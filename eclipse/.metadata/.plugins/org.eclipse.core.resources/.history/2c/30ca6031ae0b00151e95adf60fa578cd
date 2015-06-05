@@ -1,0 +1,81 @@
+package com.superzanti.serversync;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiErrorScreen;
+import net.minecraft.client.gui.GuiMainMenu;
+import net.minecraft.client.gui.GuiScreenWorking;
+import net.minecraft.client.gui.GuiYesNo;
+import net.minecraft.client.gui.GuiYesNoCallback;
+import net.minecraft.client.multiplayer.GuiConnecting;
+import net.minecraft.client.multiplayer.ServerData;
+
+
+public class SyncClient implements ClientCallback, GuiYesNoCallback{
+	
+	private static GuiScreenWorking guiscreenworking;
+	private static GuiConnecting guiconnecting;
+	private static GuiYesNo guiyesno;
+	private static GuiErrorScreen guierrorscreen;
+	private static GuiMainMenu guimainmenu;
+	
+	protected static boolean errorInUpdates;
+	protected static boolean updateHappened;
+	
+	protected SyncClient() {
+		ServerSyncRegistry.logger.info("Client Selected! Begining client routine...");
+	}
+	
+	protected void runClient() throws Exception {
+		
+		guiscreenworking = new GuiScreenWorking();
+		Minecraft.getMinecraft().displayGuiScreen(guiscreenworking);
+		updateScreenWorking(0,"Checking for server updates...");
+		
+		ServerData serverData = new ServerData("Command Line", ServerSyncRegistry.SERVER_IP+":"+ServerSyncRegistry.MINECRAFT_PORT);
+		guimainmenu = new GuiMainMenu();
+		guiconnecting = new GuiConnecting(guimainmenu, Minecraft.getMinecraft(), serverData);
+		
+		guiyesno = new GuiYesNo((GuiYesNoCallback) this, "You will need to re-launch minecraft to apply the changes.", "Would you like to do this now?", 0);
+		
+		guierrorscreen = new GuiErrorScreen("There was an error while connecting", "Make sure your config file is the same as the server's");
+		
+		SyncClientConnection scc = new SyncClientConnection(this);
+        Thread thread = new Thread(scc);
+        thread.start();
+
+        
+	}
+	
+	protected static void updateScreenWorking(int newPercent, String statusMessage){
+		guiscreenworking.displayProgressMessage(statusMessage);
+		guiscreenworking.setLoadingProgress(newPercent);
+		guiscreenworking.updateScreen();
+	}
+
+	@Override
+	public void notifyCompletion() {
+		errorInUpdates = false;
+		updateHappened = false;
+		//if there was a failure
+        if(errorInUpdates){
+            Minecraft.getMinecraft().displayGuiScreen(guierrorscreen);
+        //if there was an update
+        } else if(updateHappened){
+		  guiscreenworking.setLoadingProgress(100);
+		  Minecraft.getMinecraft().displayGuiScreen(guiyesno);
+		//if there were no updates or failures go ahead and connect to the server
+        } else {
+        	ServerSyncRegistry.connectToServer = true;
+        	//Minecraft.getMinecraft().displayGuiScreen(guiconnecting);
+        }
+	}
+	
+	@Override
+	public void confirmClicked(boolean yesButton, int whatsThisInt) {
+		if(yesButton)
+			Minecraft.getMinecraft().shutdown();
+		else
+			Minecraft.getMinecraft().displayGuiScreen(guimainmenu);
+	}
+
+}

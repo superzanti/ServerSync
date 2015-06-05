@@ -1,0 +1,46 @@
+package com.superzanti.serversync;
+
+import java.nio.file.Paths;
+
+import net.minecraftforge.client.event.GuiScreenEvent.ActionPerformedEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.relauncher.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+
+@SideOnly(Side.CLIENT)
+public class GuiScreenHandler {
+	
+	@SubscribeEvent
+	public void onActionPerformedPre (ActionPerformedEvent.Post event) {
+		
+		if (event.button.id == 6001) {
+			// log our absolute path so the user knows where to delete things
+			ServerSyncRegistry.logger.info("Files may be downloaded to this location:");
+			ServerSyncRegistry.logger.info(Paths.get(".").toAbsolutePath());
+			
+			try{
+				new Thread(new Runnable() {
+					@Override
+					public void run(){
+						try {
+							SyncClient c = new SyncClient();
+							c.runClient();
+						} catch (Exception e) {
+							ServerSyncRegistry.logger.error("Exception caught! - " + e);
+						}
+					}
+				}).start();
+			} catch (Exception e) {
+				ServerSyncRegistry.logger.error("Exception caught! - " + e);
+			}
+		}
+		return;
+	}
+	
+	private static void client() throws Exception {
+		SyncClient c = new SyncClient();
+		c.runClient();
+		return;
+	}
+
+}

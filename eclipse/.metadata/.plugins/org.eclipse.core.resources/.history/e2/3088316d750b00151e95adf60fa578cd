@@ -1,0 +1,7 @@
+package com.superzanti.serversync;
+
+public interface ClientCallback {
+	
+	void notifyCompletion();
+
+}

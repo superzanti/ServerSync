@@ -1,0 +1,16 @@
+package com.superzanti.serversync;
+
+public class teststuff extends SwingWorker<String, Object> {
+	@Overriden
+	public String doInBackgound(){
+		return
+	}
+	
+	@Override
+	protected void done(){
+		try{
+			label.set
+		}
+	}
+
+}

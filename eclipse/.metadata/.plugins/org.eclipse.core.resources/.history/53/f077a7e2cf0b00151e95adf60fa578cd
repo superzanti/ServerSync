@@ -1,0 +1,78 @@
+package com.superzanti.serversync;
+
+import java.nio.file.Paths;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiErrorScreen;
+import net.minecraft.client.gui.GuiMainMenu;
+import net.minecraft.client.gui.GuiYesNo;
+import net.minecraft.client.gui.GuiYesNoCallback;
+import net.minecraftforge.client.event.GuiScreenEvent.ActionPerformedEvent;
+import net.minecraftforge.client.event.GuiScreenEvent.DrawScreenEvent;
+import cpw.mods.fml.client.FMLClientHandler;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent;
+import cpw.mods.fml.relauncher.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+
+@SideOnly(Side.CLIENT)
+public class GuiScreenHandler implements GuiYesNoCallback{
+	
+	protected static boolean connectToServer = false;
+	private static SyncClientConnection syncclientconnecction = new SyncClientConnection();
+	protected static Thread thread = new Thread(syncclientconnecction);
+	
+	private static GuiMainMenu guimainmenu;
+	private static GuiYesNo guiyesno;
+	private static GuiErrorScreen guierrorscreen;
+	
+	
+	@SubscribeEvent
+	public void onActionPerformedPre (ActionPerformedEvent.Post event) {
+		
+		if (event.button.id == 6001) {
+			// log our absolute path so the user knows where to delete things
+			ServerSyncRegistry.logger.info("Files may be downloaded to this location:");
+			ServerSyncRegistry.logger.info(Paths.get(".").toAbsolutePath());
+			
+			try{
+				client();
+			} catch (Exception e) {
+				ServerSyncRegistry.logger.error("Exception caught! - " + e);
+			}
+		}
+		return;
+	}
+	
+	private static void client() throws Exception {
+		SyncClient c = new SyncClient();
+		c.runClient();
+		return;
+	}
+	
+	@SubscribeEvent
+	public void onEachTick(DrawScreenEvent.Pre event){
+		
+		if(syncclientconnecction.getFinished()){
+			System.out.println("donehere");
+			if(syncclientconnecction.getErrors()){
+				guierrorscreen = new GuiErrorScreen("There was an error while connecting", "Make sure your config file is the same as the server's");		
+			} else if (syncclientconnecction.getUpdates()){
+				guiyesno = new GuiYesNo((GuiYesNoCallback) this, "You will need to re-launch minecraft to apply the changes.", "Would you like to do this now?", 0);				
+			} else {
+	        	FMLClientHandler.instance().connectToServerAtStartup(ServerSyncRegistry.SERVER_IP, ServerSyncRegistry.MINECRAFT_PORT);
+	        	syncclientconnecction.setFinished(false);
+			}
+		}
+		
+	}
+	
+	@Override
+	public void confirmClicked(boolean yesButton, int whatsThisInt) {
+		if(yesButton)
+			Minecraft.getMinecraft().shutdown();
+		else
+			Minecraft.getMinecraft().displayGuiScreen(guimainmenu);
+	}
+
+}
