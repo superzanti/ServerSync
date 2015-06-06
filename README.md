@@ -89,3 +89,26 @@ Then change the working directory of your eclipse to
 Have at it.
 
 I don't expect these instructionis to change, but there will undoubtedly come a point where everyone has moved on from minecraft, forge makes some major changes that I don't want to keep up with, or I simply lose interest in maintaining this project.
+
+What you should expect to see
+--------------
+
+When the game starts up you will see a very lightweight menu.
+
+![Start Screen](/previewImages/startScreen.bmp)
+
+Upon clicking the connect button, the client will start checking for updates.
+
+![Downloading](/previewImages/downloading.bmp)
+
+If there was a download to be had, the mod will notify the user.
+
+![Relaunch](/previewImages/relaunch.bmp)
+
+If the user decides to click no and then connect again it will tell the user an update is pending.
+
+![Click Twice](/previewImages/clickTwice.bmp)
+
+A similar error message will appear if the server cannot be found or there is some exception in the mod while downloading updates. All these errors are solved simply by restarting minecraft and making sure the server is up. If there is nothing to download it will automatically connect to user to the server.
+
+![Connected](/previewImages/connected.bmp)

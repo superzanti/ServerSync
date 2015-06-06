@@ -3,11 +3,11 @@
     {
         "title":
         {
-            "image" : "custommainmenu:textures/gui/minecraft.png",
-            "posX" : -137,
-            "posY" : 30,
-            "width" : 512,
-            "height" : 512,
+            "image" : "serversync:TheVerse.png",
+            "posX" : -150,
+            "posY" : 25,
+            "width" : 300,
+            "height" : 55,
             "alignment" : "top_center"
         }
     },
@@ -17,6 +17,7 @@
         "singleplayer":
         {
             "text" : "menu.singleplayer",
+			"texture" : "serversync:versebutton_1.png",
             "posX" : -100,
             "posY" : 48,
             "width" : 200,
@@ -31,6 +32,7 @@
         "connectToServer":
         {
             "text" : "Connect To The Verse",
+			"texture" : "serversync:versebutton_1.png",
             "posX" : -100,
             "posY" : 72,
             "width" : 200,
@@ -45,6 +47,7 @@
         "options":
         {
             "text" : "menu.options",
+			"texture" : "serversync:versebutton_2.png",
             "posX" : -100,
             "posY" : 112,
             "width" : 98,
@@ -59,6 +62,7 @@
         "quit":
         {
             "text" : "menu.quit",
+			"texture" : "serversync:versebutton_2.png",
             "posX" : 2,
             "posY" : 112,
             "width" : 98,
@@ -72,6 +76,14 @@
     
     "texts":
     {
+		"disclaimer":
+		{
+			"text" : "Warning: ServerSync allows a server to put any file on your computer",
+			"posX": 5,
+			"posY": -10,
+			"color" : 16777215,
+			"alignment" : "bottom_left"
+		}
     },
     
     "other":
