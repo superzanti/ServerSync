@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-
 import cpw.mods.fml.relauncher.SideOnly;
 import cpw.mods.fml.relauncher.Side;
 
@@ -34,6 +33,7 @@ public class SyncServer implements Runnable {
 			server = new ServerSocket(ServerSyncRegistry.SERVER_PORT);
 		} catch (IOException e) {
 			ServerSyncRegistry.logger.info("Error occured."+e);
+			e.printStackTrace();
 		}
         //keep listens indefinitely until receives 'exit' call or program terminates
         ServerSyncRegistry.logger.info("Now accepting clients...");
@@ -47,6 +47,7 @@ public class SyncServer implements Runnable {
             catch(Exception e)
             {
             	ServerSyncRegistry.logger.info("Error occured."+e);
+            	e.printStackTrace();
             }
         }
 	}

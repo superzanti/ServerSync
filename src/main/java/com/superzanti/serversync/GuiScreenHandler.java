@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiErrorScreen;
 import net.minecraftforge.client.event.GuiScreenEvent.ActionPerformedEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+
 import cpw.mods.fml.relauncher.SideOnly;
 import cpw.mods.fml.relauncher.Side;
 
@@ -35,7 +36,7 @@ public class GuiScreenHandler{
 	}
 	
 	private static void client() throws Exception {
-		ServerSyncRegistry.syncclient.runClient();
+		ClientProxy.syncclient.runClient();
 		return;
 	}
 

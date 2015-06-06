@@ -1,12 +1,13 @@
-[22:19:48] [main/INFO]: Setting user: Player295
-[22:19:50] [Client thread/INFO]: LWJGL Version: 2.9.1
-[22:19:50] [Client thread/ERROR]: Couldn't initialize twitch stream
-[22:19:54] [Client thread/INFO]: Reloading ResourceManager: Default, FMLFileResourcePack:Forge Mod Loader, FMLFileResourcePack:Minecraft Forge, FMLFileResourcePack:Server Sync, FMLFileResourcePack:Custom Main Menu
-[22:19:55] [Sound Library Loader/INFO]: Sound engine started
-[22:19:55] [Client thread/INFO]: Created: 512x256 textures/blocks-atlas
-[22:19:55] [Client thread/INFO]: Created: 256x256 textures/items-atlas
-[22:19:55] [Client thread/INFO]: Reloading ResourceManager: Default, FMLFileResourcePack:Forge Mod Loader, FMLFileResourcePack:Minecraft Forge, FMLFileResourcePack:Server Sync, FMLFileResourcePack:Custom Main Menu
-[22:19:56] [Client thread/INFO]: Created: 512x256 textures/blocks-atlas
-[22:19:56] [Client thread/INFO]: Created: 256x256 textures/items-atlas
-[22:19:57] [Sound Library Loader/INFO]: Sound engine started
-[22:20:12] [Client thread/INFO]: Stopping!
+[00:49:37] [Server thread/INFO]: Starting minecraft server version 1.7.10
+[00:49:41] [Server thread/INFO]: Loading properties
+[00:49:41] [Server thread/INFO]: Default game type: SURVIVAL
+[00:49:41] [Server thread/INFO]: Generating keypair
+[00:49:42] [Server thread/INFO]: Starting Minecraft server on *:25565
+[00:49:42] [Server thread/INFO]: Preparing level "world"
+[00:49:42] [Server thread/INFO]: Preparing start region for level 0
+[00:49:43] [Server thread/INFO]: Preparing spawn area: 35%
+[00:49:44] [Server thread/INFO]: Done (2.014s)! For help, type "help" or "?"
+[00:49:54] [Server Shutdown Thread/INFO]: Stopping server
+[00:49:54] [Server Shutdown Thread/INFO]: Saving players
+[00:49:54] [Server Shutdown Thread/INFO]: Saving worlds
+[00:49:54] [Server Shutdown Thread/INFO]: Saving chunks for level 'world'/Overworld

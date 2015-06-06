@@ -34,8 +34,6 @@ public class ServerSyncRegistry {
 	@SidedProxy(modId = RefStrings.MODID, clientSide = CLIENT_PROXY, serverSide = SERVER_PROXY)
     protected static CommonProxy proxy;
 	
-	protected static SyncClient syncclient;
-	
 	@EventHandler
 	public static void PreLoad(FMLPreInitializationEvent PreEvent) {
 		
@@ -80,17 +78,17 @@ public class ServerSyncRegistry {
         // Client side
         if(proxy.isClient()){
         	logger.info("I am a client");
-        	syncclient = new SyncClient();
-        	MinecraftForge.EVENT_BUS.register(syncclient);
+        	ClientProxy.syncclient = new SyncClient();
+        	MinecraftForge.EVENT_BUS.register(ClientProxy.syncclient);
         	MinecraftForge.EVENT_BUS.register(new GuiScreenHandler());
         }
 	
         //Server side
         if(proxy.isServer()){
         	logger.info("I am a server");
-			SyncServer syncServer = new SyncServer();
-			Thread syncThread = new Thread(syncServer);
-			syncThread.start();
+			SyncServer syncserver = new SyncServer();
+			Thread syncthread = new Thread(syncserver);
+			syncthread.start();
         }
         return;
 	}

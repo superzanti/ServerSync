@@ -10,10 +10,12 @@ import net.minecraft.client.gui.GuiYesNo;
 import net.minecraft.client.gui.GuiYesNoCallback;
 import net.minecraftforge.client.event.GuiScreenEvent.DrawScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
+import cpw.mods.fml.relauncher.SideOnly;
+import cpw.mods.fml.relauncher.Side;
 
+@SideOnly(Side.CLIENT)
 public class SyncClient implements GuiYesNoCallback{
-	
-	protected static boolean connectToServer = false;
+
 	protected static SyncClientConnection syncclientconnecction = new SyncClientConnection();
 	protected static Thread thread = new Thread(syncclientconnecction);
 	
@@ -56,7 +58,7 @@ public class SyncClient implements GuiYesNoCallback{
 			} else {
 	        	FMLClientHandler.instance().connectToServerAtStartup(ServerSyncRegistry.SERVER_IP, ServerSyncRegistry.MINECRAFT_PORT);
 			}
-			MinecraftForge.EVENT_BUS.unregister(ServerSyncRegistry.syncclient);
+			MinecraftForge.EVENT_BUS.unregister(ClientProxy.syncclient);
 		}
 		
 	}

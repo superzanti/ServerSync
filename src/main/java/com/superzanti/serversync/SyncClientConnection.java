@@ -10,6 +10,10 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
+import cpw.mods.fml.relauncher.SideOnly;
+import cpw.mods.fml.relauncher.Side;
+
+@SideOnly(Side.CLIENT)
 public class SyncClientConnection implements Runnable{
 	
 	private static Socket socket;
