@@ -1,0 +1,15 @@
+[00:57:39] [Server thread/INFO]: Starting minecraft server version 1.7.10
+[00:57:44] [Server thread/INFO]: Loading properties
+[00:57:44] [Server thread/INFO]: Default game type: SURVIVAL
+[00:57:44] [Server thread/INFO]: Generating keypair
+[00:57:45] [Server thread/INFO]: Starting Minecraft server on *:25565
+[00:57:45] [Server thread/INFO]: Preparing level "world"
+[00:57:45] [Server thread/INFO]: Preparing start region for level 0
+[00:57:46] [Server thread/INFO]: Preparing spawn area: 38%
+[00:57:47] [Server thread/INFO]: Done (2.028s)! For help, type "help" or "?"
+[00:57:53] [Server thread/INFO]: Stopping server
+[00:57:53] [Server thread/INFO]: Saving players
+[00:57:53] [Server thread/INFO]: Saving worlds
+[00:57:53] [Server thread/INFO]: Saving chunks for level 'world'/Overworld
+[00:57:53] [Server thread/INFO]: Saving chunks for level 'world'/Nether
+[00:57:53] [Server thread/INFO]: Saving chunks for level 'world'/The End

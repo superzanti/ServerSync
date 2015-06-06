@@ -1,5 +1,6 @@
 package com.superzanti.serversync;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -65,6 +66,7 @@ public class SyncServerConnection implements Runnable {
 						oos.write(buff,0,bytesRead);
 					}
 					in.close();
+					oos.flush();
 					break;
 				}
 				
@@ -73,9 +75,11 @@ public class SyncServerConnection implements Runnable {
 					File f = new File(theFile);
 					if(f.exists() && !f.isDirectory()) {
 						oos.writeObject("true");
+						oos.flush();
 					}
 					else {
 						oos.writeObject("false");
+						oos.flush();
 					}
 				}
 				
@@ -86,7 +90,7 @@ public class SyncServerConnection implements Runnable {
 			ServerSyncRegistry.logger.info("Connection "+clientsocket+" is closing.");
 		}
 		catch(Exception e)
-		{
+		{ 
 			ServerSyncRegistry.logger.info("Error occured: "+e);
 		} finally {
 			try {
@@ -102,16 +106,4 @@ public class SyncServerConnection implements Runnable {
 		}
 		return;
 	}
-	
-	private static void reinitConn() throws Exception {
-		oos.close();
-		ois.close();
-		clientsocket.close();
-		Thread.sleep(10);
-		clientsocket = server.accept();
-		oos = new ObjectOutputStream(clientsocket.getOutputStream());
-		ois = new ObjectInputStream(clientsocket.getInputStream());
-		return;
-	}
-
 }
