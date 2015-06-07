@@ -45,7 +45,7 @@ public class SyncClientConnection implements Runnable{
         socket = null;
         oos = null;
         ois = null;
-        SyncClient.updateScreenWorking(1,"Connecting server...");
+        SyncClient.updateScreenWorking(1,"Connecting to server...");
 		try {
 		    //establish socket connection to server
 			ServerSyncRegistry.logger.info("Establishing a socket connection to the server...");
