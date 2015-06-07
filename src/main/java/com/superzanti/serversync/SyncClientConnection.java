@@ -45,7 +45,7 @@ public class SyncClientConnection implements Runnable{
         socket = null;
         oos = null;
         ois = null;
-        SyncClient.updateScreenWorking(1,"Connected to server...");
+        SyncClient.updateScreenWorking(1,"Connecting server...");
 		try {
 		    //establish socket connection to server
 			ServerSyncRegistry.logger.info("Establishing a socket connection to the server...");
@@ -79,6 +79,8 @@ public class SyncClientConnection implements Runnable{
 			allList.addAll(dirContents("./config"));
 			
 			SyncClient.updateScreenWorking(5,"Got filetree from client...");
+			
+			ServerSyncRegistry.logger.info("Ignoring: " + ServerSyncRegistry.IGNORE_LIST);
 		    
 		    // run calculations to figure out how big the bar is
 		    float numberOfFiles = allList.size() + fileTree.size();
@@ -112,6 +114,7 @@ public class SyncClientConnection implements Runnable{
 							
 							// download the file
 							File updated = new File(singleFile.replace('\\', '/'));
+							updated.delete();
 							updated.getParentFile().mkdirs();
 							FileOutputStream wr = new FileOutputStream(updated);
 							byte[] outBuffer = new byte[socket.getReceiveBufferSize()];
@@ -131,7 +134,7 @@ public class SyncClientConnection implements Runnable{
 					if (ServerSyncRegistry.IGNORE_LIST.contains(singleFile.replace('\\',  '/'))){
 						ServerSyncRegistry.logger.info("Ignoring: " + singleFile.replace('\\', '/'));
 					}else{
-						ServerSyncRegistry.logger.info(singleFile.replace('\\', '/') + " Does not match... Updating...");
+						ServerSyncRegistry.logger.info(singleFile.replace('\\', '/') + " Does not exist... Updating...");
 						oos.writeObject(ServerSyncRegistry.SECURE_UPDATE);
 						oos.flush();
 						oos.writeObject(singleFile.replace('\\', '/'));
@@ -141,6 +144,7 @@ public class SyncClientConnection implements Runnable{
 						
 						// download the file
 						File updated = new File(singleFile.replace('\\', '/'));
+						updated.delete();
 						updated.getParentFile().mkdirs();
 						FileOutputStream wr = new FileOutputStream(updated);
 						byte[] outBuffer = new byte[socket.getReceiveBufferSize()];

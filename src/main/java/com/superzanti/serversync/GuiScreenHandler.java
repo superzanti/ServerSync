@@ -16,7 +16,10 @@ public class GuiScreenHandler{
 	@SubscribeEvent
 	public void onActionPerformedPre (ActionPerformedEvent.Post event) {
 		
-		if (event.button.id == 6001) {
+		if(event.button.id > 0)
+			ServerSyncRegistry.logger.info("Your BUTTON_ID is: " + event.button.id);
+		
+		if (event.button.id == ServerSyncRegistry.BUTTON_ID) {
 			// log our absolute path so the user knows where to delete things
 			ServerSyncRegistry.logger.info("Files may be downloaded to this location:");
 			ServerSyncRegistry.logger.info(Paths.get(".").toAbsolutePath());
