@@ -67,8 +67,10 @@ public class ServerSyncRegistry {
 		        "./config/splash.properties",
 		        "./mods/serversync-2.0.jar"
 		};
-		String[] ignoreList = config.getStringList("IGNORE_LIST", "IgnoredFiles", defaultList,  "These files are ignored by serversync");
-		IGNORE_LIST = Arrays.asList(ignoreList);
+		//String[] ignoreList = config.getStringList("IGNORE_LIST", "IgnoredFiles", defaultList,  "These files are ignored by serversync");
+		
+		Property ignoreList = config.get("IgnoredFiles", "IGNORE_LIST", defaultList, "These files are ignored by serversync");
+		IGNORE_LIST = Arrays.asList(ignoreList.getStringList());
 		
 		
 		BUTTON_ID = config.getInt("ButtonID", "GUI", 6001, 0, 2147483647, "The ID of the button that connects to the server and updates");
