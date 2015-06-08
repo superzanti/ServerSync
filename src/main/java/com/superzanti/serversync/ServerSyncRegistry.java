@@ -71,12 +71,12 @@ public class ServerSyncRegistry {
 		};
 		//String[] ignoreList = config.getStringList("IGNORE_LIST", "IgnoredFiles", defaultList,  "These files are ignored by serversync");
 		
-		Property ignoreList = config.get("IgnoredFiles", "IGNORE_LIST", defaultList, "These files are ignored by serversync");
+		Property ignoreList = config.get("IgnoredFiles", "IGNORE_LIST", defaultList, "These files are ignored by serversync. DO NOT IGNORE serversync.cfg");
 		IGNORE_LIST = Arrays.asList(ignoreList.getStringList());
 		
 		BUTTON_ID = config.getInt("ButtonID", "GUI", 6001, 0, 2147483647, "The ID of the button that connects to the server and updates");
 
-		LAST_UPDATE = config.getString("LAST_UPDATE", "StorageVariables", "20150608_000500", "DO NOT EDIT THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING!");
+		LAST_UPDATE = config.getString("LAST_UPDATE", "StorageVariables", "20150608_000500", "DO NOT EDIT THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! (If you are a server feel free to change it as much as you want to update your clients)");
 		
 		// loading the configuration from its file
         config.save();

@@ -195,10 +195,10 @@ public class SyncClientConnection implements Runnable{
 						}
 						//reinitConn();
 					}
-			    	
 			    }
-			    ServerSyncRegistry.config.getCategory("StorageVariables").get("LAST_UPDATE").set(lastUpdate);
-			    ServerSyncRegistry.config.save();
+			    // I found that these lines are not needed since the client updates server sync anyway.
+			    //ServerSyncRegistry.config.getCategory("StorageVariables").get("LAST_UPDATE").set(lastUpdate);
+			    //ServerSyncRegistry.config.save();
 			} else {
 				SyncClient.updateScreenWorking(50, "No Updates Needed :D");
 				ServerSyncRegistry.logger.info("No Updates Needed");
