@@ -52,7 +52,6 @@ public class SyncClientConnection implements Runnable{
 		    //establish socket connection to server
 			ServerSyncRegistry.logger.info("Establishing a socket connection to the server...");
 			socket = new Socket(host.getHostName(), ServerSyncRegistry.SERVER_PORT);
-			socket.setSoTimeout(20000);
 			
 			SyncClient.updateScreenWorking(2,"Socket established...");
 			
@@ -216,6 +215,8 @@ public class SyncClientConnection implements Runnable{
 		} finally {
 			try {
 				SyncClient.updateScreenWorking(99,"Closing connections...");
+
+				socket.setSoTimeout(3000);
 				oos.close();
 				ois.close();
 				socket.close();
