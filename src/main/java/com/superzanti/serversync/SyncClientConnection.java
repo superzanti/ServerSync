@@ -8,7 +8,9 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import cpw.mods.fml.relauncher.SideOnly;
 import cpw.mods.fml.relauncher.Side;
@@ -58,53 +60,88 @@ public class SyncClientConnection implements Runnable{
 			oos = new ObjectOutputStream(socket.getOutputStream());
 			ois = new ObjectInputStream(socket.getInputStream());
 			
-			SyncClient.updateScreenWorking(3,"Streams established...");
-			
-			ServerSyncRegistry.logger.info("Sending requests to Socket Server...");
-			
-			//get all files on server
-			ServerSyncRegistry.logger.info("Getting the files on the server...");
-			oos.writeObject(ServerSyncRegistry.SECURE_RECURSIVE);
+			SyncClient.updateScreenWorking(3,"Checking to see if updates are needed...");
+			oos.writeObject(ServerSyncRegistry.SECURE_CHECK);
 			oos.flush();
-			//read the server response message
-			ArrayList<String> fileTree = new ArrayList<String>();
-			fileTree = (ArrayList) ois.readObject();
-			ServerSyncRegistry.logger.info(fileTree);
+			String lastUpdate = (String) ois.readObject();
 			
-			SyncClient.updateScreenWorking(4,"Got filetree from server...");
-			
-			//get all the files at home so we can update the progress bar
-			ArrayList<String> allList = new ArrayList<String>();
-			allList.addAll(dirContents("./mods"));
-			allList.addAll(dirContents("./config"));
-			
-			SyncClient.updateScreenWorking(5,"Got filetree from client...");
-			
-			ServerSyncRegistry.logger.info("Ignoring: " + ServerSyncRegistry.IGNORE_LIST);
-		    
-		    // run calculations to figure out how big the bar is
-		    float numberOfFiles = allList.size() + fileTree.size();
-		    float percentScale = numberOfFiles/92;
-		    float currentPercent = 0;
-			
-			for(String singleFile : fileTree){
-				currentPercent = currentPercent + 1;
-				SyncClient.updateScreenWorking((int)(5+(currentPercent/percentScale)),"Checking server's " + singleFile.replace('\\', '/'));
-				File f = new File(singleFile.replace('\\', '/'));
-				if(f.exists() && !f.isDirectory()){
-					oos.writeObject(ServerSyncRegistry.SECURE_CHECKSUM);
-					oos.flush();
-					oos.writeObject(singleFile.replace('\\', '/'));
-					oos.flush();
-					String serverChecksum = (String) ois.readObject();
-					// if the checksums do not match, update the file
-					if(!Md5.md5String(f).equals(serverChecksum)){
+			if(lastUpdate != ServerSyncRegistry.LAST_UPDATE){
+				
+				ServerSyncRegistry.logger.info("Sending requests to Socket Server...");
+				
+				//get all files on server
+				ServerSyncRegistry.logger.info("Getting the files on the server...");
+				oos.writeObject(ServerSyncRegistry.SECURE_RECURSIVE);
+				oos.flush();
+				//read the server response message
+				ArrayList<String> fileTree = new ArrayList<String>();
+				fileTree = (ArrayList) ois.readObject();
+				ServerSyncRegistry.logger.info(fileTree);
+				
+				SyncClient.updateScreenWorking(4,"Got filetree from server...");
+				
+				//get all the files at home so we can update the progress bar
+				ArrayList<String> allList = new ArrayList<String>();
+				allList.addAll(dirContents("./mods"));
+				allList.addAll(dirContents("./config"));
+				
+				SyncClient.updateScreenWorking(5,"Got filetree from client...");
+				
+				ServerSyncRegistry.logger.info("Ignoring: " + ServerSyncRegistry.IGNORE_LIST);
+			    
+			    // run calculations to figure out how big the bar is
+			    float numberOfFiles = allList.size() + fileTree.size();
+			    float percentScale = numberOfFiles/92;
+			    float currentPercent = 0;
+				
+				for(String singleFile : fileTree){
+					currentPercent = currentPercent + 1;
+					SyncClient.updateScreenWorking((int)(5+(currentPercent/percentScale)),"Checking server's " + singleFile.replace('\\', '/'));
+					File f = new File(singleFile.replace('\\', '/'));
+					if(f.exists() && !f.isDirectory()){
+						oos.writeObject(ServerSyncRegistry.SECURE_CHECKSUM);
+						oos.flush();
+						oos.writeObject(singleFile.replace('\\', '/'));
+						oos.flush();
+						String serverChecksum = (String) ois.readObject();
+						// if the checksums do not match, update the file
+						if(!Md5.md5String(f).equals(serverChecksum)){
+							if (ServerSyncRegistry.IGNORE_LIST.contains(singleFile.replace('\\',  '/'))){
+								ServerSyncRegistry.logger.info("Ignoring: " + singleFile.replace('\\', '/'));
+							}else{
+								ServerSyncRegistry.logger.info(singleFile.replace('\\', '/') + " Does not match... Updating...");
+								ServerSyncRegistry.logger.info("Server Checksum: " + serverChecksum);
+								ServerSyncRegistry.logger.info("Our Checksum: " + Md5.md5String(f));
+								oos.writeObject(ServerSyncRegistry.SECURE_UPDATE);
+								oos.flush();
+								oos.writeObject(singleFile.replace('\\', '/'));
+								oos.flush();
+								
+								SyncClient.updateScreenWorking((int)(5+(currentPercent/percentScale)),"Updating " + singleFile.replace('\\', '/'));
+								
+								// download the file
+								File updated = new File(singleFile.replace('\\', '/'));
+								updated.delete();
+								updated.getParentFile().mkdirs();
+								FileOutputStream wr = new FileOutputStream(updated);
+								byte[] outBuffer = new byte[socket.getReceiveBufferSize()];
+								int bytesReceived = 0;
+								while((bytesReceived = ois.read(outBuffer))>0) {
+									wr.write(outBuffer, 0, bytesReceived);
+								}
+								wr.flush();
+								wr.close();
+								reinitConn();
+								updateHappened = true;
+							}
+						} else {
+							ServerSyncRegistry.logger.info("We have a match! "+ singleFile.replace('\\', '/'));
+						}
+					} else {
 						if (ServerSyncRegistry.IGNORE_LIST.contains(singleFile.replace('\\',  '/'))){
 							ServerSyncRegistry.logger.info("Ignoring: " + singleFile.replace('\\', '/'));
 						}else{
-							ServerSyncRegistry.logger.info(singleFile.replace('\\', '/') + " Does not match... Updating...");
-							ServerSyncRegistry.logger.info("Server Checksum: " + serverChecksum);
-							ServerSyncRegistry.logger.info("Our Checksum: " + Md5.md5String(f));
+							ServerSyncRegistry.logger.info(singleFile.replace('\\', '/') + " Does not exist... Updating...");
 							oos.writeObject(ServerSyncRegistry.SECURE_UPDATE);
 							oos.flush();
 							oos.writeObject(singleFile.replace('\\', '/'));
@@ -127,66 +164,43 @@ public class SyncClientConnection implements Runnable{
 							reinitConn();
 							updateHappened = true;
 						}
-					} else {
-						ServerSyncRegistry.logger.info("We have a match! "+ singleFile.replace('\\', '/'));
 					}
-				} else {
+				}
+			    
+			    for (String singleFile : allList){
+			    	currentPercent++;
+					SyncClient.updateScreenWorking((int)(5+(currentPercent/percentScale)),"Checking client's " + singleFile.replace('\\', '/'));
+					
+			    	ServerSyncRegistry.logger.info("Checking client's files against the server's...");
+			    	oos.writeObject(ServerSyncRegistry.SECURE_EXISTS);
+					oos.flush();
+					oos.writeObject(singleFile.replace('\\', '/'));
+					oos.flush();
+					
+					// check for files that need to be deleted
+					String doesExist = (String) ois.readObject();
+					
 					if (ServerSyncRegistry.IGNORE_LIST.contains(singleFile.replace('\\',  '/'))){
 						ServerSyncRegistry.logger.info("Ignoring: " + singleFile.replace('\\', '/'));
 					}else{
-						ServerSyncRegistry.logger.info(singleFile.replace('\\', '/') + " Does not exist... Updating...");
-						oos.writeObject(ServerSyncRegistry.SECURE_UPDATE);
-						oos.flush();
-						oos.writeObject(singleFile.replace('\\', '/'));
-						oos.flush();
-						
-						SyncClient.updateScreenWorking((int)(5+(currentPercent/percentScale)),"Updating " + singleFile.replace('\\', '/'));
-						
-						// download the file
-						File updated = new File(singleFile.replace('\\', '/'));
-						updated.delete();
-						updated.getParentFile().mkdirs();
-						FileOutputStream wr = new FileOutputStream(updated);
-						byte[] outBuffer = new byte[socket.getReceiveBufferSize()];
-						int bytesReceived = 0;
-						while((bytesReceived = ois.read(outBuffer))>0) {
-							wr.write(outBuffer, 0, bytesReceived);
+						if(doesExist.equalsIgnoreCase("false")){
+							ServerSyncRegistry.logger.info(singleFile.replace('\\', '/') + " Does not match... Deleting...");
+							SyncClient.updateScreenWorking((int)(5+(currentPercent/percentScale)),"Deleting client's " + singleFile.replace('\\', '/'));
+							File deleteMe = new File(singleFile.replace('\\', '/'));
+							deleteMe.delete();
+							updateHappened = true;
 						}
-						wr.flush();
-						wr.close();
-						reinitConn();
-						updateHappened = true;
+						//reinitConn();
 					}
-				}
+			    	
+			    }
+			    File deleteMe = new File("./config/serversync.cfg");
+			    deleteMe.delete();
+			    ServerSyncRegistry.config.getCategory("StorageVariables").get("LAST_UPDATE").set(lastUpdate);
+			} else {
+				SyncClient.updateScreenWorking(50, "No Updates Needed :D");
+				ServerSyncRegistry.logger.error("No Updates Needed");
 			}
-		    
-		    for (String singleFile : allList){
-		    	currentPercent++;
-				SyncClient.updateScreenWorking((int)(5+(currentPercent/percentScale)),"Checking client's " + singleFile.replace('\\', '/'));
-				
-		    	ServerSyncRegistry.logger.info("Checking client's files against the server's...");
-		    	oos.writeObject(ServerSyncRegistry.SECURE_EXISTS);
-				oos.flush();
-				oos.writeObject(singleFile.replace('\\', '/'));
-				oos.flush();
-				
-				// check for files that need to be deleted
-				String doesExist = (String) ois.readObject();
-				
-				if (ServerSyncRegistry.IGNORE_LIST.contains(singleFile.replace('\\',  '/'))){
-					ServerSyncRegistry.logger.info("Ignoring: " + singleFile.replace('\\', '/'));
-				}else{
-					if(doesExist.equalsIgnoreCase("false")){
-						ServerSyncRegistry.logger.info(singleFile.replace('\\', '/') + " Does not match... Deleting...");
-						SyncClient.updateScreenWorking((int)(5+(currentPercent/percentScale)),"Deleting client's " + singleFile.replace('\\', '/'));
-						File deleteMe = new File(singleFile.replace('\\', '/'));
-						deleteMe.delete();
-						updateHappened = true;
-					}
-					//reinitConn();
-				}
-		    	
-		    }
 		    
 		    SyncClient.updateScreenWorking(98,"Telling Server to Exit...");
 			

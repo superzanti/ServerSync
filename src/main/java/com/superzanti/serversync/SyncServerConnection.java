@@ -42,6 +42,11 @@ public class SyncServerConnection implements Runnable {
 				String message = (String) ois.readObject();
 				ServerSyncRegistry.logger.info("Received message: "+message+" from connection "+clientsocket);
 		
+				if(message.equals(ServerSyncRegistry.SECURE_CHECK)) {
+					oos.writeObject(ServerSyncRegistry.LAST_UPDATE);
+					oos.flush();
+				}
+				
 				if(message.equals(ServerSyncRegistry.SECURE_RECURSIVE)) {
 					oos.writeObject(allList);
 					oos.flush();

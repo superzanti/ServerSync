@@ -16,6 +16,15 @@ Not to mention, depending on the copyright and/or pattent laws in your area usin
 
 Don't trust anyone with my mod. This mod allows ANY server running it to put ANY jar file in your mods folder. Any mod means any function of java, such as making a virus or a keylogger. So if you are a client please make sure you trust your server administrator.
 
+
+RECENT UPDATES:
+-----------
+Version 2.1:
+* Added feature to ask the server if there has been any updates before ever updating
+  * This allows to update all configs regardless of if they change
+  * Has almost made the IGNORE_LIST property worthless, but is stil handy to have for client/server side only things like GLSL shaders
+
+
 FREQUENTLY ASKED QUESTIONS:
 -----------
 * "This mod isn't doing anything!"
