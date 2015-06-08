@@ -26,7 +26,7 @@ public class GuiScreenHandler{
 			ServerSyncRegistry.logger.info("Files may be downloaded to this location:");
 			ServerSyncRegistry.logger.info(Paths.get(".").toAbsolutePath());
 			
-			if(doesButtonWork){
+			if(!doesButtonWork){
 				GuiErrorScreen guierrorscreen = new GuiErrorScreen("A Minecraft restart is pending...", "Please restart your client to play multiplayer.");
 				Minecraft.getMinecraft().displayGuiScreen(guierrorscreen);
 			} else {
