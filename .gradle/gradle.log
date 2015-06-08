@@ -18,7 +18,7 @@
 :compileApiJava UP-TO-DATE
 :processApiResources UP-TO-DATE
 :apiClasses UP-TO-DATE
-:sourceMainJava
+:sourceMainJava UP-TO-DATE
 :compileJavawarning: [options] bootstrap class path not set in conjunction with -source 1.6
 Note: /home/seth/Downloads/serversync/build/sources/java/com/superzanti/serversync/SyncClientConnection.java uses unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
@@ -38,4 +38,4 @@ Note: Recompile with -Xlint:unchecked for details.
 
 BUILD SUCCESSFUL
 
-Total time: 15.181 secs
+Total time: 14.14 secs

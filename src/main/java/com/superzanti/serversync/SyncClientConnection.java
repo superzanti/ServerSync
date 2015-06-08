@@ -194,9 +194,8 @@ public class SyncClientConnection implements Runnable{
 					}
 			    	
 			    }
-			    File deleteMe = new File("./config/serversync.cfg");
-			    deleteMe.delete();
 			    ServerSyncRegistry.config.getCategory("StorageVariables").get("LAST_UPDATE").set(lastUpdate);
+			    ServerSyncRegistry.config.save();
 			} else {
 				SyncClient.updateScreenWorking(50, "No Updates Needed :D");
 				ServerSyncRegistry.logger.error("No Updates Needed");
