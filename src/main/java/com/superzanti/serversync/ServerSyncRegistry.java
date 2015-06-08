@@ -55,7 +55,7 @@ public class ServerSyncRegistry {
 		SERVER_PORT = config.getInt("SERVER_PORT", "ServerConnection", 38067, 1, 49151, "The port that your server will be serving on");
 		MINECRAFT_PORT = config.getInt("MINECRAFT_PORT", "ServerConnection", 25565, 1, 49151, "The port in which the minecraft server is running, not the serversync port");
 		
-		SECURE_CHECK = config.getString("SECURE_RECURSIVE", "ServerEncryption", "0ba4439ee9a46d9d9f14c60f88f45f87", "The check command security key phrase");
+		SECURE_CHECK = config.getString("SECURE_CHECK", "ServerEncryption", "0ba4439ee9a46d9d9f14c60f88f45f87", "The check command security key phrase");
 		SECURE_RECURSIVE = config.getString("SECURE_RECURSIVE", "ServerEncryption", "f8e45531a3ea3d5c1247b004985175a4", "The recursive command security key phrase");
 		SECURE_CHECKSUM = config.getString("SECURE_CHECKSUM", "ServerEncryption", "226190d94b21d1b0c7b1a42d855e419d", "The checksum command security key phrase");
 		SECURE_UPDATE = config.getString("SECURE_UPDATE", "ServerEncryption", "3ac340832f29c11538fbe2d6f75e8bcc", "The update command security key phrase");

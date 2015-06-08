@@ -24,7 +24,7 @@ Note: /home/seth/Downloads/serversync/build/sources/java/com/superzanti/serversy
 Note: Recompile with -Xlint:unchecked for details.
 1 warning
 
-:processResources
+:processResources UP-TO-DATE
 :classes
 :jar
 :compileTestJava UP-TO-DATE
@@ -38,4 +38,4 @@ Note: Recompile with -Xlint:unchecked for details.
 
 BUILD SUCCESSFUL
 
-Total time: 16.293 secs
+Total time: 15.181 secs
