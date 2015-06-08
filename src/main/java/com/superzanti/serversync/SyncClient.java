@@ -52,11 +52,14 @@ public class SyncClient implements GuiYesNoCallback{
 			if(syncclientconnecction.getErrors()){
 				guierrorscreen = new GuiErrorScreen("There was an error while connecting", "Make sure your config file is the same as the server's");		
 				Minecraft.getMinecraft().displayGuiScreen(guierrorscreen);
+				GuiScreenHandler.doesButtonWork = false;
 			} else if (syncclientconnecction.getUpdates()){
 				guiyesno = new GuiYesNo((GuiYesNoCallback) this, "You will need to re-launch minecraft to apply the changes.", "Would you like to do this now?", 0);				
 				Minecraft.getMinecraft().displayGuiScreen(guiyesno);
+				GuiScreenHandler.doesButtonWork = false;
 			} else {
 	        	FMLClientHandler.instance().connectToServerAtStartup(ServerSyncRegistry.SERVER_IP, ServerSyncRegistry.MINECRAFT_PORT);
+	        	GuiScreenHandler.doesButtonWork = true;
 			}
 			MinecraftForge.EVENT_BUS.unregister(ClientProxy.syncclient);
 		}

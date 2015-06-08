@@ -13,6 +13,8 @@ import cpw.mods.fml.relauncher.Side;
 @SideOnly(Side.CLIENT)
 public class GuiScreenHandler{
 	
+	public static boolean doesButtonWork = true;
+	
 	@SubscribeEvent
 	public void onActionPerformedPre (ActionPerformedEvent.Post event) {
 		
@@ -24,7 +26,7 @@ public class GuiScreenHandler{
 			ServerSyncRegistry.logger.info("Files may be downloaded to this location:");
 			ServerSyncRegistry.logger.info(Paths.get(".").toAbsolutePath());
 			
-			if(SyncClient.syncclientconnecction.getUpdates()){
+			if(doesButtonWork){
 				GuiErrorScreen guierrorscreen = new GuiErrorScreen("A Minecraft restart is pending...", "Please restart your client to play multiplayer.");
 				Minecraft.getMinecraft().displayGuiScreen(guierrorscreen);
 			} else {
