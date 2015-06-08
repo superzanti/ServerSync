@@ -41,6 +41,7 @@ public class SyncServer implements Runnable {
             try
             {
             	Socket socket = server.accept();
+            	socket.setSoTimeout(20000);
                 SyncServerConnection sc = new SyncServerConnection(socket, allList, server);
                 new Thread(sc).start();
             }

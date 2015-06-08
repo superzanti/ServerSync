@@ -52,6 +52,7 @@ public class SyncClientConnection implements Runnable{
 		    //establish socket connection to server
 			ServerSyncRegistry.logger.info("Establishing a socket connection to the server...");
 			socket = new Socket(host.getHostName(), ServerSyncRegistry.SERVER_PORT);
+			socket.setSoTimeout(20000);
 			
 			SyncClient.updateScreenWorking(2,"Socket established...");
 			
@@ -67,7 +68,7 @@ public class SyncClientConnection implements Runnable{
 			ServerSyncRegistry.logger.info("Our last update was:" + ServerSyncRegistry.LAST_UPDATE);
 			ServerSyncRegistry.logger.info("The server's last update was:" + lastUpdate);
 			
-			if(lastUpdate != ServerSyncRegistry.LAST_UPDATE){
+			if(!lastUpdate.equals(ServerSyncRegistry.LAST_UPDATE)){
 				
 				ServerSyncRegistry.logger.info("Sending requests to Socket Server...");
 				
