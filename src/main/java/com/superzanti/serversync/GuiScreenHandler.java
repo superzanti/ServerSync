@@ -5,8 +5,8 @@ import java.nio.file.Paths;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiErrorScreen;
 import net.minecraftforge.client.event.GuiScreenEvent.ActionPerformedEvent;
+import net.minecraftforge.common.MinecraftForge;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-
 import cpw.mods.fml.relauncher.SideOnly;
 import cpw.mods.fml.relauncher.Side;
 
@@ -30,6 +30,7 @@ public class GuiScreenHandler{
 				GuiErrorScreen guierrorscreen = new GuiErrorScreen("A Minecraft restart is pending...", "Please restart your client to play multiplayer.");
 				Minecraft.getMinecraft().displayGuiScreen(guierrorscreen);
 			} else {
+				MinecraftForge.EVENT_BUS.register(ClientProxy.syncclient);
 				try{
 					client();
 				} catch (Exception e) {
