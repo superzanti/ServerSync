@@ -64,6 +64,8 @@ public class SyncClientConnection implements Runnable{
 			oos.writeObject(ServerSyncRegistry.SECURE_CHECK);
 			oos.flush();
 			String lastUpdate = (String) ois.readObject();
+			ServerSyncRegistry.logger.info("Our last update was:" + ServerSyncRegistry.LAST_UPDATE);
+			ServerSyncRegistry.logger.info("The server's last update was:" + lastUpdate);
 			
 			if(lastUpdate != ServerSyncRegistry.LAST_UPDATE){
 				
@@ -198,7 +200,7 @@ public class SyncClientConnection implements Runnable{
 			    ServerSyncRegistry.config.save();
 			} else {
 				SyncClient.updateScreenWorking(50, "No Updates Needed :D");
-				ServerSyncRegistry.logger.error("No Updates Needed");
+				ServerSyncRegistry.logger.info("No Updates Needed");
 			}
 		    
 		    SyncClient.updateScreenWorking(98,"Telling Server to Exit...");
