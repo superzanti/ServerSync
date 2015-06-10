@@ -35,10 +35,11 @@ public class SyncServerConnection implements Runnable {
 	public void run() {
 		try
 		{
-			ois = new ObjectInputStream(clientsocket.getInputStream());
-			oos = new ObjectOutputStream(clientsocket.getOutputStream());
-			oos.flush();
 			while(true) {
+				ois = new ObjectInputStream(clientsocket.getInputStream());
+				oos = new ObjectOutputStream(clientsocket.getOutputStream());
+				oos.flush();
+				
 				String message = (String) ois.readObject();
 				ServerSyncRegistry.logger.info("Received message: "+message+" from connection "+clientsocket);
 		
@@ -97,16 +98,18 @@ public class SyncServerConnection implements Runnable {
 		catch(Exception e)
 		{ 
 			ServerSyncRegistry.logger.info("Error occured: "+e);
+			e.printStackTrace();
 		} finally {
 			try {
-				ois.close();
-				oos.close();
-				Thread.sleep(10);
-				clientsocket.close();
+				if(oos != null)
+					oos.close();
+				if(ois != null)
+					ois.close();
+				if(clientsocket !=null)
+					clientsocket.close();
 			} catch (IOException e) {
 				ServerSyncRegistry.logger.info("Error occured: "+e);
-			} catch (InterruptedException e) {
-				ServerSyncRegistry.logger.info("Error occured: "+e);
+				e.printStackTrace();
 			}
 		}
 		return;

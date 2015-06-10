@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
@@ -42,6 +43,7 @@ public class SyncClientConnection implements Runnable{
 			host = InetAddress.getByName(ServerSyncRegistry.SERVER_IP);
 		} catch (UnknownHostException e) {
 			ServerSyncRegistry.logger.error("Exception caught! - " + e);
+			e.printStackTrace();
 			errorInUpdates = true;
 		}
         socket = null;
@@ -51,7 +53,9 @@ public class SyncClientConnection implements Runnable{
 		try {
 		    //establish socket connection to server
 			ServerSyncRegistry.logger.info("Establishing a socket connection to the server...");
-			socket = new Socket(host.getHostName(), ServerSyncRegistry.SERVER_PORT);
+			//socket = new Socket(host.getHostName(), ServerSyncRegistry.SERVER_PORT);
+			socket = new Socket();
+			socket.connect(new InetSocketAddress(host.getHostName(), ServerSyncRegistry.SERVER_PORT), 5000);
 			
 			SyncClient.updateScreenWorking(2,"Socket established...");
 			
@@ -123,7 +127,7 @@ public class SyncClientConnection implements Runnable{
 								
 								// download the file
 								File updated = new File(singleFile.replace('\\', '/'));
-								updated.delete();
+								updated.deleteOnExit();
 								updated.getParentFile().mkdirs();
 								FileOutputStream wr = new FileOutputStream(updated);
 								byte[] outBuffer = new byte[socket.getReceiveBufferSize()];
@@ -153,7 +157,7 @@ public class SyncClientConnection implements Runnable{
 							
 							// download the file
 							File updated = new File(singleFile.replace('\\', '/'));
-							updated.delete();
+							updated.deleteOnExit();
 							updated.getParentFile().mkdirs();
 							FileOutputStream wr = new FileOutputStream(updated);
 							byte[] outBuffer = new byte[socket.getReceiveBufferSize()];
@@ -189,7 +193,7 @@ public class SyncClientConnection implements Runnable{
 							ServerSyncRegistry.logger.info(singleFile.replace('\\', '/') + " Does not match... Deleting...");
 							SyncClient.updateScreenWorking((int)(5+(currentPercent/percentScale)),"Deleting client's " + singleFile.replace('\\', '/'));
 							File deleteMe = new File(singleFile.replace('\\', '/'));
-							deleteMe.delete();
+							deleteMe.deleteOnExit();
 							updateHappened = true;
 						}
 						//reinitConn();
@@ -216,12 +220,15 @@ public class SyncClientConnection implements Runnable{
 			try {
 				SyncClient.updateScreenWorking(99,"Closing connections...");
 
-				socket.setSoTimeout(3000);
-				oos.close();
-				ois.close();
-				socket.close();
+				if(oos != null)
+					oos.close();
+				if(ois != null)
+					ois.close();
+				if(socket !=null)
+					socket.close();
 			} catch (IOException e) {
 				ServerSyncRegistry.logger.error("Exception caught! - " + e);
+				e.printStackTrace();
 				errorInUpdates = true;
 			} //close resources here!
 			ServerSyncRegistry.logger.info("All of serversync's sockets to the server have been closed.");
@@ -232,6 +239,7 @@ public class SyncClientConnection implements Runnable{
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			ServerSyncRegistry.logger.error("Exception caught! - " + e);
+			e.printStackTrace();
 		}
 		checkFinished = true;
 		return;
@@ -245,7 +253,7 @@ public class SyncClientConnection implements Runnable{
 		// Loop through all the directories and only add to the list if it's a file
 		for (File file : files) {
 			if (file.isDirectory()) {
-				dirContents(file.getPath());
+				dirList.addAll(dirContents(file.getPath()));
 			} else {
 				dirList.add(file.toString());
 			}
@@ -257,14 +265,18 @@ public class SyncClientConnection implements Runnable{
 		ServerSyncRegistry.logger.info("Reinitializing the connection...");
 		oos.flush();
 		// close our resources and set values to null
-		oos.close();
-		ois.close();
-		Thread.sleep(10);
-		socket.close();
+		if(oos != null)
+			oos.close();
+		if(ois != null)
+			ois.close();
+		if(socket !=null)
+			socket.close();
         socket = null;
         oos = null;
         ois = null;
-		socket = new Socket(host.getHostName(), ServerSyncRegistry.SERVER_PORT);
+		//socket = new Socket(host.getHostName(), ServerSyncRegistry.SERVER_PORT);
+		socket = new Socket();
+		socket.connect(new InetSocketAddress(host.getHostName(), ServerSyncRegistry.SERVER_PORT), 5000);
 		// write to socket using ObjectOutputStream
 		oos = new ObjectOutputStream(socket.getOutputStream());
 		ois = new ObjectInputStream(socket.getInputStream());

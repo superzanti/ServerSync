@@ -35,6 +35,7 @@ public class GuiScreenHandler{
 					client();
 				} catch (Exception e) {
 					ServerSyncRegistry.logger.error("Exception caught! - " + e);
+					e.printStackTrace();
 				}
 			}
 		}

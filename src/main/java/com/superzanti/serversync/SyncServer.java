@@ -60,7 +60,7 @@ public class SyncServer implements Runnable {
 		// Loop through all the directories and only add to the list if it's a file
 		for (File file : files) {
 			if (file.isDirectory()) {
-				dirContents(file.getPath());
+				dirList.addAll(dirContents(file.getPath()));
 			} else {
 				dirList.add(file.toString());
 			}
