@@ -35,10 +35,10 @@ public class SyncServerConnection implements Runnable {
 	public void run() {
 		try
 		{
+			ois = new ObjectInputStream(clientsocket.getInputStream());
+			oos = new ObjectOutputStream(clientsocket.getOutputStream());
+			oos.flush();
 			while(true) {
-				ois = new ObjectInputStream(clientsocket.getInputStream());
-				oos = new ObjectOutputStream(clientsocket.getOutputStream());
-				oos.flush();
 				
 				String message = (String) ois.readObject();
 				ServerSyncRegistry.logger.info("Received message: "+message+" from connection "+clientsocket);
