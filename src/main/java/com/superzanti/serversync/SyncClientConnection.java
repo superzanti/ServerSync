@@ -127,7 +127,8 @@ public class SyncClientConnection implements Runnable{
 								
 								// download the file
 								File updated = new File(singleFile.replace('\\', '/'));
-								updated.deleteOnExit();
+								//updated.deleteOnExit();
+								//ofcourse that didn't work
 								updated.getParentFile().mkdirs();
 								FileOutputStream wr = new FileOutputStream(updated);
 								byte[] outBuffer = new byte[socket.getReceiveBufferSize()];
@@ -157,7 +158,8 @@ public class SyncClientConnection implements Runnable{
 							
 							// download the file
 							File updated = new File(singleFile.replace('\\', '/'));
-							updated.deleteOnExit();
+							//updated.deleteOnExit();
+							//ofcourse that didn't work
 							updated.getParentFile().mkdirs();
 							FileOutputStream wr = new FileOutputStream(updated);
 							byte[] outBuffer = new byte[socket.getReceiveBufferSize()];
