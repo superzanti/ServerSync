@@ -19,6 +19,13 @@ Don't trust anyone with my mod. This mod allows ANY server running it to put ANY
 
 RECENT UPDATES:
 -----------
+Version 2.3:
+* Fixed deletion bugs
+  * Files couldn't be deleted because they were in use. Now I delete them when the JVM exits
+* Fixed updating bugs
+* Changed error messages
+
+
 Version 2.1:
 * Added feature to ask the server if there has been any updates before ever updating
   * This allows to update all configs regardless of if they change
