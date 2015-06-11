@@ -50,7 +50,7 @@ public class SyncClient implements GuiYesNoCallback{
 		
 		if(syncclientconnecction.getFinished()){
 			if(syncclientconnecction.getErrors()){
-				guierrorscreen = new GuiErrorScreen("There was an error while connecting", "Make sure your config file is the same as the server's");		
+				guierrorscreen = new GuiErrorScreen("There was an error while connecting", "Is your config file is the same as the server's? Is the server on?");		
 				Minecraft.getMinecraft().displayGuiScreen(guierrorscreen);
 				GuiScreenHandler.doesButtonWork = false;
 			} else if (syncclientconnecction.getUpdates()){
