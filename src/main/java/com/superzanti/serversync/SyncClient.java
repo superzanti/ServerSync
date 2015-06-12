@@ -1,6 +1,7 @@
 package com.superzanti.serversync;
 
 import cpw.mods.fml.client.FMLClientHandler;
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiErrorScreen;
@@ -69,7 +70,8 @@ public class SyncClient implements GuiYesNoCallback{
 	@Override
 	public void confirmClicked(boolean yesButton, int whatsThisInt) {
 		if(yesButton)
-			Minecraft.getMinecraft().shutdown();
+			//Minecraft.getMinecraft().shutdown();
+			FMLCommonHandler.instance().exitJava(0, true);
 		else
 			Minecraft.getMinecraft().displayGuiScreen(guimainmenu);
 	}
