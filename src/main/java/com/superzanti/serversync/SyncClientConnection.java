@@ -195,6 +195,11 @@ public class SyncClientConnection implements Runnable{
 							ServerSyncRegistry.logger.info(singleFile.replace('\\', '/') + " Does not match... Deleting...");
 							SyncClient.updateScreenWorking((int)(5+(currentPercent/percentScale)),"Deleting client's " + singleFile.replace('\\', '/'));
 							File deleteMe = new File(singleFile.replace('\\', '/'));
+							deleteMe.getParentFile().mkdirs();
+							FileOutputStream wr = new FileOutputStream(deleteMe);
+							wr.write("D".getBytes(), 0, 1);
+							wr.flush();
+							wr.close();
 							deleteMe.deleteOnExit();
 							updateHappened = true;
 						}
