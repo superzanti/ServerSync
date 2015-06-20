@@ -73,9 +73,7 @@ public class SyncClient implements GuiYesNoCallback{
 	
 	@Override
 	public void confirmClicked(boolean yesButton, int whatsThisInt) {
-		System.gc();
 		if(yesButton)
-			//Minecraft.getMinecraft().shutdown();
 			FMLCommonHandler.instance().exitJava(0, true);
 		else
 			Minecraft.getMinecraft().displayGuiScreen(guimainmenu);
