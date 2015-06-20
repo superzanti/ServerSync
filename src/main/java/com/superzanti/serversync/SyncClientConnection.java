@@ -93,9 +93,8 @@ public class SyncClientConnection implements Runnable{
 				if (ServerSyncRegistry.IGNORE_LIST.contains(relativeModPath.replace('\\',  '/'))){
 					clientModList.remove(modEntry.getKey());
 				}
-				ServerSyncRegistry.logger.info(clientModList);
-
 			}
+			ServerSyncRegistry.logger.info("Syncable mods are: " + clientModList);
 			if(serverModList != clientModList.toString()){
 				ServerSyncRegistry.logger.info("The mods between server and client are incompatable... Force updating...");
 			}
