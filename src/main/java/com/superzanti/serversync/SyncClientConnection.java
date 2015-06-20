@@ -12,6 +12,8 @@ import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
@@ -78,8 +80,9 @@ public class SyncClientConnection implements Runnable{
 			
 			oos.writeObject(ServerSyncRegistry.SECURE_CHECKMODS);
 			oos.flush();
-			Map<String,ModContainer> serverModList = (Map<String,ModContainer>) ois.readObject();
-			Map<String,ModContainer> clientModList = Maps.newHashMap(Loader.instance().getIndexedModList());
+			Collection<ModContainer> serverModList = (Collection<ModContainer>) ois.readObject();
+			Map<String,ModContainer> clientModList_ = Maps.newHashMap(Loader.instance().getIndexedModList());
+			Collection<ModContainer> clientModList = clientModList_.values();
 			
 			if(serverModList != clientModList){
 				ServerSyncRegistry.logger.info("The mods between server and client are incompatable... Force updating...");

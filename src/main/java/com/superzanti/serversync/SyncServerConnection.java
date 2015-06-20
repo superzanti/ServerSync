@@ -10,6 +10,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
@@ -54,7 +55,8 @@ public class SyncServerConnection implements Runnable {
 				}
 				
 				if(message.equals(ServerSyncRegistry.SECURE_CHECKMODS)){
-					Map<String,ModContainer> serverModList = Maps.newHashMap(Loader.instance().getIndexedModList());
+					Map<String,ModContainer> serverModList_ = Maps.newHashMap(Loader.instance().getIndexedModList());
+					Collection<ModContainer> serverModList = serverModList_.values();
 					oos.writeObject(serverModList);
 					oos.flush();
 				}
