@@ -83,7 +83,7 @@ public class SyncClientConnection implements Runnable{
 			
 			oos.writeObject(ServerSyncRegistry.SECURE_CHECKMODS);
 			oos.flush();
-			Integer serverModList = (Integer) ois.readObject();
+			String serverModList = (String) ois.readObject();
 			Map<String,ModContainer> clientModList_ = Maps.newHashMap(Loader.instance().getIndexedModList());
 			Map<String,ModContainer> clientModList = Maps.newHashMap(Loader.instance().getIndexedModList());
 			for (Map.Entry<String, ModContainer> modEntry : clientModList_.entrySet()){
@@ -96,11 +96,11 @@ public class SyncClientConnection implements Runnable{
 				ServerSyncRegistry.logger.info(clientModList);
 
 			}
-			if(serverModList != clientModList.hashCode()){
+			if(serverModList != clientModList.toString()){
 				ServerSyncRegistry.logger.info("The mods between server and client are incompatable... Force updating...");
 			}
 			
-			if(!lastUpdate.equals(ServerSyncRegistry.LAST_UPDATE) || serverModList != clientModList.hashCode()){
+			if(!lastUpdate.equals(ServerSyncRegistry.LAST_UPDATE) || serverModList != clientModList.toString()){
 				
 				ServerSyncRegistry.logger.info("Sending requests to Socket Server...");
 				

@@ -68,7 +68,7 @@ public class SyncServerConnection implements Runnable {
 						}
 					}
 					ServerSyncRegistry.logger.info(serverModList);
-					oos.writeObject((Integer)serverModList.hashCode());
+					oos.writeObject((String)serverModList.toString());
 					oos.flush();
 				}
 				
