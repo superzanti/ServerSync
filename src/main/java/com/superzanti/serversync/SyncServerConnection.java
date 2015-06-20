@@ -10,7 +10,12 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Map;
 
+import com.google.common.collect.Maps;
+
+import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.ModContainer;
 import cpw.mods.fml.relauncher.SideOnly;
 import cpw.mods.fml.relauncher.Side;
 
@@ -45,6 +50,12 @@ public class SyncServerConnection implements Runnable {
 		
 				if(message.equals(ServerSyncRegistry.SECURE_CHECK)) {
 					oos.writeObject(ServerSyncRegistry.LAST_UPDATE);
+					oos.flush();
+				}
+				
+				if(message.equals(ServerSyncRegistry.SECURE_CHECKMODS)){
+					Map<String,ModContainer> serverModList = Maps.newHashMap(Loader.instance().getIndexedModList());
+					oos.writeObject(serverModList);
 					oos.flush();
 				}
 				

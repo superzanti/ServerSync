@@ -12,7 +12,12 @@ import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Map;
 
+import com.google.common.collect.Maps;
+
+import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.ModContainer;
 import cpw.mods.fml.relauncher.SideOnly;
 import cpw.mods.fml.relauncher.Side;
 
@@ -68,10 +73,19 @@ public class SyncClientConnection implements Runnable{
 			oos.writeObject(ServerSyncRegistry.SECURE_CHECK);
 			oos.flush();
 			String lastUpdate = (String) ois.readObject();
-			ServerSyncRegistry.logger.info("Our last update was:" + ServerSyncRegistry.LAST_UPDATE);
-			ServerSyncRegistry.logger.info("The server's last update was:" + lastUpdate);
+			ServerSyncRegistry.logger.info("Our version is:" + ServerSyncRegistry.LAST_UPDATE);
+			ServerSyncRegistry.logger.info("The server's version is:" + lastUpdate);
 			
-			if(!lastUpdate.equals(ServerSyncRegistry.LAST_UPDATE)){
+			oos.writeObject(ServerSyncRegistry.SECURE_CHECKMODS);
+			oos.flush();
+			Map<String,ModContainer> serverModList = (Map<String,ModContainer>) ois.readObject();
+			Map<String,ModContainer> clientModList = Maps.newHashMap(Loader.instance().getIndexedModList());
+			
+			if(serverModList != clientModList){
+				ServerSyncRegistry.logger.info("The mods between server and client are incompatable... Force updating...");
+			}
+			
+			if(!lastUpdate.equals(ServerSyncRegistry.LAST_UPDATE) || serverModList != clientModList){
 				
 				ServerSyncRegistry.logger.info("Sending requests to Socket Server...");
 				
