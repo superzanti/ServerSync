@@ -94,13 +94,13 @@ public class SyncClientConnection implements Runnable{
 					clientModList.remove(modEntry.getKey());
 				}
 			}
-			ServerSyncRegistry.logger.info("Syncable mods are: " + clientModList.toString());
-			ServerSyncRegistry.logger.info("Syncable mods are: " + serverModList.toString());
-			if(serverModList.toString() != clientModList.toString()){
+			ServerSyncRegistry.logger.info("Syncable client mods are: " + clientModList.toString());
+			ServerSyncRegistry.logger.info("Syncable server mods are: " + serverModList.toString());
+			if(!serverModList.toString().equals(clientModList.toString())){
 				ServerSyncRegistry.logger.info("The mods between server and client are incompatable... Force updating...");
 			}
 			
-			if(!lastUpdate.equals(ServerSyncRegistry.LAST_UPDATE) || serverModList.toString() != clientModList.toString()){
+			if(!lastUpdate.equals(ServerSyncRegistry.LAST_UPDATE) || !serverModList.toString().equals(clientModList.toString())){
 				
 				ServerSyncRegistry.logger.info("Sending requests to Socket Server...");
 				
