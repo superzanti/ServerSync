@@ -56,6 +56,7 @@ public class SyncServerConnection implements Runnable {
 				
 				if(message.equals(ServerSyncRegistry.SECURE_CHECKMODS)){
 					Map<String,ModContainer> serverModList_ = Maps.newHashMap(Loader.instance().getIndexedModList());
+					//System.out.println(serverModList_.get("CustomMainMenu").getMod().toString());
 					System.out.println(Loader.instance().getActiveModList());
 					Integer serverModList = serverModList_.hashCode();
 					oos.writeObject(serverModList);
