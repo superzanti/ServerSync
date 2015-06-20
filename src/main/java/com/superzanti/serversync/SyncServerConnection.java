@@ -9,6 +9,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -56,10 +58,16 @@ public class SyncServerConnection implements Runnable {
 				
 				if(message.equals(ServerSyncRegistry.SECURE_CHECKMODS)){
 					Map<String,ModContainer> serverModList_ = Maps.newHashMap(Loader.instance().getIndexedModList());
-					//System.out.println(serverModList_.get("CustomMainMenu").getMod().toString());
-					System.out.println(Loader.instance().getActiveModList());
-					Integer serverModList = serverModList_.hashCode();
-					oos.writeObject(serverModList);
+					Map<String,ModContainer> serverModList = Maps.newHashMap(Loader.instance().getIndexedModList());
+					for (Map.Entry<String, ModContainer> modEntry : serverModList_.entrySet()){
+						Path modPath = Paths.get(modEntry.getValue().getSource().getAbsolutePath());
+						Path rootPath = Paths.get("").toAbsolutePath();
+						String relativeModPath = "./" + rootPath.relativize(modPath);
+						if (ServerSyncRegistry.IGNORE_LIST.contains(relativeModPath.replace('\\',  '/'))){
+							serverModList.remove(modEntry.getKey());
+						}
+					}
+					oos.writeObject((Integer)serverModList.hashCode());
 					oos.flush();
 				}
 				

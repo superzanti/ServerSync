@@ -9,6 +9,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -60,6 +62,7 @@ public class SyncClientConnection implements Runnable{
 		try {
 		    //establish socket connection to server
 			ServerSyncRegistry.logger.info("Establishing a socket connection to the server...");
+			
 			//socket = new Socket(host.getHostName(), ServerSyncRegistry.SERVER_PORT);
 			socket = new Socket();
 			socket.connect(new InetSocketAddress(host.getHostName(), ServerSyncRegistry.SERVER_PORT), 5000);
@@ -82,13 +85,20 @@ public class SyncClientConnection implements Runnable{
 			oos.flush();
 			Integer serverModList = (Integer) ois.readObject();
 			Map<String,ModContainer> clientModList_ = Maps.newHashMap(Loader.instance().getIndexedModList());
-			System.out.println(clientModList_.get("CustomMainMenu").getMod().toString());
-			Integer clientModList = clientModList_.hashCode();
-			if(serverModList != clientModList){
+			Map<String,ModContainer> clientModList = Maps.newHashMap(Loader.instance().getIndexedModList());
+			for (Map.Entry<String, ModContainer> modEntry : clientModList_.entrySet()){
+				Path modPath = Paths.get(modEntry.getValue().getSource().getAbsolutePath());
+				Path rootPath = Paths.get("").toAbsolutePath();
+				String relativeModPath = "./" + rootPath.relativize(modPath);
+				if (ServerSyncRegistry.IGNORE_LIST.contains(relativeModPath.replace('\\',  '/'))){
+					clientModList.remove(modEntry.getKey());
+				}
+			}
+			if(serverModList != clientModList.hashCode()){
 				ServerSyncRegistry.logger.info("The mods between server and client are incompatable... Force updating...");
 			}
 			
-			if(!lastUpdate.equals(ServerSyncRegistry.LAST_UPDATE) || serverModList != clientModList){
+			if(!lastUpdate.equals(ServerSyncRegistry.LAST_UPDATE) || serverModList != clientModList.hashCode()){
 				
 				ServerSyncRegistry.logger.info("Sending requests to Socket Server...");
 				
