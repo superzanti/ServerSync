@@ -82,7 +82,7 @@ public class SyncClientConnection implements Runnable{
 			oos.flush();
 			Collection<ModContainer> serverModList = (Collection<ModContainer>) ois.readObject();
 			Map<String,ModContainer> clientModList_ = Maps.newHashMap(Loader.instance().getIndexedModList());
-			Collection<ModContainer> clientModList = clientModList_.values();
+			ArrayList clientModList = new ArrayList(clientModList_.values());
 			
 			if(serverModList != clientModList){
 				ServerSyncRegistry.logger.info("The mods between server and client are incompatable... Force updating...");
