@@ -80,7 +80,7 @@ public class SyncClientConnection implements Runnable{
 			
 			oos.writeObject(ServerSyncRegistry.SECURE_CHECKMODS);
 			oos.flush();
-			Collection<ModContainer> serverModList = (Collection<ModContainer>) ois.readObject();
+			ArrayList serverModList = (ArrayList) ois.readObject();
 			Map<String,ModContainer> clientModList_ = Maps.newHashMap(Loader.instance().getIndexedModList());
 			ArrayList clientModList = new ArrayList(clientModList_.values());
 			
