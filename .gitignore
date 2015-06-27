@@ -65,6 +65,7 @@ build/
 *.swp
 *~.nib
 local.properties
+eclipse/
 .classpath
 .settings/
 .loadpath
