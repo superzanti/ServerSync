@@ -66,7 +66,7 @@ What does it do exactly?
 * If the server receives the checksum command it will send back a md5 checksum of the file requested by the client.
 * If the server receives the update command the server will start a file transfer of the file that the client requested.
 * If the server receives the exists command the server will will return a boolean value of weather or not the file requested exists on the server.
-* If the server receieves the exit command it will close the connection and destroy the thread. However, this will also happen automatically after X ammount of time as defined in the config file
+* If the server receives the exit command it will close the connection and destroy the thread. However, this will also happen automatically after X ammount of time as defined in the config file
  
 * When the client clicks the button which has the ID defined in the config file the client will start the update script
 * The client will first request the name of all the files on the server.
@@ -79,32 +79,42 @@ What does it do exactly?
 * When all this finishes if there were updated files the client will ask the user if she/he wants to restart the client to apply the changes
 * If there are no files to update the client will join the server that is defined in the IP field of the config file
 
-Compiling
+Developing
 --------------
 
-Simply git clone my repo, cd into the folder and run 
-```
-./gradlew build
-```
-or for windows
-```
-gradlew.bat build
-```
+Simply git clone my repo, cd into the folder and run
 
+---
+
+### Eclipse workspace
 If you would like to setup a workspace to work on these files simply run
 ```
-./gradlew setupDecompWorkspace
-./gradlew eclipse
+./gradlew setupDecompWorkspace eclipse
 ```
 
-Then change the working directory of your eclipse to 
+Then change the working directory of your eclipse to `./version/eclipse` where 'version' is the version you want to make changes to.
+
+---
+
+### IntelliJ IDEA workspace
+If you would like to setup a workspace to work on these files simply run
 ```
-./eclipse
+./gradlew setupDecompWorkspace idea
 ```
 
-Have at it.
+Then you just have to open the generated .ipr file with IDEA.
 
-I don't expect these instructionis to change, but there will undoubtedly come a point where everyone has moved on from minecraft, forge makes some major changes that I don't want to keep up with, or I simply lose interest in maintaining this project.
+---
+
+Building
+--------------
+
+Clone the repo or download the [source zip](/archive/master.zip), then just run `./gradlew build` or for windows `gradlew.bat build` to build all versions. You will find the built jar in `./version/build/libs/` where 'version' is the Minecraft version of your build.
+
+If you want to build a specific version, or just set up your workspace for a specific version, just prefix your command with `:version:` where 'version' is the version you want to do the operation on. For example:
+```
+./gradlew :1.7.10:build
+```
 
 What you should expect to see
 --------------
