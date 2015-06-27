@@ -3,7 +3,7 @@ ServerSync
 
 This is an open source mod that allows for easy server management. It simply syncs the mods folder and the config folder from the server to the client. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. My method avoids a lot of complaining. I have a server which runs all of my own mods, as a developer I'm constantly updating these mods, fixing bugs, and making changes to configs. For the past fiew years I've been going around to the users on my server with a USB stick instructing them on how to use mods. Recently I've had some people join my server that don't know how to find the .minecraft folder. So explaining this to them and getting them the new updates can be a real pain.
 
-**Currently for Minecraft 1.7.10 Forge 1403**
+**Currently for Minecraft Forge 1.7.10+**
 
 If you don't feel like compiling from source and simply want to download the jar file, navigate around this repo's folders. If you're a developer you'll be able to find it easy. Please read the disclaimer before downloading.
 

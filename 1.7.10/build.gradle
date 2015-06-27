@@ -18,7 +18,7 @@ buildscript {
 apply plugin: 'forge'
 
 minecraft {
-    ext.forgeVersion = "10.13.3.1403-1.7.10"
+    ext.forgeVersion = "10.13.4.1481-1.7.10"
     version = "1.7.10-$forgeVersion"
     runDir = "eclipse"
 }
