@@ -66,6 +66,7 @@ build/
 *~.nib
 local.properties
 eclipse/
+eclipse/*
 .classpath
 .settings/
 .loadpath
