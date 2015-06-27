@@ -1,0 +1,3 @@
+rootProject.name = 'serversync'
+
+include '1.7.10', '1.8'
