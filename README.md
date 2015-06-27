@@ -1,7 +1,7 @@
 ServerSync
 =========
 
-This is an open source mod that allows for easy server management. It simply syncs the mods folder and the config folder from the server to the client. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. My method avoids a lot of complaining. I have a server which runs all of my own mods, as a developer I'm constatly updating these mods, fixing bugs, and making changes to configs. For the past fiew years I've been going around to the users on my server with a USB stick instructing them on how to use mods. Recently I've had some people join my server that don't know how to find the .minecraft folder. So explaining this to them and getting them the new updates can be a real pain.
+This is an open source mod that allows for easy server management. It simply syncs the mods folder and the config folder from the server to the client. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. My method avoids a lot of complaining. I have a server which runs all of my own mods, as a developer I'm constantly updating these mods, fixing bugs, and making changes to configs. For the past fiew years I've been going around to the users on my server with a USB stick instructing them on how to use mods. Recently I've had some people join my server that don't know how to find the .minecraft folder. So explaining this to them and getting them the new updates can be a real pain.
 
 **Currently for Minecraft 1.7.10 Forge 1403**
 
@@ -10,9 +10,9 @@ If you don't feel like compiling from source and simply want to download the jar
 DISCLAIMER:
 -----------
 
-This mod is only meant to be used for developers that constantly push their OWN mods. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to distribute other people's mods.
+This mod is only meant to be used for developers that constantly push their OWN mods. Other developers work very hard on their mods and simply visiting their website, forum post, or Github is just a common courtesy. Please don't use this to distribute other people's mods.
 
-Not to mention, depending on the copyright and/or pattent laws in your area using my mod with other developer's mods could be ILLEGAL.
+Not to mention, depending on the copyright and/or patent laws in your area using my mod with other developer's mods could be ILLEGAL.
 
 Don't trust anyone with my mod. This mod allows ANY server running it to put ANY jar file in your mods folder. Any mod means any function of java, such as making a virus or a keylogger. So if you are a client please make sure you trust your server administrator.
 
@@ -39,7 +39,7 @@ FREQUENTLY ASKED QUESTIONS:
 * "I can't connect to my server"
   * Did you check that the config file was the same between both the client and the server?
   * Everything in the config file MUST be the same on both sides.
-  * Are you using your external/internal IP address apropriately?
+  * Are you using your external/internal IP address appropriately?
   * Are you trying to transfer a file larger than your max file size?
   * Are you ignoring a file that is neccecary to connect to the server?
 * "This is so insecure I hate it!"
@@ -53,7 +53,7 @@ FREQUENTLY ASKED QUESTIONS:
   * I'm not sure. I haven't looked into it, but if you have an informed suggestion please let me know and I'll do what I can.
 * "Why does this mod spit out so much 'junk' in my console?"
   * It's simply to help users know that they're not being attacked. It will tell them what IP they're connected to, what mod is being downloaded and more. My hope is that people will actually see this while it's running to know for sure that they can trust their admin. Hey, not everyone reads this.
-* "I have files such as optifine that I don't want the server to delete"
+* "I have files such as Optifine that I don't want the server to delete"
   * Well then specify that in the config file. It can ignore a download or deletion of any file you want.
 * "I want to change how the UI looks so it doesn't say 'The Verse' "
   * This mod requires CustomMainMenu, read up on the CustomMainMenu documents for all of that.
@@ -72,7 +72,7 @@ What does it do exactly?
 * The client will first request the name of all the files on the server.
 * The client will then iterate through each of these files
 * If this file exists on the client it will take a checksum of it and ask the server if they are the same
-* If the files are differnt it will send the update command to pull a new file
+* If the files are different it will send the update command to pull a new file
 * If the client does not have the file it will send the update command to download it
 * After iterating through all of the server files the client will then iterate through all of it's own files
 * If the client has a file that the server does not, it will delete it.
@@ -82,9 +82,7 @@ What does it do exactly?
 Developing
 --------------
 
-Simply git clone my repo, cd into the folder and run
-
----
+Clone the repo or download the source zip, then follow the below depending on your preferred IDE.
 
 ### Eclipse workspace
 If you would like to setup a workspace to work on these files simply run
@@ -109,7 +107,7 @@ Then you just have to open the generated .ipr file with IDEA.
 Building
 --------------
 
-Clone the repo or download the [source zip](/archive/master.zip), then just run `./gradlew build` or for windows `gradlew.bat build` to build all versions. You will find the built jar in `./version/build/libs/` where 'version' is the Minecraft version of your build.
+Clone the repo or download the source zip, then just run `./gradlew build` or for windows `gradlew.bat build` to build all versions. You will find the built jar in `./version/build/libs/` where 'version' is the Minecraft version of your build.
 
 If you want to build a specific version, or just set up your workspace for a specific version, just prefix your command with `:version:` where 'version' is the version you want to do the operation on. For example:
 ```
@@ -135,6 +133,6 @@ If the user decides to click no and then connect again it will tell the user an 
 
 ![Click Twice](/previewImages/clickTwice.bmp)
 
-A similar error message will appear if the server cannot be found or there is some exception in the mod while downloading updates. All these errors are solved simply by restarting minecraft and making sure the server is up. If there is nothing to download it will automatically connect to user to the server.
+A similar error message will appear if the server cannot be found or there is some exception in the mod while downloading updates. All these errors are solved simply by restarting Minecraft and making sure the server is up. If there is nothing to download it will automatically connect to user to the server.
 
 ![Connected](/previewImages/connected.bmp)
