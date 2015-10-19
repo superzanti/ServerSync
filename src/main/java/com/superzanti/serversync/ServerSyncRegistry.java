@@ -31,6 +31,7 @@ public class ServerSyncRegistry {
 	protected static String SECURE_EXISTS;
 	protected static String SECURE_EXIT;
 	protected static List<String> IGNORE_LIST;
+	protected static List<String> MODID_IGNORE_LIST = Arrays.asList("appliedenergistics2-core");
 	protected static int BUTTON_ID;
 	protected static String LAST_UPDATE;
 	

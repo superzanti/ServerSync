@@ -63,7 +63,7 @@ public class SyncServerConnection implements Runnable {
 						Path modPath = Paths.get(modEntry.getValue().getSource().getAbsolutePath());
 						Path rootPath = Paths.get("").toAbsolutePath();
 						String relativeModPath = "./" + rootPath.relativize(modPath);
-						if (ServerSyncRegistry.IGNORE_LIST.contains(relativeModPath.replace('\\',  '/'))){
+						if (ServerSyncRegistry.IGNORE_LIST.contains(relativeModPath.replace('\\',  '/')) || ServerSyncRegistry.MODID_IGNORE_LIST.contains(modEntry.getValue().getModId())){
 							serverModList.remove(modEntry.getKey());
 						}
 					}
