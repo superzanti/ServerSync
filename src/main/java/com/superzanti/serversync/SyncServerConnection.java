@@ -57,18 +57,19 @@ public class SyncServerConnection implements Runnable {
 				}
 				
 				if(message.equals(ServerSyncRegistry.SECURE_CHECKMODS)){
-					Map<String,ModContainer> serverModList_ = Maps.newHashMap(Loader.instance().getIndexedModList());
+					Map<String,String> serverVersionList = Maps.newHashMap();
 					Map<String,ModContainer> serverModList = Maps.newHashMap(Loader.instance().getIndexedModList());
-					for (Map.Entry<String, ModContainer> modEntry : serverModList_.entrySet()){
+					for (Map.Entry<String, ModContainer> modEntry : serverModList.entrySet()){
 						Path modPath = Paths.get(modEntry.getValue().getSource().getAbsolutePath());
 						Path rootPath = Paths.get("").toAbsolutePath();
 						String relativeModPath = "./" + rootPath.relativize(modPath);
-						if (ServerSyncRegistry.IGNORE_LIST.contains(relativeModPath.replace('\\',  '/'))){
-							serverModList.remove(modEntry.getKey());
+						if (!(ServerSyncRegistry.IGNORE_LIST.contains(relativeModPath.replace('\\',  '/'))
+								|| modEntry.getValue().getModId().equals("Forge"))){ // Do not update when only the forge version differs. ServerSync can't update forge anyway.
+							serverVersionList.put(modEntry.getValue().getModId(), modEntry.getValue().getVersion());
 						}
 					}
-					ServerSyncRegistry.logger.info("Syncable mods are: " + serverModList.toString());
-					oos.writeObject((String)serverModList.toString());
+					ServerSyncRegistry.logger.info("Syncable mods are: " + serverVersionList.toString());
+					oos.writeObject((String)serverVersionList.toString());
 					oos.flush();
 				}
 				
