@@ -83,24 +83,25 @@ public class SyncClientConnection implements Runnable{
 			
 			oos.writeObject(ServerSyncRegistry.SECURE_CHECKMODS);
 			oos.flush();
-			String serverModList = (String) ois.readObject();
-			Map<String,ModContainer> clientModList_ = Maps.newHashMap(Loader.instance().getIndexedModList());
+			String serverVersionList = (String) ois.readObject();
+			Map<String,String> clientVersionList = Maps.newHashMap();
 			Map<String,ModContainer> clientModList = Maps.newHashMap(Loader.instance().getIndexedModList());
-			for (Map.Entry<String, ModContainer> modEntry : clientModList_.entrySet()){
+			for (Map.Entry<String, ModContainer> modEntry : clientModList.entrySet()){
 				Path modPath = Paths.get(modEntry.getValue().getSource().getAbsolutePath());
 				Path rootPath = Paths.get("").toAbsolutePath();
 				String relativeModPath = "./" + rootPath.relativize(modPath);
-				if (ServerSyncRegistry.IGNORE_LIST.contains(relativeModPath.replace('\\',  '/'))){
-					clientModList.remove(modEntry.getKey());
+				if (!(ServerSyncRegistry.IGNORE_LIST.contains(relativeModPath.replace('\\',  '/')) 
+						|| modEntry.getValue().getModId().equals("Forge"))) { // Do not update when only the forge version differs. ServerSync can't update forge anyway.
+					clientVersionList.put(modEntry.getValue().getModId(), modEntry.getValue().getVersion());
 				}
 			}
-			ServerSyncRegistry.logger.info("Syncable client mods are: " + clientModList.toString());
-			ServerSyncRegistry.logger.info("Syncable server mods are: " + serverModList.toString());
-			if(!serverModList.toString().equals(clientModList.toString())){
+			ServerSyncRegistry.logger.info("Syncable client mods are: " + clientVersionList.toString());
+			ServerSyncRegistry.logger.info("Syncable server mods are: " + serverVersionList.toString());
+			if(!serverVersionList.toString().equals(clientVersionList.toString())){
 				ServerSyncRegistry.logger.info("The mods between server and client are incompatable... Force updating...");
 			}
 			
-			if(!lastUpdate.equals(ServerSyncRegistry.LAST_UPDATE) || !serverModList.toString().equals(clientModList.toString())){
+			if(!lastUpdate.equals(ServerSyncRegistry.LAST_UPDATE) || !serverVersionList.toString().equals(clientVersionList.toString())){
 				
 				ServerSyncRegistry.logger.info("Sending requests to Socket Server...");
 				
