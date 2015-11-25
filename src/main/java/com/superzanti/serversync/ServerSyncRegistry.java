@@ -2,6 +2,8 @@ package com.superzanti.serversync;
 
 import java.util.Arrays;
 import java.util.List;
+import java.io.File;
+import java.io.IOException;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
@@ -13,10 +15,12 @@ import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.event.FMLConstructionEvent;
+import cpw.mods.fml.common.FMLCommonHandler;
 
 import com.superzanti.lib.RefStrings;
 
-@Mod(modid = RefStrings.MODID, name = RefStrings.NAME, version = RefStrings.VERSION)
+@Mod(modid = RefStrings.MODID, name = RefStrings.NAME, version = RefStrings.VERSION, dependencies="before:*")
 public class ServerSyncRegistry {
 	protected static Logger logger;
 	protected static Configuration config;
@@ -38,6 +42,39 @@ public class ServerSyncRegistry {
 	protected static final String SERVER_PROXY = "com.superzanti.serversync.CommonProxy";
 	@SidedProxy(modId = RefStrings.MODID, clientSide = CLIENT_PROXY, serverSide = SERVER_PROXY)
     protected static CommonProxy proxy;
+	
+	@EventHandler
+	public static void Construct(FMLConstructionEvent constructEvent) {
+		if (proxy.isClient()) {
+			try {
+				
+				File[] filesToDelete = new File[]{};
+				File deleteDir = new File("./config/serversync/delete/");
+				if (deleteDir.exists() && deleteDir.isDirectory()) {
+					filesToDelete = deleteDir.listFiles();
+				}
+				
+				if (filesToDelete != null && filesToDelete.length > 0) {
+					for (File file : filesToDelete) {
+						String parsedName = file.getName().replace("_$_", "/");
+										
+						File deleteMe = new File(parsedName);
+												
+						if (deleteMe.exists()) {
+							deleteMe.delete();
+						}
+						file.delete();
+					}
+					// TODO need friendlier way to do this, or find a way to get FML to restart its Loader
+					// currently this will look like minecraft crashes and will require a manual restart on the users end
+					// without exiting, FML will crash due to not being able to find the deleted files
+					FMLCommonHandler.instance().exitJava(0,false);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
 	
 	@EventHandler
 	public static void PreLoad(FMLPreInitializationEvent PreEvent) {
