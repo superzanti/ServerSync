@@ -1,11 +1,14 @@
 package com.superzanti.serversync;
 
+import java.io.File;
+
+import com.superzanti.lib.RefStrings;
+
 import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.network.handshake.FMLHandshakeMessage;
-import cpw.mods.fml.common.network.internal.FMLNetworkHandler;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiErrorScreen;
 import net.minecraft.client.gui.GuiMainMenu;
@@ -14,9 +17,7 @@ import net.minecraft.client.gui.GuiYesNo;
 import net.minecraft.client.gui.GuiYesNoCallback;
 import net.minecraftforge.client.event.GuiScreenEvent.DrawScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
-import cpw.mods.fml.relauncher.SideOnly;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.server.FMLServerHandler;
+import runme.Delete;
 
 @SideOnly(Side.CLIENT)
 public class SyncClient implements GuiYesNoCallback{
@@ -53,12 +54,13 @@ public class SyncClient implements GuiYesNoCallback{
 	@SubscribeEvent
 	public void onEachTick(DrawScreenEvent.Pre event){
 		
-		if(syncclientconnecction.getFinished()){
-			if(syncclientconnecction.getErrors()){
+		if(SyncClientConnection.getFinished()){
+			if(SyncClientConnection.getErrors()){
 				guierrorscreen = new GuiErrorScreen("There was an error while connecting", "Is your config file is the same as the server's? Is the server on?");		
 				Minecraft.getMinecraft().displayGuiScreen(guierrorscreen);
 				GuiScreenHandler.doesButtonWork = false;
-			} else if (syncclientconnecction.getUpdates()){
+			} else if (SyncClientConnection.getUpdates()){
+				
 				guiyesno = new GuiYesNo((GuiYesNoCallback) this, "You will need to re-launch minecraft to apply the changes.", "Would you like to do this now?", 0);				
 				Minecraft.getMinecraft().displayGuiScreen(guiyesno);
 				GuiScreenHandler.doesButtonWork = false;
@@ -73,10 +75,25 @@ public class SyncClient implements GuiYesNoCallback{
 	
 	@Override
 	public void confirmClicked(boolean yesButton, int whatsThisInt) {
-		if(yesButton)
-			FMLCommonHandler.instance().exitJava(0, true);
-		else
+		if(yesButton) {
+			final class Shutdown extends Thread {
+
+				@Override
+				public void run() {
+					try {
+						//new File("imHere").createNewFile();// Creates in base minecraft dir
+						Runtime.getRuntime().exec("java -cp "+RefStrings.MODID+"-"+RefStrings.VERSION+".jar runme.Main", null, new File("mods/"));
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				
+			}
+			Runtime.getRuntime().addShutdownHook(new Shutdown());
+			FMLCommonHandler.instance().exitJava(0, false);
+		} else {
 			Minecraft.getMinecraft().displayGuiScreen(guimainmenu);
+		}
 	}
 
 }
