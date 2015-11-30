@@ -1,6 +1,8 @@
 package com.superzanti.serversync;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.superzanti.lib.RefStrings;
 
@@ -28,6 +30,8 @@ public class SyncClient implements GuiYesNoCallback{
 	private static GuiYesNo guiyesno;
 	private static GuiErrorScreen guierrorscreen;
 	private static GuiScreenWorking guiscreenworking;
+	
+	public static Path absoluteModsDirectory = null;
 	
 	
 	protected SyncClient() {
@@ -76,12 +80,14 @@ public class SyncClient implements GuiYesNoCallback{
 	public void confirmClicked(boolean yesButton, int whatsThisInt) {
 		if(yesButton) {
 			final class Shutdown extends Thread {
+				String modsDir = Paths.get("mods/").toAbsolutePath().toString();
 
 				@Override
 				public void run() {
 					try {
-						//new File("imHere").createNewFile();// Creates in base minecraft dir
-						Runtime.getRuntime().exec("java -cp "+RefStrings.MODID+"-"+RefStrings.VERSION+".jar runme.Main", null, new File("mods/"));
+						//new File(modsDir + "/imHere").createNewFile();// Creates in base mods foler
+						// Not running ? needs more time perhaps
+						Runtime.getRuntime().exec("java -cp "+RefStrings.MODID+"-"+RefStrings.VERSION+".jar runme.Main", null, new File(modsDir));
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

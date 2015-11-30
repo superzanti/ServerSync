@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.superzanti.lib.RefStrings;
 
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.SidedProxy;
@@ -40,7 +41,6 @@ public class ServerSyncRegistry {
 
 	@EventHandler
 	public static void PreLoad(FMLPreInitializationEvent PreEvent) {
-
 		// MinecraftForge.EVENT_BUS.register(new SyncClient());
 
 		// setup the logger for the mod

@@ -10,7 +10,7 @@ public class Delete implements Runnable {
 	public void run() {
 		try {
 			System.out.println("Sleeping for 3 seconds");
-			//Thread.sleep(1000);
+			Thread.sleep(2000);
 			
 			File[] filesToDelete = new File[] {};
 			File deleteDir = new File("serversync_delete/");
