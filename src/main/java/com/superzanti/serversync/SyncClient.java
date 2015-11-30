@@ -17,7 +17,6 @@ import net.minecraft.client.gui.GuiYesNo;
 import net.minecraft.client.gui.GuiYesNoCallback;
 import net.minecraftforge.client.event.GuiScreenEvent.DrawScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
-import runme.Delete;
 
 @SideOnly(Side.CLIENT)
 public class SyncClient implements GuiYesNoCallback{
