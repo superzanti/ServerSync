@@ -8,6 +8,10 @@ import java.util.ArrayList;
 import cpw.mods.fml.relauncher.SideOnly;
 import cpw.mods.fml.relauncher.Side;
 
+/**
+ * Sets up listener for clients on the server
+ * @author superzanti
+ */
 @SideOnly(Side.SERVER)
 public class SyncServer implements Runnable {
 	
@@ -18,9 +22,9 @@ public class SyncServer implements Runnable {
 	private static ArrayList<String> allList = new ArrayList<String>();
 
 	protected SyncServer(){
-	    ServerSyncRegistry.logger.info("Getting ./mod contents");
+	    ServerSync.logger.info("Getting ./mod contents");
 	    allList.addAll(dirContents("./mods"));
-	    ServerSyncRegistry.logger.info("Getting ./config contents");
+	    ServerSync.logger.info("Getting ./config contents");
 		allList.addAll(dirContents("./config"));
 		return;
 	}
@@ -28,32 +32,32 @@ public class SyncServer implements Runnable {
 	@Override
 	public void run(){
         //create the socket server object
-		ServerSyncRegistry.logger.info("Creating new server socket");
+		ServerSync.logger.info("Creating new server socket");
         try {
-			server = new ServerSocket(ServerSyncRegistry.SERVER_PORT);
+			server = new ServerSocket(ServerSyncConfig.SERVER_PORT);
 		} catch (IOException e) {
-			ServerSyncRegistry.logger.info("Error occured."+e);
+			ServerSync.logger.info("Error occured."+e);
 			e.printStackTrace();
 		}
         //keep listens indefinitely until receives 'exit' call or program terminates
-        ServerSyncRegistry.logger.info("Now accepting clients...");
+        ServerSync.logger.info("Now accepting clients...");
         while(true){
             try
             {
             	Socket socket = server.accept();
-                SyncServerConnection sc = new SyncServerConnection(socket, allList, server);
+                ServerWorker sc = new ServerWorker(socket, allList, server);
                 new Thread(sc).start();
             }
             catch(Exception e)
             {
-            	ServerSyncRegistry.logger.info("Error occured."+e);
+            	ServerSync.logger.info("Error occured."+e);
             	e.printStackTrace();
             }
         }
 	}
 	
 	private static ArrayList<String> dirContents(String dir) {
-		ServerSyncRegistry.logger.info("Getting all of " + dir.replace('\\', '/') + "'s folder contents");
+		ServerSync.logger.info("Getting all of " + dir.replace('\\', '/') + "'s folder contents");
 		File f = new File(dir);
 		File[] files = f.listFiles();
 		ArrayList<String> dirList = new ArrayList<String>();

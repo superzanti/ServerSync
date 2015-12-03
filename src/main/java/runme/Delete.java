@@ -2,31 +2,26 @@ package runme;
 
 import java.io.File;
 
+import com.superzanti.serversync.util.PathUtils;
+
 public class Delete implements Runnable {
-	
-	public static boolean finished;
+
+	public static boolean finished = false;
 
 	@Override
 	public void run() {
 		try {
 			System.out.println("Sleeping for 3 seconds");
 			Thread.sleep(2000);
-			
+
 			File[] filesToDelete = new File[] {};
 			File deleteDir = new File("serversync_delete/");
 			deleteDir.mkdirs();
-			
-			File minecraftDir = new File("");
-			String useable = minecraftDir.getAbsolutePath().replace("\\", "/");
-			String[] brokenOut = useable.split("/");
-			int len = brokenOut.length - 1;
-			String newUrl = "";
-			for (int i = 0; i < len; i++) {
-				newUrl += brokenOut[i]+"/";
-			}
-			minecraftDir = new File(newUrl);
 
-			System.out.println(deleteDir.getPath());
+			File workDir = new File("");
+			File minecraftDir = PathUtils.getMinecraftDirectory(workDir);
+			
+			System.out.println(minecraftDir.getAbsolutePath());
 
 			if (deleteDir.exists() && deleteDir.isDirectory()) {
 				filesToDelete = deleteDir.listFiles();
@@ -48,6 +43,7 @@ public class Delete implements Runnable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		finished = true;
 		System.out.println("Finished running delete code");
 	}
 

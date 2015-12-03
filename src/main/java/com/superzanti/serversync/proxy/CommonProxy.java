@@ -1,4 +1,4 @@
-package com.superzanti.serversync;
+package com.superzanti.serversync.proxy;
 
 public class CommonProxy {
 

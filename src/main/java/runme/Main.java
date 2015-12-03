@@ -3,7 +3,6 @@ package runme;
 import java.io.IOException;
 
 public class Main {
-	
 	private static Delete deleteOldMods = new Delete();
 
 	public static void main(String[] args) throws InterruptedException, IOException  {

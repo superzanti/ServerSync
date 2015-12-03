@@ -5,6 +5,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.superzanti.lib.RefStrings;
+import com.superzanti.serversync.proxy.ClientProxy;
+import com.superzanti.serversync.util.GuiScreenHandler;
 
 import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.common.FMLCommonHandler;
@@ -23,8 +25,8 @@ import net.minecraftforge.common.MinecraftForge;
 @SideOnly(Side.CLIENT)
 public class SyncClient implements GuiYesNoCallback{
 
-	protected static SyncClientConnection syncclientconnecction = new SyncClientConnection();
-	protected static Thread thread = new Thread(syncclientconnecction);
+	protected static ClientWorker clientConnection = new ClientWorker();
+	protected static Thread thread = new Thread(clientConnection);
 	
 	private static GuiMainMenu guimainmenu;
 	private static GuiYesNo guiyesno;
@@ -34,11 +36,15 @@ public class SyncClient implements GuiYesNoCallback{
 	public static Path absoluteModsDirectory = null;
 	
 	
-	protected SyncClient() {
-		ServerSyncRegistry.logger.info("Client Selected! Read for client routine...");
+	public SyncClient() {
+		ServerSync.logger.info("Client Selected! Read for client routine...");
 	}
 	
-	protected void runClient() throws Exception {
+	/**
+	 * Sets up GUI and starts off the synchronization process
+	 * @throws Exception
+	 */
+	public void runClient() throws Exception {
 		
 		guiscreenworking = new GuiScreenWorking();
 		Minecraft.getMinecraft().displayGuiScreen(guiscreenworking);
@@ -48,6 +54,11 @@ public class SyncClient implements GuiYesNoCallback{
         
 	}
 	
+	/**
+	 * Updates GUI with new progress and message
+	 * @param newPercent Percentage completed
+	 * @param statusMessage Displayed message on GUI
+	 */
 	protected static void updateScreenWorking(int newPercent, String statusMessage){
 		guiscreenworking.displayProgressMessage(statusMessage);
 		guiscreenworking.setLoadingProgress(newPercent);
@@ -57,46 +68,51 @@ public class SyncClient implements GuiYesNoCallback{
 	@SubscribeEvent
 	public void onEachTick(DrawScreenEvent.Pre event){
 		
-		if(SyncClientConnection.getFinished()){
-			if(SyncClientConnection.getErrors()){
+		if(ClientWorker.getFinished()){
+			if(ClientWorker.getErrors()){
 				guierrorscreen = new GuiErrorScreen("There was an error while connecting", "Is your config file is the same as the server's? Is the server on?");		
 				Minecraft.getMinecraft().displayGuiScreen(guierrorscreen);
 				GuiScreenHandler.doesButtonWork = false;
-			} else if (SyncClientConnection.getUpdates()){
+			} else if (ClientWorker.getUpdates()){
 				
 				guiyesno = new GuiYesNo((GuiYesNoCallback) this, "You will need to re-launch minecraft to apply the changes.", "Would you like to do this now?", 0);				
 				Minecraft.getMinecraft().displayGuiScreen(guiyesno);
 				GuiScreenHandler.doesButtonWork = false;
 			} else {
-	        	FMLClientHandler.instance().connectToServerAtStartup(ServerSyncRegistry.SERVER_IP, ServerSyncRegistry.MINECRAFT_PORT);
+	        	FMLClientHandler.instance().connectToServerAtStartup(ServerSyncConfig.SERVER_IP, ServerSyncConfig.MINECRAFT_PORT);
 	        	GuiScreenHandler.doesButtonWork = true;
 			}
-			MinecraftForge.EVENT_BUS.unregister(ClientProxy.syncclient);
+			MinecraftForge.EVENT_BUS.unregister(ClientProxy.getClient());
 		}
 		
 	}
 	
+	/**
+	 * Adds shutdown hook to run mod deletion code and closes/returns to main menu
+	 */
 	@Override
 	public void confirmClicked(boolean yesButton, int whatsThisInt) {
-		if(yesButton) {
-			final class Shutdown extends Thread {
-				String modsDir = Paths.get("mods/").toAbsolutePath().toString();
+		final class Shutdown extends Thread {
+			String modsDir = Paths.get("mods/").toAbsolutePath().toString();
 
-				@Override
-				public void run() {
-					try {
-						//new File(modsDir + "/imHere").createNewFile();// Creates in base mods foler
-						// Not running ? needs more time perhaps
-						Runtime.getRuntime().exec("java -cp "+RefStrings.MODID+"-"+RefStrings.VERSION+".jar runme.Main", null, new File(modsDir));
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
+			@Override
+			public void run() {
+				try {
+					//new File(modsDir + "/imHere").createNewFile();// Creates in base mods foler
+					// Not running ? needs more sleep time perhaps in runme.Delete
+					Runtime.getRuntime().exec("java -cp "+RefStrings.MODID+"-"+RefStrings.VERSION+".jar runme.Main", null, new File(modsDir));
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-				
 			}
+			
+		}
+		
+		if(yesButton) {
 			Runtime.getRuntime().addShutdownHook(new Shutdown());
 			FMLCommonHandler.instance().exitJava(0, false);
 		} else {
+			Runtime.getRuntime().addShutdownHook(new Shutdown());
 			Minecraft.getMinecraft().displayGuiScreen(guimainmenu);
 		}
 	}
