@@ -11,9 +11,6 @@ public class Delete implements Runnable {
 	@Override
 	public void run() {
 		try {
-			System.out.println("Sleeping for 3 seconds");
-			Thread.sleep(2000);
-
 			File[] filesToDelete = new File[] {};
 			File deleteDir = new File("serversync_delete/");
 			deleteDir.mkdirs();
@@ -32,11 +29,17 @@ public class Delete implements Runnable {
 				for (File file : filesToDelete) {
 					String converted = file.getName().replace("_$_", "/");
 					File deleteMe = new File(minecraftDir + converted);
-					if (deleteMe.delete()) {
-						String path = deleteMe.getAbsolutePath();
-						System.out.println("Successfully deleted " + path);
-						file.delete();
+					long timeout = System.currentTimeMillis();
+					while (!deleteMe.delete()) { // Run until system releases resources or timeout in 10 seconds
+						if (System.currentTimeMillis() - timeout > 10000) {
+							break;
+						}
+						System.out.println("Sleeping for 2ms");
+						Thread.sleep(200);
 					}
+					String path = deleteMe.getAbsolutePath();
+					System.out.println("Successfully deleted " + path);
+					file.delete();
 				}
 
 			}
