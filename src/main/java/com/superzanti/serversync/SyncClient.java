@@ -100,7 +100,8 @@ public class SyncClient implements GuiYesNoCallback{
 				try {
 					//new File(modsDir + "/imHere").createNewFile();// Creates in base mods foler
 					// Not running ? needs more sleep time perhaps in runme.Delete
-					Runtime.getRuntime().exec("java -cp "+RefStrings.MODID+"-"+RefStrings.VERSION+".jar runme.Main", null, new File(modsDir));
+					//TODO update this to use ProcessBuilder
+					Runtime.getRuntime().exec("java -cp "+RefStrings.MODID+"-"+RefStrings.VERSION+".jar runme.Main delete", null, new File(modsDir));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

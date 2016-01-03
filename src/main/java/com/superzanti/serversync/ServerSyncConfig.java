@@ -1,5 +1,11 @@
 package com.superzanti.serversync;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -22,15 +28,86 @@ public class ServerSyncConfig {
 	public static List<String> IGNORE_LIST;
 	public static int BUTTON_ID;
 	public static String LAST_UPDATE;
-	
+
 	/**
 	 * Loads/Initializes config parameters from serversync.cfg
-	 * @param PreEvent forge pre-initialization event
+	 * 
+	 * @param PreEvent
+	 *            forge pre-initialization event
 	 */
 	public static void init(FMLPreInitializationEvent PreEvent) {
 		config = new Configuration(PreEvent.getSuggestedConfigurationFile());
 		config.load();
+		setupConfig();
+	}
 
+	public static void init(File configFile) {
+		config = new Configuration(configFile);
+		config.load();
+		setupConfig();
+	}
+
+	public static void getServerDetailsDirty(Path configFile) throws IOException {
+		BufferedReader br = Files.newBufferedReader(configFile);
+		String chars = "";
+		while (true) {
+			if (br.ready()) {
+				chars += br.readLine();
+			} else {
+				break;
+			}
+		}
+		chars = chars.replaceAll("[}{]", " ");
+		//System.out.println(chars);
+		String port = getChunk(chars, "MINECRAFT_PORT=").trim();
+		String ip = getChunk(chars, "SERVER_IP=").trim();
+		List<String> ignoredFiles = getArray(chars, "IGNORE_LIST");
+		String serverPort = getChunk(chars, "SERVER_PORT=").trim();
+		String secureCheck = getChunk(chars, "SECURE_CHECK=").trim();
+		String secureCheckMods = getChunk(chars, "SECURE_CHECKMODS=").trim();
+		String secureRecursive = getChunk(chars, "SECURE_RECURSIVE=").trim();
+		String secureChecksum = getChunk(chars, "SECURE_CHECKSUM=").trim();
+		String secureUpdate = getChunk(chars, "SECURE_UPDATE=").trim();
+		String secureExists = getChunk(chars, "SECURE_EXISTS=").trim();
+		String secureExit = getChunk(chars, "SECURE_EXIT=").trim();
+		String lastUpdate = getChunk(chars, "LAST_UPDATE=").trim();
+		
+		SERVER_IP = ip;
+		SERVER_PORT = Integer.parseInt(serverPort);
+		IGNORE_LIST = ignoredFiles;
+		MINECRAFT_PORT = Integer.parseInt(port);
+		SECURE_CHECK = secureCheck;
+		SECURE_CHECKMODS = secureCheckMods;
+		SECURE_RECURSIVE = secureRecursive;
+		SECURE_CHECKSUM = secureChecksum;
+		SECURE_UPDATE = secureUpdate;
+		SECURE_EXISTS = secureExists;
+		SECURE_EXIT = secureExit;
+		LAST_UPDATE = lastUpdate;
+		System.out.println("finished loading config");
+	}
+	
+	private static String getChunk(String config, String target) {
+		String proc = "";
+		proc = config.substring(config.indexOf(target) + target.length());		
+		proc = proc.substring(0, proc.indexOf(" "));
+		
+		return proc;
+	}
+	
+	private static List<String> getArray(String config, String target) {
+		List<String> proc = new ArrayList<String>();
+		String _proc = "";
+		_proc = config.substring(config.indexOf(target) + target.length());
+		_proc = _proc.substring(2, _proc.indexOf(">"));
+		String[] dirtyArray = _proc.split("        ");
+		for (String e : dirtyArray) {
+			proc.add(e.trim());
+		}
+		return proc;
+	}
+
+	private static void setupConfig() {
 		SERVER_IP = config.getString("SERVER_IP", "ServerConnection", "127.0.0.1", "The IP address of the server");
 		SERVER_PORT = config.getInt("SERVER_PORT", "ServerConnection", 38067, 1, 49151,
 				"The port that your server will be serving on");
