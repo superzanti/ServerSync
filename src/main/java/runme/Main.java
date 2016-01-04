@@ -21,13 +21,19 @@ public class Main {
 	private static boolean configError = false;
 	
 	private static JLabel info = new JLabel("Information Zone");
+	private static JLabel completionLabel = new JLabel("completion");
+	private static int completion = 0;
+	private static JFrame rootFrame;
 	
 	private static void GUI() {
-		JFrame rootFrame = new JFrame("Serversync");
+		rootFrame = new JFrame("Serversync");
 		rootFrame.setResizable(false);
 		rootFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		rootFrame.setLocationRelativeTo(null);
-		rootFrame.setPreferredSize(new Dimension(400,200));
+		rootFrame.setPreferredSize(new Dimension(600,300));
+		
+		completionLabel.setText(""+completion+"%");
+		completionLabel.setBounds(10, 0, 100, 40);
+		rootFrame.getContentPane().add(completionLabel);
 		
 		info = new JLabel("Information Zone");
 		info.setHorizontalAlignment(SwingConstants.CENTER);
@@ -35,6 +41,7 @@ public class Main {
 		
 		// Display window
 		rootFrame.pack();
+		rootFrame.setLocationRelativeTo(null);
 		rootFrame.setVisible(true);
 	}
 
@@ -75,6 +82,16 @@ public class Main {
 			@Override
 			public void run() {
 				info.setText(string);
+			}
+			
+		});
+	}
+	
+	public static void updateProgress(final int progress) {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				completionLabel.setText(""+progress+"%");
 			}
 			
 		});

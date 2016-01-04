@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -136,7 +137,14 @@ public class OfflineClientWorker implements Runnable {
 			// socket = new Socket(host.getHostName(),
 			// ServerSyncRegistry.SERVER_PORT);
 			socket = new Socket();
+			try {
 			socket.connect(new InetSocketAddress(host.getHostName(), ServerSyncConfig.SERVER_PORT), 5000);
+			} catch (SocketException e) {
+				Main.updateText("Could not connect to: " + ServerSyncConfig.SERVER_IP+":"+ServerSyncConfig.SERVER_PORT);
+				Thread.sleep(5000);
+				errorInUpdates = true;
+				return;
+			}
 
 			Main.updateText("Socket established...");
 
@@ -238,14 +246,14 @@ public class OfflineClientWorker implements Runnable {
 				Main.updateText("Ignoring: " + ServerSyncConfig.IGNORE_LIST);
 
 				// run calculations to figure out how big the bar is
-				//float numberOfFiles = allList.size() + fileTree.size();
-				//float percentScale = numberOfFiles / 92;
-				//float currentPercent = 0;
+				float numberOfFiles = allList.size() + fileTree.size();
+				float percentScale = numberOfFiles / 100;
+				float currentPercent = 0;
 
 				// Parse servers file tree
 				for (String singleFile : fileTree) {
 					// Update status
-					//currentPercent++;
+					currentPercent++;
 
 					// Readable/Usable path saves resources instead of multiple
 					// string method calls
@@ -300,11 +308,12 @@ public class OfflineClientWorker implements Runnable {
 							updateFile(rPath, currentFile);
 						}
 					}
+					Main.updateProgress((int)(currentPercent / percentScale));
 				}
 
 				// Parse clients file tree
 				for (String singleFile : allList) {
-					//currentPercent++;
+					currentPercent++;
 					String rPath = singleFile.replace('\\', '/');
 					String serverReadablePath = rPath.replaceFirst(".", "");
 					String filePathSaveable = rPath.replaceFirst(".", "").replace("/", "_$_");
@@ -329,7 +338,7 @@ public class OfflineClientWorker implements Runnable {
 						// Not present in server list
 						if (doesExist.equalsIgnoreCase("false")) {
 							Main.updateText(rPath + " Does not match... Deleting...");
-							System.out.println("no match");
+							System.out.println(fileName + " deleted");
 							Main.updateText("Deleting client's " + fileName);
 
 							// File fails to delete
@@ -351,6 +360,7 @@ public class OfflineClientWorker implements Runnable {
 							}
 							updateHappened = true;
 						}
+						Main.updateProgress((int)(currentPercent / percentScale));
 					}
 				}
 				// I found that these lines are not needed since the client
@@ -358,8 +368,8 @@ public class OfflineClientWorker implements Runnable {
 				// ServerSyncRegistry.config.getCategory("StorageVariables").get("LAST_UPDATE").set(lastUpdate);
 				// ServerSyncRegistry.config.save();
 			} else {
-				Main.updateText("No Updates Needed :D");
 				Main.updateText("No Updates Needed");
+				Thread.sleep(1000);
 			}
 
 			Main.updateText("Telling Server to Exit...");
@@ -387,10 +397,21 @@ public class OfflineClientWorker implements Runnable {
 				errorInUpdates = true;
 			} // close resources here!
 			Main.updateText("All of serversync's sockets to the server have been closed.");
+			if (errorInUpdates) {
+				Main.updateText("Errors occured, please check serversync.cfg has been set up correctly");
+			}
 		}
-
-		Main.updateText("Finished!");
+		
 		try {
+			if (!updateHappened) {
+				Main.updateText("No update needed");
+				Thread.sleep(1000);
+				Main.updateText("Finished!");
+			} else {
+				Main.updateText("Files updated");
+				Thread.sleep(1000);
+				Main.updateText("Finished!");
+			}
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			Main.updateText("Exception caught! - " + e);
