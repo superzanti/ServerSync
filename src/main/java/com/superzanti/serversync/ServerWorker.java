@@ -106,9 +106,9 @@ public class ServerWorker implements Runnable {
 					ServerSync.logger.info("Writing filesize to client...");
 					String theFile = (String) ois.readObject();
 					File f = new File(theFile);
-					oos.writeLong(f.length());
+					long l = f.length();
+					oos.writeLong(l);
 					oos.flush();
-					break;
 				}
 				
 				if(message.equals(ServerSyncConfig.SECURE_EXISTS)) {
