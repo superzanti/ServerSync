@@ -70,8 +70,13 @@ public class OfflineClientWorker implements Runnable {
 		oos.writeObject(filePath);
 		oos.flush();
 		
-		long fileSize = ois.readLong();
-		reinitConn();
+		long fileSize = 0l;
+		
+		try {
+			fileSize = ois.readLong();
+		} catch (Exception e) {
+			System.out.println("Could not get file size");
+		}
 		
 		oos.writeObject(ServerSyncConfig.SECURE_UPDATE);
 		oos.flush();
@@ -89,12 +94,11 @@ public class OfflineClientWorker implements Runnable {
 		double factor = 0;
 
 		while ((bytesReceived = ois.read(outBuffer)) > 0) {
-			
 			byteP++;
 			factor = fileSize / bytesReceived;
 			progress = Math.ceil(byteP/factor * 100);
 			wr.write(outBuffer, 0, bytesReceived);
-			Main.updateText("<"+progress+"%> Updating " + currentFile.getName());
+			Main.updateText("<"+(int)progress+"%> Updating " + currentFile.getName());
 		}
 		wr.flush();
 		wr.close();
@@ -451,7 +455,7 @@ public class OfflineClientWorker implements Runnable {
 
 		try {
 			if (!updateHappened) {
-				//Main.updateText("No update needed, for a full log check the logs folder in the minecraft directory");
+				Main.updateText("No update needed, for a full log check the logs folder in the minecraft directory");
 				Thread.sleep(1000);
 				Main.updateProgress(100);
 			} else {
