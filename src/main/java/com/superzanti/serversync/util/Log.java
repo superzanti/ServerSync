@@ -29,13 +29,13 @@ public class Log {
 	 */
 	public Log add(String s) {
 		this.logContent.append(s);
-		this.logContent.append("\n");
+		this.logContent.append("\r\n");
 		return this;
 	}
 	
 	public Log add(int i) {
 		this.logContent.append(i);
-		this.logContent.append("\n");
+		this.logContent.append("\r\n");
 		return this;
 	}
 	
