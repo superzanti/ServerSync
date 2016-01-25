@@ -1,5 +1,7 @@
 package runme;
 
+import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -7,8 +9,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
 import com.superzanti.serversync.OfflineClientWorker;
@@ -18,11 +20,12 @@ public class Main {
 	private static Delete deleteOldMods = new Delete();
 	private static OfflineClientWorker updateMods = new OfflineClientWorker();
 	
-	private static boolean configError = false;
+	public static final String SECURE_FILESIZE = "11b4278c7e5a79003db77272c1ed2cf5";
 	
-	private static JLabel info = new JLabel("Information Zone");
-	private static JLabel completionLabel = new JLabel("completion");
-	private static int completion = 0;
+	private static boolean configError = false;
+	private static int mode = 10;
+	
+	private static JTextArea info = new JTextArea();
 	private static JFrame rootFrame;
 	
 	private static void GUI() {
@@ -30,22 +33,33 @@ public class Main {
 		rootFrame.setResizable(false);
 		rootFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		rootFrame.setPreferredSize(new Dimension(600,300));
+		Container pane = rootFrame.getContentPane();
 		
-		completionLabel.setText(""+completion+"%");
-		completionLabel.setBounds(10, 0, 100, 40);
-		rootFrame.getContentPane().add(completionLabel);
-		
-		info = new JLabel("Information Zone");
-		info.setHorizontalAlignment(SwingConstants.CENTER);
-		rootFrame.getContentPane().add(info);
+		JScrollPane scrollable = new JScrollPane(info);
+		scrollable.setPreferredSize(new Dimension(500,300));
+
+		info.setLineWrap(true);
+		info.setOpaque(true);
+		info.setEditable(false);
+		pane.add(scrollable, BorderLayout.LINE_END);
 		
 		// Display window
 		rootFrame.pack();
 		rootFrame.setLocationRelativeTo(null);
 		rootFrame.setVisible(true);
+
+		startWorker(mode);
 	}
 
-	public static void main(String[] args) throws InterruptedException, IOException  {
+	public static void main(String[] args) throws InterruptedException, IOException  {	
+		if (args.length > 0) {
+			for (String arg : args) {
+				if (arg.equalsIgnoreCase("delete")) {
+					mode = 0;
+				}
+			}
+		}
+		
 		SwingUtilities.invokeLater(new Runnable() {
 
 			@Override
@@ -54,27 +68,6 @@ public class Main {
 			}
 			
 		});
-		
-		Path config = Paths.get("../config/serversync.cfg");
-		System.out.println(config.toAbsolutePath().toString());
-		if (Files.exists(config)) {			
-			updateText("File exists");
-			System.out.println("attempting to init config file: " + config.toAbsolutePath().toString());
-			//ServerSyncConfig.init(config.toFile());
-			ServerSyncConfig.getServerDetailsDirty(config);
-		} else {
-			configError = true;
-		}
-		
-		int mode = 10;
-		if (args.length > 0) {
-			for (String arg : args) {
-				if (arg.equalsIgnoreCase("delete")) {
-					mode = 0;
-				}
-			}
-		}
-		startWorker(mode);
 	}
 
 	public static void updateText(final String string) {
@@ -91,7 +84,7 @@ public class Main {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				completionLabel.setText(""+progress+"%");
+				rootFrame.setTitle("Serversync - " + progress + "%");
 			}
 			
 		});
@@ -99,6 +92,21 @@ public class Main {
 	
 	private static void startWorker(int mode) {
 		Thread t;
+		Path config = Paths.get("../config/serversync.cfg");
+		System.out.println(config.toAbsolutePath().toString());
+		if (Files.exists(config)) {			
+			updateText("serversync.cfg found");
+			System.out.println("attempting to init config file: " + config.toAbsolutePath().toString());
+			//ServerSyncConfig.init(config.toFile());
+			try {
+				ServerSyncConfig.getServerDetailsDirty(config);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			configError = true;
+		}
+		
 		switch(mode) {
 		case 0:
 			updateText("Starting deletion process...");

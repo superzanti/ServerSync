@@ -20,6 +20,7 @@ import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.ModContainer;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import runme.Main;
 
 /**
  * This worker handles requests from the client continuously until told to exit using SECURE_EXIT
@@ -97,6 +98,15 @@ public class ServerWorker implements Runnable {
 						oos.write(buff,0,bytesRead);
 					}
 					in.close();
+					oos.flush();
+					break;
+				}
+				
+				if(message.equals(Main.SECURE_FILESIZE)) {
+					ServerSync.logger.info("Writing filesize to client...");
+					String theFile = (String) ois.readObject();
+					File f = new File(theFile);
+					oos.writeLong(f.length());
 					oos.flush();
 					break;
 				}
