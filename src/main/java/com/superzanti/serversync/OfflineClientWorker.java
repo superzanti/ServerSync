@@ -376,8 +376,7 @@ public class OfflineClientWorker implements Runnable {
 
 					// check for files that need to be deleted
 					String doesExist = (String) ois.readObject();
-
-					if (ServerSyncConfig.IGNORE_LIST.contains(rPath)) {
+					if (ServerSyncConfig.IGNORE_LIST.contains(serverReadablePath)) {
 						fullLog.add(fileName + " set to ignore");
 					} else {
 						// Not present in server list
