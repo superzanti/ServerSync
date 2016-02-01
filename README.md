@@ -3,9 +3,9 @@ ServerSync
 
 This is an open source mod that allows for easy server management. It simply syncs the mods folder and the config folder from the server to the client. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. My method avoids a lot of complaining. I have a server which runs all of my own mods, as a developer I'm constatly updating these mods, fixing bugs, and making changes to configs. For the past fiew years I've been going around to the users on my server with a USB stick instructing them on how to use mods. Recently I've had some people join my server that don't know how to find the .minecraft folder. So explaining this to them and getting them the new updates can be a real pain.
 
-**Currently for Minecraft 1.7.10 Forge 1403**
+**Currently for Minecraft 1.7.10 Forge 1614**
 
-If you don't feel like compiling from source and simply want to download the jar file, navigate around this repo's folders. If you're a developer you'll be able to find it easy. Please read the disclaimer before downloading.
+If you don't feel like compiling from source and simply want to download the jar file, see the releases tab. Please read the disclaimer before downloading.
 
 DISCLAIMER:
 -----------
@@ -19,6 +19,15 @@ Don't trust anyone with my mod. This mod allows ANY server running it to put ANY
 
 RECENT UPDATES:
 -----------
+Version 2.4.6
+* Added the ability to push client-only mods
+* Various code optimization/cleanup
+
+Version 2.4.5
+* Added the ability to sync files without opening minecraft
+* Fixed windows deletion issue, not an issue if using "offline" sync
+* Added GUI for "offline" mode
+
 Version 2.3:
 * Fixed deletion bugs
   * Files couldn't be deleted because they were in use. Now I delete them when the JVM exits
@@ -35,10 +44,11 @@ Version 2.1:
 FREQUENTLY ASKED QUESTIONS:
 -----------
 * "This mod isn't doing anything!"
-  * I require you to have CustomMainMenu. Create a main menu with a button that runs this mod. Use the buttonid of that button in the config file.
+  * I require you to have CustomMainMenu for in-game sync. Create a main menu with a button that runs this mod. Use the buttonid of that button in the config file, see the wiki for help with this.
+  * Alternatively just run serversync.jar from the mods folder to sync without opening minecraft.
 * "I can't connect to my server"
-  * Did you check that the config file was the same between both the client and the server?
-  * Everything in the config file MUST be the same on both sides.
+  * ~~Did you check that the config file was the same between both the client and the server?~~ (not really relevant anymore)
+  * ~~Everything in the config file MUST be the same on both sides.~~ (config file updated by server before running)
   * Are you using your external/internal IP address apropriately?
   * Are you trying to transfer a file larger than your max file size?
   * Are you ignoring a file that is neccecary to connect to the server?
@@ -50,13 +60,15 @@ FREQUENTLY ASKED QUESTIONS:
 * "You're a horrible programmer"
   * I'm an Electrical Engineer not a computer scientist. Please submit a bug report and help me improve.
 * "Can you make this work without using a custom main menu?"
-  * I'm not sure. I haven't looked into it, but if you have an informed suggestion please let me know and I'll do what I can.
+  * Run serversync.jar from the mods folder
 * "Why does this mod spit out so much 'junk' in my console?"
   * It's simply to help users know that they're not being attacked. It will tell them what IP they're connected to, what mod is being downloaded and more. My hope is that people will actually see this while it's running to know for sure that they can trust their admin. Hey, not everyone reads this.
 * "I have files such as optifine that I don't want the server to delete"
   * Well then specify that in the config file. It can ignore a download or deletion of any file you want.
+  * Or add optifine/other client mods to the folder clientmods in your minecraft folder, create one if it does not exist. Set B:PushClientMods=true in the config.
+  * Mods in the clientmods folder are automatically added to the ignore list, however some of these may create user based config files that need to be added to the ignore list manually. Check the handy serversync log generated in the minecraft/logs folder for detailed information.
 * "I want to change how the UI looks so it doesn't say 'The Verse' "
-  * This mod requires CustomMainMenu, read up on the CustomMainMenu documents for all of that.
+  * That part of the mod requires CustomMainMenu, read up on the CustomMainMenu documents for all of that.
 
 What does it do exactly?
 -----------
@@ -78,6 +90,11 @@ What does it do exactly?
 * If the client has a file that the server does not, it will delete it.
 * When all this finishes if there were updated files the client will ask the user if she/he wants to restart the client to apply the changes
 * If there are no files to update the client will join the server that is defined in the IP field of the config file
+ 
+Offline sync?
+-----------
+
+* Same as above except you run serversync.jar from the mods folder before starting up minecraft.
 
 Compiling
 --------------
