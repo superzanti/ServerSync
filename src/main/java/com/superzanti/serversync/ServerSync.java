@@ -1,5 +1,9 @@
 package com.superzanti.serversync;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import org.apache.logging.log4j.Logger;
 
 import com.superzanti.lib.RefStrings;
@@ -32,6 +36,13 @@ public class ServerSync {
 		logger = PreEvent.getModLog();
 
 		// Grab the configuration file and load in the values
+		if (proxy.isServer()) {
+			try {
+				Files.createDirectories(Paths.get("clientmods/"));
+			} catch (IOException e) {
+				logger.error("Could not create clientmods directory");
+			}
+		}
 		ServerSyncConfig.init(PreEvent);
 		
 

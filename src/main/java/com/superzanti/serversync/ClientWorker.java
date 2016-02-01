@@ -77,7 +77,6 @@ public class ClientWorker implements Runnable {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
-		//TODO check and update serversync.cfg first to avoid the need to double run
 		// use the ip address of the server to get the host
 		try {
 			host = InetAddress.getByName(ServerSyncConfig.SERVER_IP);

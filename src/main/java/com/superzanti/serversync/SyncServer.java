@@ -20,12 +20,17 @@ public class SyncServer implements Runnable {
     
     //this is what's in our folders
 	private static ArrayList<String> allList = new ArrayList<String>();
+	private static ArrayList<String> clientList = new ArrayList<String>();
 
 	protected SyncServer(){
 	    ServerSync.logger.info("Getting ./mod contents");
 	    allList.addAll(dirContents("./mods"));
 	    ServerSync.logger.info("Getting ./config contents");
 		allList.addAll(dirContents("./config"));
+		if (ServerSyncConfig.PUSH_CLIENT_MODS) {
+			ServerSync.logger.info("Getting ./clientmods contents");
+			clientList.addAll(dirContents("./clientmods"));
+		}
 		return;
 	}
 	
@@ -45,7 +50,12 @@ public class SyncServer implements Runnable {
             try
             {
             	Socket socket = server.accept();
-                ServerWorker sc = new ServerWorker(socket, allList, server);
+            	ServerWorker sc;
+            	if (ServerSyncConfig.PUSH_CLIENT_MODS) { 
+            		sc = new ServerWorker(socket, allList, clientList, server);
+            	} else {
+            		sc = new ServerWorker(socket, allList, server);
+            	}
                 new Thread(sc).start();
             }
             catch(Exception e)

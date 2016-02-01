@@ -10,6 +10,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -47,7 +48,6 @@ public class OfflineClientWorker implements Runnable {
 	private List<String> clientFiles;
 
 	public OfflineClientWorker() {
-
 		errorInUpdates = false;
 		updateHappened = false;
 		checkFinished = false;
@@ -64,20 +64,31 @@ public class OfflineClientWorker implements Runnable {
 
 	}
 
+	/**
+	 * Sends request to server for the file stored at filePath and updates the
+	 * current file with the returned data
+	 * 
+	 * @param filePath
+	 *            the location of the file on the server
+	 * @param currentFile
+	 *            the current file being worked on
+	 * @throws IOException
+	 * @throws Exception
+	 */
 	private void updateFile(String filePath, File currentFile) throws IOException, Exception {
 		oos.writeObject(Main.SECURE_FILESIZE);
 		oos.flush();
 		oos.writeObject(filePath);
 		oos.flush();
-		
+
 		long fileSize = 0l;
-		
+
 		try {
 			fileSize = ois.readLong();
 		} catch (Exception e) {
 			System.out.println("Could not get file size");
 		}
-		
+
 		oos.writeObject(ServerSyncConfig.SECURE_UPDATE);
 		oos.flush();
 		oos.writeObject(filePath);
@@ -96,9 +107,9 @@ public class OfflineClientWorker implements Runnable {
 		while ((bytesReceived = ois.read(outBuffer)) > 0) {
 			byteP++;
 			factor = fileSize / bytesReceived;
-			progress = Math.ceil(byteP/factor * 100);
+			progress = Math.ceil(byteP / factor * 100);
 			wr.write(outBuffer, 0, bytesReceived);
-			Main.updateText("<"+(int)progress+"%> Updating " + currentFile.getName());
+			Main.updateText("<" + (int) progress + "%> Updating " + currentFile.getName());
 		}
 		wr.flush();
 		wr.close();
@@ -275,8 +286,46 @@ public class OfflineClientWorker implements Runnable {
 
 				fullLog.add("Sending requests to Socket Server...");
 
+				updateLogs("Getting client-side mods");
+				ArrayList<String> serverClientMods = new ArrayList<String>();
+				oos.writeObject(Main.SECURE_PUSH_CLIENTMODS);
+				oos.flush();
+				serverClientMods = (ArrayList<String>) ois.readObject();
+				fullLog.add(serverClientMods.toString());
+				fullLog.add("Got client mods");
+
+				for (String file : serverClientMods) {
+					String pathOnClient = file.replace("\\", "/").replace("clientmods", "mods");
+					String pathOnServer = file.replace("\\", "/");
+					Path currentFile = Paths.get("." + pathOnClient);
+					String fileName = currentFile.getFileName().toString();
+
+					if (Files.exists(currentFile) && !Files.isDirectory(currentFile)) {
+						oos.writeObject(ServerSyncConfig.SECURE_CHECKSUM);
+						oos.flush();
+						oos.writeObject(pathOnServer);
+						oos.flush();
+						String serverChecksum = (String) ois.readObject();
+						// if the checksums do not match, update the file
+						if (!Md5.md5String(currentFile.toFile()).equals(serverChecksum)) {
+							fullLog.add("Server Checksum: " + serverChecksum);
+							fullLog.add("Our Checksum: " + Md5.md5String(currentFile.toFile()));
+
+							updateFile(pathOnServer, currentFile.toFile());
+
+							// Matches
+						} else {
+							updateLogs(fileName + " exists or is up to date");
+						}
+						// Does not exist
+					} else {
+						fullLog.add(pathOnClient + " Does not exist...");
+						updateFile(pathOnServer, currentFile.toFile());
+					}
+				}
+
 				// get all files on server
-				updateLogs("Getting mods from the server...");
+				updateLogs("Getting mods...");
 				oos.writeObject(ServerSyncConfig.SECURE_RECURSIVE);
 				oos.flush();
 				// read the server response message

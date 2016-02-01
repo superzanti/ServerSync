@@ -21,6 +21,7 @@ public class Main {
 	private static OfflineClientWorker updateMods = new OfflineClientWorker();
 	
 	public static final String SECURE_FILESIZE = "11b4278c7e5a79003db77272c1ed2cf5";
+	public static final String SECURE_PUSH_CLIENTMODS = "0ad95bb1734520dc1fa3c737f8a57d91";
 	
 	private static boolean configError = false;
 	private static int mode = 10;

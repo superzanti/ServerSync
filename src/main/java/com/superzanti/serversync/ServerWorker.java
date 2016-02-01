@@ -33,11 +33,18 @@ public class ServerWorker implements Runnable {
 	private static ObjectInputStream ois;
 	private static ObjectOutputStream oos;
     private static ArrayList<String> allList = new ArrayList<String>();
+    private static ArrayList<String> clientList = new ArrayList<String>();
 	
 	protected ServerWorker(Socket socket, ArrayList<String> allFiles, ServerSocket theServer){
 		clientsocket = socket;
 		allList = allFiles;
 		ServerSync.logger.info("Connection established with " + clientsocket);
+		return;
+	}
+	
+	protected ServerWorker(Socket socket, ArrayList<String> allFiles, ArrayList<String> clientMods, ServerSocket theServer) {
+		this(socket,allFiles,theServer);
+		clientList = clientMods;
 		return;
 	}
 
@@ -84,6 +91,11 @@ public class ServerWorker implements Runnable {
 					File f = new File(theFile);
 					String serverChecksum = Md5.md5String(f);
 					oos.writeObject(serverChecksum);
+					oos.flush();
+				}
+				
+				if(message.equals(Main.SECURE_PUSH_CLIENTMODS)) {
+					oos.writeObject(clientList);
 					oos.flush();
 				}
 				
