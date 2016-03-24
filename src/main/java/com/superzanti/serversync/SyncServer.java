@@ -23,8 +23,17 @@ public class SyncServer implements Runnable {
 	private static ArrayList<String> clientList = new ArrayList<String>();
 
 	protected SyncServer(){
+		ArrayList<String> tl = null;
 	    ServerSync.logger.info("Getting ./mod contents");
-	    allList.addAll(dirContents("./mods"));
+	    if ((tl = dirContents("./mods")) != null) {
+	    	allList.addAll(tl);
+	    } else {
+	    	ServerSync.logger.info("Could not access ./mods, have you installed forge?");	    	
+	    }
+	    if ((tl = dirContents("./flan")) != null) {
+	    	allList.addAll(tl);
+	    	ServerSync.logger.info("Found flans mod, adding content packs to modlist");
+	    }
 	    ServerSync.logger.info("Getting ./config contents");
 		allList.addAll(dirContents("./config"));
 		if (ServerSyncConfig.PUSH_CLIENT_MODS) {
@@ -69,17 +78,21 @@ public class SyncServer implements Runnable {
 	private static ArrayList<String> dirContents(String dir) {
 		ServerSync.logger.info("Getting all of " + dir.replace('\\', '/') + "'s folder contents");
 		File f = new File(dir);
-		File[] files = f.listFiles();
-		ArrayList<String> dirList = new ArrayList<String>();
-		// Loop through all the directories and only add to the list if it's a file
-		for (File file : files) {
-			if (file.isDirectory()) {
-				dirList.addAll(dirContents(file.getPath()));
-			} else {
-				dirList.add(file.toString());
+		// UPDATE file safety check
+		if (f.exists()) {
+			File[] files = f.listFiles();
+			ArrayList<String> dirList = new ArrayList<String>();
+			// Loop through all the directories and only add to the list if it's a file
+			for (File file : files) {
+				if (file.isDirectory()) {
+					dirList.addAll(dirContents(file.getPath()));
+				} else {
+					dirList.add(file.toString());
+				}
 			}
+			return dirList;
 		}
-		return dirList;
+		return null;
 	}
 
 }

@@ -226,7 +226,11 @@ public class OfflineClientWorker implements Runnable {
 			// List<String> _clientFiles = PathUtils.fileListDeep("");
 			// Mod list clone that ends up being filtered mod list
 			clientFiles = PathUtils.fileListDeep(Paths.get("../mods"));
-
+			Path flanCheck = Paths.get("../flan");
+			if (Files.exists(flanCheck)) {				
+				clientFiles.addAll(PathUtils.fileListDeep(flanCheck));
+				fullLog.add("Found flans mod, adding content packs");
+			}
 			// Remove ignored mods from mod list
 			// What is actually used from the ModContainer interface?
 			/*
