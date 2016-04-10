@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
@@ -105,7 +106,18 @@ public class Main {
 				e.printStackTrace();
 			}
 		} else {
-			configError = true;
+			updateText("No config found, requesting details");
+			String serverIP = (String) JOptionPane.showInputDialog("Server IP address");
+			String serverPort = (String) JOptionPane.showInputDialog("Server Port (numbers only)");
+			int port = 0;
+			try {
+				port = Integer.parseInt(serverPort);
+			} catch(NumberFormatException e) {
+				configError = true;
+			}
+			ServerSyncConfig.setServerIp(serverIP);
+			ServerSyncConfig.setServerPort(port);
+			ServerSyncConfig.pullServerConfig = true;
 		}
 		
 		switch(mode) {

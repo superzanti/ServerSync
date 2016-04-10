@@ -114,6 +114,20 @@ public class ServerWorker implements Runnable {
 					break;
 				}
 				
+				if(message.equals(ServerSyncConfig.GET_CONFIG)) {
+					ServerSync.logger.info("Sending config to client...");
+					File f = new File("./config/serversync.cfg");
+					byte[] buff = new byte[clientsocket.getSendBufferSize()];
+					int bytesRead = 0;
+					InputStream in = new FileInputStream(f);
+					while((bytesRead = in.read(buff))>0) {
+						oos.write(buff,0,bytesRead);
+					}
+					in.close();
+					oos.flush();
+					break;
+				}
+				
 				if(message.equals(Main.SECURE_FILESIZE)) {
 					ServerSync.logger.info("Writing filesize to client...");
 					String theFile = (String) ois.readObject();

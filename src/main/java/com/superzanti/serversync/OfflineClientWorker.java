@@ -8,7 +8,6 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,6 +62,10 @@ public class OfflineClientWorker implements Runnable {
 		Runtime.getRuntime().addShutdownHook(new Shutdown());
 
 	}
+	
+	private void updateFile(String filePath, File currentFile) throws IOException, Exception {
+		updateFile(filePath,currentFile,false);
+	}
 
 	/**
 	 * Sends request to server for the file stored at filePath and updates the
@@ -75,7 +78,7 @@ public class OfflineClientWorker implements Runnable {
 	 * @throws IOException
 	 * @throws Exception
 	 */
-	private void updateFile(String filePath, File currentFile) throws IOException, Exception {
+	private void updateFile(String filePath, File currentFile, boolean getConfig) throws IOException, Exception {
 		oos.writeObject(Main.SECURE_FILESIZE);
 		oos.flush();
 		oos.writeObject(filePath);
@@ -89,10 +92,15 @@ public class OfflineClientWorker implements Runnable {
 			System.out.println("Could not get file size");
 		}
 
-		oos.writeObject(ServerSyncConfig.SECURE_UPDATE);
-		oos.flush();
-		oos.writeObject(filePath);
-		oos.flush();
+		if(!getConfig) {
+			oos.writeObject(ServerSyncConfig.SECURE_UPDATE);
+			oos.flush();
+			oos.writeObject(filePath);
+			oos.flush();
+		} else {
+			oos.writeObject(ServerSyncConfig.GET_CONFIG);
+			oos.flush();
+		}
 
 		currentFile.getParentFile().mkdirs();
 		FileOutputStream wr = new FileOutputStream(currentFile);
@@ -195,9 +203,8 @@ public class OfflineClientWorker implements Runnable {
 			socket = new Socket();
 			try {
 				socket.connect(new InetSocketAddress(host.getHostName(), ServerSyncConfig.SERVER_PORT), 5000);
-			} catch (SocketException e) {
+			} catch (Exception e) {
 				updateLogs("Could not connect to: " + ServerSyncConfig.SERVER_IP + ":" + ServerSyncConfig.SERVER_PORT);
-				Thread.sleep(5000);
 				errorInUpdates = true;
 				return;
 			}
@@ -208,6 +215,15 @@ public class OfflineClientWorker implements Runnable {
 			fullLog.add("Creating input/output streams...");
 			oos = new ObjectOutputStream(socket.getOutputStream());
 			ois = new ObjectInputStream(socket.getInputStream());
+			
+			// Config was not found getting it from server
+			if (ServerSyncConfig.pullServerConfig) {
+				updateLogs("Getting servers config file");
+				Path cfig = Paths.get("../config/serversync.cfg");
+				updateFile("./config/serversync.cfg", cfig.toFile(), true);
+				updateLogs("Reloading config");
+				ServerSyncConfig.getServerDetailsDirty(cfig);
+			}
 
 			updateLogs("Checking to see if updates are needed...");
 			oos.writeObject(ServerSyncConfig.SECURE_CHECK);
@@ -266,23 +282,25 @@ public class OfflineClientWorker implements Runnable {
 
 			if (!serverCompatable) {
 				updateLogs("The mods between server and client are incompatable... Force updating...", false);
-				updateLogs("Updating serversync config...");
 
-				String sConfigPath = "./config/serversync.cfg";
-				Path configPath = Paths.get("../config/serversync.cfg");
-
-				oos.writeObject(ServerSyncConfig.SECURE_CHECKSUM);
-				oos.flush();
-				oos.writeObject(sConfigPath);
-				oos.flush();
-				String serverChecksum = (String) ois.readObject();
-				// if the checksums do not match, update the file
-				if (!Md5.md5String(configPath.toFile()).equals(serverChecksum)) {
-					fullLog.add("updating config");
-					updateFile(sConfigPath, configPath.toFile());
-					// reload config file
-					fullLog.add("reloading config");
-					ServerSyncConfig.getServerDetailsDirty(configPath);
+				if(!ServerSyncConfig.pullServerConfig) {
+					updateLogs("Updating serversync config...");
+					
+					String sConfigPath = "./config/serversync.cfg";
+					Path configPath = Paths.get("../config/serversync.cfg");
+					oos.writeObject(ServerSyncConfig.SECURE_CHECKSUM);
+					oos.flush();
+					oos.writeObject(sConfigPath);
+					oos.flush();
+					String serverChecksum = (String) ois.readObject();
+					// if the checksums do not match, update the file
+					if (!Md5.md5String(configPath.toFile()).equals(serverChecksum)) {
+						fullLog.add("updating config");
+						updateFile(sConfigPath, configPath.toFile());
+						// reload config file
+						fullLog.add("reloading config");
+						ServerSyncConfig.getServerDetailsDirty(configPath);
+					}
 				}
 			}
 

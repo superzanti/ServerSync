@@ -29,6 +29,8 @@ public class ServerSyncConfig {
 	protected static String SECURE_UPDATE;
 	protected static String SECURE_EXISTS;
 	protected static String SECURE_EXIT;
+	public static final String GET_CONFIG = "GIMME";
+	public static boolean pullServerConfig = false;
 	protected static List<String> ClientMods = new ArrayList<String>();
 	public static Boolean PUSH_CLIENT_MODS;
 	public static List<String> IGNORE_LIST;
@@ -52,6 +54,14 @@ public class ServerSyncConfig {
 		config = new Configuration(configFile);
 		config.load();
 		setupConfig();
+	}
+	
+	public static void setServerIp(String ip) {
+		SERVER_IP = ip;
+	}
+	
+	public static void setServerPort(int port) {
+		SERVER_PORT = port;
 	}
 
 	public static void getServerDetailsDirty(Path configFile) throws IOException {
