@@ -17,7 +17,7 @@ DISCLAIMER:
 -----------
 This mod is only meant for personal use or for developers that constantly push their OWN mods. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to distribute other people's mods.
 
-Depending on the copyright and/or pattent laws in your area using my mod with other developer's mods for a commercial purpose could be ILLEGAL.
+Depending on the copyright and/or pattent laws in your area using this mod with other developer's mods for a commercial purpose could be ILLEGAL.
 
 Don't trust anyone with this mod. This mod allows ANY server running it to put ANY jar file in your mods folder. Any mod means any function of java, such as making a virus or a keylogger. So if you are a client please make sure you trust your server administrator.
 
@@ -86,7 +86,7 @@ What does it do exactly?
 Compiling
 --------------
 
-Simply git clone my repo, cd into the folder and run 
+Simply git clone the repo, cd into the folder and run 
 ```
 ./gradlew build
 ```
