@@ -1,24 +1,32 @@
 ServerSync
 =========
+This is an open source mod that allows for easy server management. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. This method avoids a lot of complaining. As a server admin constantly changing configs/updating mods it can get to be quite a pain pushing these updates. Some users have trouble finding the minecraft folder let alone putting mods in the right place.
 
-This is an open source mod that allows for easy server management. It simply syncs the mods folder and the config folder from the server to the client. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. My method avoids a lot of complaining. I have a server which runs all of my own mods, as a developer I'm constatly updating these mods, fixing bugs, and making changes to configs. For the past fiew years I've been going around to the users on my server with a USB stick instructing them on how to use mods. Recently I've had some people join my server that don't know how to find the .minecraft folder. So explaining this to them and getting them the new updates can be a real pain.
+Currently you can sync:
+* Client-side mods
+* Mods
+* Flans content packs
+* Configs
 
 **Currently for Minecraft 1.7.10 Forge 1614**
 
-If you don't feel like compiling from source and simply want to download the jar file, see the releases tab. Please read the disclaimer before downloading.
+If you don't feel like compiling from source and simply want to download a jar file see the releases tab, I update these periodically when theres a large enough addition/change. Please read the disclaimer before downloading.
+
 
 DISCLAIMER:
 -----------
+This mod is only meant for personal use or for developers that constantly push their OWN mods. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to distribute other people's mods.
 
-This mod is only meant to be used for developers that constantly push their OWN mods. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to distribute other people's mods.
+Depending on the copyright and/or pattent laws in your area using my mod with other developer's mods for a commercial purpose could be ILLEGAL.
 
-Not to mention, depending on the copyright and/or pattent laws in your area using my mod with other developer's mods could be ILLEGAL.
-
-Don't trust anyone with my mod. This mod allows ANY server running it to put ANY jar file in your mods folder. Any mod means any function of java, such as making a virus or a keylogger. So if you are a client please make sure you trust your server administrator.
+Don't trust anyone with this mod. This mod allows ANY server running it to put ANY jar file in your mods folder. Any mod means any function of java, such as making a virus or a keylogger. So if you are a client please make sure you trust your server administrator.
 
 
 RECENT UPDATES:
 -----------
+Version 2.4.7
+* Added support for flans mod content packs 
+
 Version 2.4.6
 * Added the ability to push client-only mods
 * Various code optimization/cleanup
@@ -28,47 +36,33 @@ Version 2.4.5
 * Fixed windows deletion issue, not an issue if using "offline" sync
 * Added GUI for "offline" mode
 
-Version 2.3:
-* Fixed deletion bugs
-  * Files couldn't be deleted because they were in use. Now I delete them when the JVM exits
-* Fixed updating bugs
-* Changed error messages
-
-
-Version 2.1:
-* Added feature to ask the server if there has been any updates before ever updating
-  * This allows to update all configs regardless of if they change
-  * Has almost made the IGNORE_LIST property worthless, but is stil handy to have for client/server side only things like GLSL shaders
-
-
 FREQUENTLY ASKED QUESTIONS:
 -----------
 * "This mod isn't doing anything!"
-  * I require you to have CustomMainMenu for in-game sync. Create a main menu with a button that runs this mod. Use the buttonid of that button in the config file, see the wiki for help with this.
-  * Alternatively just run serversync.jar from the mods folder to sync without opening minecraft.
+  * This version of serversync is run independant of minecraft (minecraft should be closed when running serversync), I did this as minecraft did not need to be running for the program to work and the previous method required you to open and close minecraft several times which if you have any more than 2-3 mods then loading time gets very taxing.
+  * Run serversync.jar from your mods folder or create a shortcut, you will need to set up the servers ip/port details in serversync.cfg
 * "I can't connect to my server"
-  * ~~Did you check that the config file was the same between both the client and the server?~~ (not really relevant anymore)
-  * ~~Everything in the config file MUST be the same on both sides.~~ (config file updated by server before running)
+  * Did you check that the config files ip/port details are correct on both server and client
   * Are you using your external/internal IP address apropriately?
   * Are you trying to transfer a file larger than your max file size?
   * Are you ignoring a file that is neccecary to connect to the server?
 * "This is so insecure I hate it!"
-  * Go read the disclaimer. It will always be insecure and I don't plan on making it super secure.
+  * As per the disclaimer this is not intended to be a super secure system, it's more for personal use. Want to play with your kids/partner but you dont feel like teaching all of them exactly how to update mods.
   * The config file allows you to put in your own hashes for the server client commands. This would take a real genious to pull files off the server or send files to you.
 * "Can you add feature X? Or fix bug Y?"
   * I don't know. Go submit it to the issues and I'll check it out.
 * "You're a horrible programmer"
-  * I'm an Electrical Engineer not a computer scientist. Please submit a bug report and help me improve.
+  * You're entitled to that opinion.
 * "Can you make this work without using a custom main menu?"
-  * Run serversync.jar from the mods folder
+  * This fork of serversync is run without opening minecraft and in fact is no longer really supporting the in-game feature of the previous incarnation, it is still present and can be used but the new features like client mod pushing and support for flans etc are not implimented yet.
 * "Why does this mod spit out so much 'junk' in my console?"
-  * It's simply to help users know that they're not being attacked. It will tell them what IP they're connected to, what mod is being downloaded and more. My hope is that people will actually see this while it's running to know for sure that they can trust their admin. Hey, not everyone reads this.
+  * It's simply to help users know that they're not being attacked. It will tell them what IP they're connected to, what mod is being downloaded and more. My hope is that people will actually see this while it's running to know for sure that they can trust their admin. Hey, not everyone reads this. Also now that serversync is it's own entity the entire console is there for debugging purposes.
 * "I have files such as optifine that I don't want the server to delete"
-  * Well then specify that in the config file. It can ignore a download or deletion of any file you want.
+  * Specify this in the config file. Ignore list has entries by default that should be easy to follow.
   * Or add optifine/other client mods to the folder clientmods in your minecraft folder, create one if it does not exist. Set B:PushClientMods=true in the config.
-  * Mods in the clientmods folder are automatically added to the ignore list, however some of these may create user based config files that need to be added to the ignore list manually. Check the handy serversync log generated in the minecraft/logs folder for detailed information.
+  * Mods in the clientmods folder are automatically added to the ignore list, however some of these may create user based config files that need to be added to the ignore list manually. Check the handy serversync log generated in the minecraft/logs folder for detailed information, this will probably be quite long so I added "<>" to entries that I personally deemed to be significant, such as file deletions.
 * "I want to change how the UI looks so it doesn't say 'The Verse' "
-  * That part of the mod requires CustomMainMenu, read up on the CustomMainMenu documents for all of that.
+  * That part of the mod requires CustomMainMenu, read up on the CustomMainMenu documents for all of that, I'm not really supporting CMM at the moment as running the game is pretty much unnecessary for this program to function and causes a bunch of issues with the mods being loaded and unaccessable to be writen/deleted (and it is just downright slow to load the game multiple times).
 
 What does it do exactly?
 -----------
@@ -80,21 +74,14 @@ What does it do exactly?
 * If the server receives the exists command the server will will return a boolean value of weather or not the file requested exists on the server.
 * If the server receieves the exit command it will close the connection and destroy the thread. However, this will also happen automatically after X ammount of time as defined in the config file
  
-* When the client clicks the button which has the ID defined in the config file the client will start the update script
+* When the client runs serversync the update script starts
 * The client will first request the name of all the files on the server.
 * The client will then iterate through each of these files
 * If this file exists on the client it will take a checksum of it and ask the server if they are the same
-* If the files are differnt it will send the update command to pull a new file
+* If the files are different it will send the update command to pull a new file
 * If the client does not have the file it will send the update command to download it
 * After iterating through all of the server files the client will then iterate through all of it's own files
 * If the client has a file that the server does not, it will delete it.
-* When all this finishes if there were updated files the client will ask the user if she/he wants to restart the client to apply the changes
-* If there are no files to update the client will join the server that is defined in the IP field of the config file
- 
-Offline sync?
------------
-
-* Same as above except you run serversync.jar from the mods folder before starting up minecraft.
 
 Compiling
 --------------
@@ -121,27 +108,11 @@ Then change the working directory of your eclipse to
 
 Have at it.
 
-I don't expect these instructionis to change, but there will undoubtedly come a point where everyone has moved on from minecraft, forge makes some major changes that I don't want to keep up with, or I simply lose interest in maintaining this project.
-
 What you should expect to see
 --------------
 
-When the game starts up you will see a very lightweight menu.
+When the program starts up you will see a very lightweight console with general information on progress etc.
 
-![Start Screen](/previewImages/startScreen.bmp)
+![Information Console](http://s16.postimg.org/swag8elmt/Serversync_Grab.jpg)
 
-Upon clicking the connect button, the client will start checking for updates.
-
-![Downloading](/previewImages/downloading.bmp)
-
-If there was a download to be had, the mod will notify the user.
-
-![Relaunch](/previewImages/relaunch.bmp)
-
-If the user decides to click no and then connect again it will tell the user an update is pending.
-
-![Click Twice](/previewImages/clickTwice.bmp)
-
-A similar error message will appear if the server cannot be found or there is some exception in the mod while downloading updates. All these errors are solved simply by restarting minecraft and making sure the server is up. If there is nothing to download it will automatically connect to user to the server.
-
-![Connected](/previewImages/connected.bmp)
+Error messages will appear if the server cannot be found or there is some exception in the mod while downloading updates. All these errors should be fairly self explanatory and easy to fix.
