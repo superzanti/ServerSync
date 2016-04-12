@@ -19,8 +19,8 @@ import net.minecraftforge.common.config.Property;
 
 public class ServerSyncConfig {
 	protected static Configuration config;
-	protected static String SERVER_IP;
-	protected static int SERVER_PORT;
+	public static String SERVER_IP;
+	public static int SERVER_PORT;
 	protected static int MINECRAFT_PORT;
 	protected static String SECURE_CHECK;
 	protected static String SECURE_CHECKMODS;
@@ -30,7 +30,8 @@ public class ServerSyncConfig {
 	protected static String SECURE_EXISTS;
 	protected static String SECURE_EXIT;
 	public static final String GET_CONFIG = "GIMME";
-	public static boolean pullServerConfig = false;
+	public static boolean pullServerConfig = true;
+	public static boolean configPresent = false;
 	protected static List<String> ClientMods = new ArrayList<String>();
 	public static Boolean PUSH_CLIENT_MODS;
 	public static List<String> IGNORE_LIST;
@@ -54,14 +55,6 @@ public class ServerSyncConfig {
 		config = new Configuration(configFile);
 		config.load();
 		setupConfig();
-	}
-	
-	public static void setServerIp(String ip) {
-		SERVER_IP = ip;
-	}
-	
-	public static void setServerPort(int port) {
-		SERVER_PORT = port;
 	}
 
 	public static void getServerDetailsDirty(Path configFile) throws IOException {
