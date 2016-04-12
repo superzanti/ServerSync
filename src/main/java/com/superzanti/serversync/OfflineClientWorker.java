@@ -519,7 +519,7 @@ public class OfflineClientWorker implements Runnable {
 			fullLog.add("All of serversync's sockets to the server have been closed.");
 			if (errorInUpdates) {
 				updateLogs(
-						"Errors occured, please check serversync.cfg has been set up correctly. For a detailed log check the logs folder in your minecraft directory");
+						"Errors occured, please check ip/port details are correct. For a detailed log check the logs folder in your minecraft directory");
 			}
 		}
 
