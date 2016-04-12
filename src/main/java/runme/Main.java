@@ -235,11 +235,21 @@ public class Main {
 			break;
 		default:
 			if (!error) {
+				//TODO disable sync button untill finished
 				updateText("Starting update process...");
+				toggleButton();
 				t = new Thread(updateMods);
 				t.start();
 			}
 			break;
+		}
+	}
+	
+	public static void toggleButton() {
+		if (B_sync.isEnabled()) {
+			B_sync.setEnabled(false);
+		} else {
+			B_sync.setEnabled(true);
 		}
 	}
 

@@ -521,6 +521,7 @@ public class OfflineClientWorker implements Runnable {
 				updateLogs(
 						"Errors occured, please check ip/port details are correct. For a detailed log check the logs folder in your minecraft directory");
 			}
+			Main.toggleButton();
 		}
 
 		try {
