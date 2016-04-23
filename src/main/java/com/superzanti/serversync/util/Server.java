@@ -20,6 +20,12 @@ import com.superzanti.serversync.ServerSyncConfig;
 
 import runme.Main;
 
+/**
+ * Interacts with a server running serversync
+ * 
+ * @author Rheimus
+ *
+ */
 public class Server {
 
 	public final String IP_ADDRESS;

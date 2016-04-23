@@ -2,6 +2,11 @@ package com.superzanti.serversync.util;
 
 import runme.Main;
 
+/**
+ * Manager for serversyncs logs
+ * @author Rheimus
+ *
+ */
 public class Logger {
 	private Log fullLog;
 	private Log userLog;
