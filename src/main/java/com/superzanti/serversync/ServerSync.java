@@ -2,6 +2,7 @@ package com.superzanti.serversync;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.apache.logging.log4j.Logger;
@@ -9,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import com.superzanti.lib.RefStrings;
 import com.superzanti.serversync.proxy.ClientProxy;
 import com.superzanti.serversync.proxy.CommonProxy;
-import com.superzanti.serversync.util.GuiScreenHandler;
 
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
@@ -37,10 +37,13 @@ public class ServerSync {
 
 		// Grab the configuration file and load in the values
 		if (proxy.isServer()) {
-			try {
-				Files.createDirectories(Paths.get("clientmods/"));
-			} catch (IOException e) {
-				logger.error("Could not create clientmods directory");
+			Path clientOnlyMods = Paths.get("clientmods/");
+			if (!Files.exists(clientOnlyMods)) {				
+				try {
+					Files.createDirectories(clientOnlyMods);
+				} catch (IOException e) {
+					logger.error("Could not create clientmods directory");
+				}
 			}
 		}
 		ServerSyncConfig.init(PreEvent);
@@ -49,9 +52,7 @@ public class ServerSync {
 		// Client side
 		if (proxy.isClient()) {
 			logger.info("I am a client");
-			ClientProxy.newClient();
-			MinecraftForge.EVENT_BUS.register(ClientProxy.getClient());
-			MinecraftForge.EVENT_BUS.register(new GuiScreenHandler());
+			MinecraftForge.EVENT_BUS.register(new ClientProxy());
 		}
 
 		// Server side
@@ -61,6 +62,5 @@ public class ServerSync {
 			Thread syncthread = new Thread(syncserver);
 			syncthread.start();
 		}
-		return;
 	}
 }
