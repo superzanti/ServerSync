@@ -14,30 +14,35 @@ import java.util.List;
 import com.superzanti.serversync.util.PathUtils;
 
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 
 public class ServerSyncConfig {
-	protected static Configuration config;
+	public static Configuration config;
 	public static String SERVER_IP;
 	public static int SERVER_PORT;
-	protected static int MINECRAFT_PORT;
-	protected static String SECURE_CHECK;
-	protected static String SECURE_CHECKMODS;
-	protected static String SECURE_RECURSIVE;
-	protected static String SECURE_CHECKSUM;
-	protected static String SECURE_UPDATE;
-	protected static String SECURE_EXISTS;
-	protected static String SECURE_EXIT;
-	public static final String GET_CONFIG = "GIMME";
-	public static boolean pullServerConfig = true;
-	public static boolean configPresent = false;
-	protected static List<String> ClientMods = new ArrayList<String>();
+	public static int MINECRAFT_PORT;
+	public static String SECURE_CHECK;
+	public static String SECURE_CHECKMODS;
+	public static String SECURE_RECURSIVE;
+	public static String SECURE_CHECKSUM;
+	public static String SECURE_UPDATE;
+	public static String SECURE_EXISTS;
+	public static String SECURE_EXIT;
 	public static Boolean PUSH_CLIENT_MODS;
+	public static final String GET_CONFIG = "GIMME";
+	public static List<String> ClientMods = new ArrayList<String>();
 	public static List<String> IGNORE_LIST;
-	public static int BUTTON_ID;
+	public static List<String> INCLUDE_LIST;
 	public static String LAST_UPDATE;
 	private static Property ignoreList;
+	private static Property includeList;
+	public static boolean pullServerConfig = true;
+	public static boolean configPresent = false;
+
+	@Deprecated
+	public static int BUTTON_ID;
 
 	/**
 	 * Loads/Initializes config parameters from serversync.cfg
@@ -47,17 +52,26 @@ public class ServerSyncConfig {
 	 */
 	public static void init(FMLPreInitializationEvent PreEvent) {
 		config = new Configuration(PreEvent.getSuggestedConfigurationFile());
-		config.load();
-		setupConfig();
+		try {
+			setupConfig();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public static void init(File configFile) {
 		config = new Configuration(configFile);
-		config.load();
-		setupConfig();
+		try {
+			setupConfig();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public static void getServerDetailsDirty(Path configFile) throws IOException {
+		//TODO read as proper file format?
 		BufferedReader br = Files.newBufferedReader(configFile);
 		String chars = "";
 		while (true) {
@@ -69,31 +83,21 @@ public class ServerSyncConfig {
 		}
 		chars = chars.replaceAll("[}{]", " ");
 		// System.out.println(chars);
-		String port = getChunk(chars, "MINECRAFT_PORT=").trim();
-		String ip = getChunk(chars, "SERVER_IP=").trim();
-		List<String> ignoredFiles = getArray(chars, "IGNORE_LIST");
-		String serverPort = getChunk(chars, "SERVER_PORT=").trim();
-		String secureCheck = getChunk(chars, "SECURE_CHECK=").trim();
-		String secureCheckMods = getChunk(chars, "SECURE_CHECKMODS=").trim();
-		String secureRecursive = getChunk(chars, "SECURE_RECURSIVE=").trim();
-		String secureChecksum = getChunk(chars, "SECURE_CHECKSUM=").trim();
-		String secureUpdate = getChunk(chars, "SECURE_UPDATE=").trim();
-		String secureExists = getChunk(chars, "SECURE_EXISTS=").trim();
-		String secureExit = getChunk(chars, "SECURE_EXIT=").trim();
-		String lastUpdate = getChunk(chars, "LAST_UPDATE=").trim();
+		MINECRAFT_PORT = Integer.parseInt(getChunk(chars, "MINECRAFT_PORT=").trim());
+		SERVER_IP = getChunk(chars, "SERVER_IP=").trim();
+		SERVER_PORT = Integer.parseInt(getChunk(chars, "SERVER_PORT=").trim());
+		SECURE_CHECK = getChunk(chars, "SECURE_CHECK=").trim();
+		SECURE_CHECKMODS = getChunk(chars, "SECURE_CHECKMODS=").trim();
+		SECURE_RECURSIVE = getChunk(chars, "SECURE_RECURSIVE=").trim();
+		SECURE_CHECKSUM = getChunk(chars, "SECURE_CHECKSUM=").trim();
+		SECURE_UPDATE = getChunk(chars, "SECURE_UPDATE=").trim();
+		SECURE_EXISTS = getChunk(chars, "SECURE_EXISTS=").trim();
+		SECURE_EXIT = getChunk(chars, "SECURE_EXIT=").trim();
+		LAST_UPDATE = getChunk(chars, "LAST_UPDATE=").trim();
+		PUSH_CLIENT_MODS = Boolean.valueOf(getChunk(chars, "PushClientMods=").trim());
+		IGNORE_LIST = getArray(chars, "IGNORE_LIST");
+		INCLUDE_LIST = getArray(chars, "INCLUDE_LIST");
 
-		SERVER_IP = ip;
-		SERVER_PORT = Integer.parseInt(serverPort);
-		IGNORE_LIST = ignoredFiles;
-		MINECRAFT_PORT = Integer.parseInt(port);
-		SECURE_CHECK = secureCheck;
-		SECURE_CHECKMODS = secureCheckMods;
-		SECURE_RECURSIVE = secureRecursive;
-		SECURE_CHECKSUM = secureChecksum;
-		SECURE_UPDATE = secureUpdate;
-		SECURE_EXISTS = secureExists;
-		SECURE_EXIT = secureExit;
-		LAST_UPDATE = lastUpdate;
 		System.out.println("finished loading config");
 	}
 
@@ -117,7 +121,16 @@ public class ServerSyncConfig {
 		return proc;
 	}
 
-	private static void setupConfig() {
+	private static void setupConfig() throws IOException {
+		//TODO add accept client mods for client config file
+		config.load();
+		// Attempt to reset config file if old value is detected
+		if (config.hasCategory("ignoredfiles")) {			
+			ServerSync.logger.info("Resetting config file");
+			config.removeCategory(new ConfigCategory("ignoredfiles"));
+			config.removeCategory(new ConfigCategory(Configuration.CATEGORY_GENERAL));
+			config.removeCategory(new ConfigCategory("gui"));
+		}
 		SERVER_IP = config.getString("SERVER_IP", "ServerConnection", "127.0.0.1", "The IP address of the server");
 		SERVER_PORT = config.getInt("SERVER_PORT", "ServerConnection", 38067, 1, 49151,
 				"The port that your server will be serving on");
@@ -139,29 +152,24 @@ public class ServerSyncConfig {
 		SECURE_EXIT = config.getString("SECURE_EXIT", "ServerEncryption", "f24f62eeb789199b9b2e467df3b1876b",
 				"The exit command security key phrase");
 
-		PUSH_CLIENT_MODS = config.getBoolean("PushClientMods", Configuration.CATEGORY_GENERAL, false,
+		PUSH_CLIENT_MODS = config.getBoolean("PUSH_CLIENT_MODS", Configuration.CATEGORY_GENERAL, false,
 				"set true to push client side mods from clientmods directory, set on server");
 
-		List<String> defaultList = new ArrayList<String>();
-		defaultList.add("./mods/CustomMainMenu-MC1.7.10-1.5.jar");
-		defaultList.add("./config/CustomMainMenu/mainmenu.json");
-		defaultList.add("./config/forge.cfg");
-		defaultList.add("./config/forgeChunkLoading.cfg");
-		defaultList.add("./config/splash.properties");
-		defaultList.add("./config/NEI/client.cfg");
-
-		ignoreList = config.get("IgnoredFiles", "IGNORE_LIST", defaultList.toArray(new String[] {}),
-				"These files are ignored by serversync, list auto updates with files added to the clientmods directory. \r\nDO NOT IGNORE serversync.cfg");
+		ignoreList = config.get("Rules", "MOD_IGNORE_LIST", new String[]{},
+				"These mods are ignored by serversync, list auto updates with mods added to the clientmods directory.");
+		
+		includeList = config.get("Rules", "CONFIG_INCLUDE_LIST", new String[]{},
+				"These configs are included, by default configs are not synced.");
 
 		if (PUSH_CLIENT_MODS) {
 			String[] oldList = ignoreList.getStringList();
 			Path clientMods = Paths.get("clientmods/");
-			ArrayList<String> files = PathUtils.fileListDeep(clientMods);
+			ArrayList<Path> files = PathUtils.fileListDeep(clientMods);
 			ArrayList<String> saveableFiles = new ArrayList<String>();
 
-			for (String path : files) {
+			for (Path path : files) {
 				boolean found = false;
-				String saveable = "./" + path.replace("\\", "/").replace("clientmods", "mods");
+				String saveable = path.getFileName().toString();
 				// Duplicate check
 				for (String oldPath : oldList) {
 					if (oldPath.equals(saveable)) {
@@ -187,9 +195,7 @@ public class ServerSyncConfig {
 		}
 
 		IGNORE_LIST = Arrays.asList(ignoreList.getStringList());
-
-		BUTTON_ID = config.getInt("ButtonID", "GUI", 6001, 0, 2147483647,
-				"The ID of the button that connects to the server and updates");
+		INCLUDE_LIST = Arrays.asList(includeList.getStringList());
 
 		LAST_UPDATE = config.getString("LAST_UPDATE", "StorageVariables", "20150608_000500",
 				"DO NOT EDIT THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! (If you are a server feel free to change it as much as you want to update your clients)");

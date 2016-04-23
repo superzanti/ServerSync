@@ -8,16 +8,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Map;
 
-import com.google.common.collect.Maps;
 import com.superzanti.serversync.util.Md5;
+import com.superzanti.serversync.util.Mod;
 
-import cpw.mods.fml.common.Loader;
-import cpw.mods.fml.common.ModContainer;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import runme.Main;
@@ -32,19 +27,21 @@ public class ServerWorker implements Runnable {
 	private static Socket clientsocket;
 	private static ObjectInputStream ois;
 	private static ObjectOutputStream oos;
-    private static ArrayList<String> allList = new ArrayList<String>();
-    private static ArrayList<String> clientList = new ArrayList<String>();
+	// Contains all mods on the server, including client-side mods etc
+    private static ArrayList<Mod> allList = new ArrayList<Mod>();
+    // Contians mods located in the servers clientmods directory
+    private static ArrayList<Mod> clientOnlyList = new ArrayList<Mod>();
 	
-	protected ServerWorker(Socket socket, ArrayList<String> allFiles, ServerSocket theServer){
+	protected ServerWorker(Socket socket, ArrayList<Mod> allFiles, ServerSocket theServer){
 		clientsocket = socket;
 		allList = allFiles;
 		ServerSync.logger.info("Connection established with " + clientsocket);
 		return;
 	}
 	
-	protected ServerWorker(Socket socket, ArrayList<String> allFiles, ArrayList<String> clientMods, ServerSocket theServer) {
+	protected ServerWorker(Socket socket, ArrayList<Mod> allFiles, ArrayList<Mod> clientMods, ServerSocket theServer) {
 		this(socket,allFiles,theServer);
-		clientList = clientMods;
+		clientOnlyList = clientMods;
 		return;
 	}
 
@@ -65,23 +62,19 @@ public class ServerWorker implements Runnable {
 					oos.flush();
 				}
 				
-				if(message.equals(ServerSyncConfig.SECURE_CHECKMODS)){
-					Map<String,ModContainer> serverModList_ = Maps.newHashMap(Loader.instance().getIndexedModList());
-					Map<String,ModContainer> serverModList = Maps.newHashMap(Loader.instance().getIndexedModList());
-					for (Map.Entry<String, ModContainer> modEntry : serverModList_.entrySet()){
-						Path modPath = Paths.get(modEntry.getValue().getSource().getAbsolutePath());
-						Path rootPath = Paths.get("").toAbsolutePath();
-						String relativeModPath = "./" + rootPath.relativize(modPath);
-						if (ServerSyncConfig.IGNORE_LIST.contains(relativeModPath.replace('\\',  '/'))){
-							serverModList.remove(modEntry.getKey());
-						}
-					}
+				if(message.equals(ServerSyncConfig.SECURE_CHECKMODS)) {
+					@SuppressWarnings("unchecked")
+					ArrayList<String> serverModList = Mod.listModNames(allList);
 					ServerSync.logger.info("Syncable mods are: " + serverModList.toString());
-					oos.writeObject((String)serverModList.toString());
+					oos.writeObject(serverModList);
 					oos.flush();
 				}
 				
 				if(message.equals(ServerSyncConfig.SECURE_RECURSIVE)) {
+					/*ArrayList<String> ml = new ArrayList<String>();
+					for (Mod mod : allList) {
+						ml.add(mod.MODPATH.toString());
+					}*/
 					oos.writeObject(allList);
 					oos.flush();
 				}
@@ -94,10 +87,12 @@ public class ServerWorker implements Runnable {
 					oos.flush();
 				}
 				
+				/*// Not currently in use as clientmods are included in allList
 				if(message.equals(Main.SECURE_PUSH_CLIENTMODS)) {
-					oos.writeObject(clientList);
+					oos.writeObject(clientOnlyList);
 					oos.flush();
 				}
+				*/
 				
 				if(message.equals(ServerSyncConfig.SECURE_UPDATE)) {
 					ServerSync.logger.info("Writing file to client...");
@@ -138,14 +133,28 @@ public class ServerWorker implements Runnable {
 				}
 				
 				if(message.equals(ServerSyncConfig.SECURE_EXISTS)) {
-					String theFile = (String) ois.readObject();
-					File f = new File(theFile);
-					if(f.exists() && !f.isDirectory()) {
-						oos.writeObject("true");
+					String theMod = (String) ois.readObject();
+					boolean exists = false;
+					for(Mod m : allList) {
+						if (m.fileName.equals(theMod)) {
+							exists = true;
+							break;
+						}
+					}
+					if (!exists) {
+						for(Mod m : clientOnlyList) {
+							if (m.fileName.equals(theMod)) {
+								exists = true;
+								break;
+							}
+						}
+					}
+					if(exists) {
+						oos.writeBoolean(true);
 						oos.flush();
 					}
 					else {
-						oos.writeObject("false");
+						oos.writeBoolean(false);
 						oos.flush();
 					}
 				}
