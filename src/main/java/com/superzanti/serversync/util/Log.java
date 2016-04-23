@@ -48,7 +48,6 @@ public class Log {
 			@Override
 			public void run() {
 				try {
-					
 					Files.createDirectories(logsDir);
 					Files.write(log, logContent.toString().getBytes());
 				} catch (IOException e) {

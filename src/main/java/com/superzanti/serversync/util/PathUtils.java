@@ -1,11 +1,14 @@
 package com.superzanti.serversync.util;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.stream.Stream;
 
 public class PathUtils {
 
@@ -122,21 +125,26 @@ public class PathUtils {
 		return contents.listFiles();
 	}
 
-	public static ArrayList<String> fileListDeep(Path dir) {
-		File f = dir.toFile();
-		File[] files = f.listFiles();
-		ArrayList<String> dirList = new ArrayList<String>();
-		// Loop through all the directories and only add to the list if it's a
-		// file
-		if (files != null) {
-			for (File file : files) {
-				if (file.isDirectory()) {
-					dirList.addAll(fileListDeep(Paths.get(file.getPath())));
-				} else {
-					dirList.add(file.toString());
+	public static ArrayList<Path> fileListDeep(Path dir) {
+		try {
+			Stream<Path> ds = Files.walk(dir);
+			
+			ArrayList<Path> dirList = new ArrayList<Path>();
+			
+			Iterator<Path> it = ds.iterator();
+			while(it.hasNext()) {
+				Path tp = it.next();
+				// discard directories
+				if(!Files.isDirectory(tp)) {
+					dirList.add(tp);
 				}
 			}
+			ds.close();
+		
+			return dirList;
+		} catch(IOException e) {
+			System.out.println("Could not traverse directory");
 		}
-		return dirList;
+		return null;
 	}
 }

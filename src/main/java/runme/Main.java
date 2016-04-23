@@ -13,14 +13,13 @@ import java.nio.file.Paths;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.KeyStroke;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import com.sun.glass.events.KeyEvent;
@@ -29,15 +28,14 @@ import com.superzanti.serversync.ServerSyncConfig;
 
 public class Main {
 	private static Delete deleteOldMods = new Delete();
-	private static OfflineClientWorker updateMods = new OfflineClientWorker();
 
 	public static final String SECURE_FILESIZE = "11b4278c7e5a79003db77272c1ed2cf5";
 	public static final String SECURE_PUSH_CLIENTMODS = "0ad95bb1734520dc1fa3c737f8a57d91";
 	private static int mode = 10;
 
 	private static JTextArea TA_info = new JTextArea();
-	private static JTextArea TA_ipAddress = new JTextArea();
-	private static JTextArea TA_port = new JTextArea();
+	private static JTextField TF_ipAddress = new JTextField();
+	private static JTextField TF_port = new JTextField();
 	private static JButton B_sync = new JButton();
 	private static JFrame F_root;
 	private static JPanel P_serverDetails;
@@ -55,18 +53,14 @@ public class Main {
 		P_serverDetails.setPreferredSize(new Dimension(143, 300));
 
 		B_sync.setPreferredSize(sDetailsElements);
-		TA_ipAddress.setPreferredSize(sDetailsElements);
-		TA_port.setPreferredSize(sDetailsElements);
+		TF_ipAddress.setPreferredSize(sDetailsElements);
+		TF_port.setPreferredSize(sDetailsElements);
 
 		B_sync.setToolTipText("Starts sync process");
 		B_sync.setText("Sync");
-		TA_ipAddress.setOpaque(true);
-		TA_port.setOpaque(true);
-		TA_ipAddress.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), "none");
-		TA_ipAddress.getInputMap().put(KeyStroke.getKeyStroke("TAB"), "none");
-		TA_port.setInputMap(JComponent.WHEN_FOCUSED, TA_ipAddress.getInputMap());
-
-		TA_ipAddress.addKeyListener(new KeyListener() {
+		TF_ipAddress.setOpaque(true);
+		TF_port.setOpaque(true);
+		TF_ipAddress.addKeyListener(new KeyListener() {
 
 			@Override
 			public void keyTyped(java.awt.event.KeyEvent e) {
@@ -76,7 +70,7 @@ public class Main {
 			@Override
 			public void keyReleased(java.awt.event.KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB) {
-					TA_ipAddress.transferFocus();
+					TF_ipAddress.transferFocus();
 				}
 			}
 
@@ -85,7 +79,7 @@ public class Main {
 				return;
 			}
 		});
-		TA_port.addKeyListener(new KeyListener() {
+		TF_port.addKeyListener(new KeyListener() {
 
 			@Override
 			public void keyTyped(java.awt.event.KeyEvent e) {
@@ -109,16 +103,16 @@ public class Main {
 
 		JLabel ipLabel = new JLabel("IP Address");
 		JLabel portLabel = new JLabel("Port");
-		ipLabel.setLabelFor(TA_ipAddress);
-		portLabel.setLabelFor(TA_port);
+		ipLabel.setLabelFor(TF_ipAddress);
+		portLabel.setLabelFor(TF_port);
 
 		JScrollPane sp_console = new JScrollPane(TA_info);
 		sp_console.setPreferredSize(new Dimension(450, 300));
 
 		P_serverDetails.add(ipLabel);
-		P_serverDetails.add(TA_ipAddress);
+		P_serverDetails.add(TF_ipAddress);
 		P_serverDetails.add(portLabel);
-		P_serverDetails.add(TA_port);
+		P_serverDetails.add(TF_port);
 		P_serverDetails.add(B_sync);
 
 		TA_info.setLineWrap(true);
@@ -153,11 +147,11 @@ public class Main {
 				e.printStackTrace();
 				return;
 			}
-			TA_ipAddress.setText(ServerSyncConfig.SERVER_IP);
-			TA_port.setText(Integer.toString(ServerSyncConfig.SERVER_PORT));
+			TF_ipAddress.setText(ServerSyncConfig.SERVER_IP);
+			TF_port.setText(Integer.toString(ServerSyncConfig.SERVER_PORT));
 			ServerSyncConfig.pullServerConfig = false;
 			ServerSyncConfig.configPresent = true;
-			TA_port.requestFocus();
+			TF_port.requestFocus();
 		}
 	}
 
@@ -195,6 +189,7 @@ public class Main {
 			@Override
 			public void run() {
 				F_root.setTitle("Serversync - " + progress + "%");
+				B_sync.setText(progress + "%");
 			}
 
 		});
@@ -203,15 +198,15 @@ public class Main {
 	private static void startWorker(int mode) {
 		boolean error = false;
 		Thread t;
-		if (TA_ipAddress.getText().equals("") || TA_port.getText().equals("")) {
+		if (TF_ipAddress.getText().equals("") || TF_port.getText().equals("")) {
 			updateText("No config found, requesting details");
-			if (TA_ipAddress.getText().equals("")) {
+			if (TF_ipAddress.getText().equals("")) {
 				String serverIP = (String) JOptionPane.showInputDialog("Server IP address");
-				TA_ipAddress.setText(serverIP);
+				TF_ipAddress.setText(serverIP);
 			}
-			if (TA_port.getText().equals("")) {
+			if (TF_port.getText().equals("")) {
 				String serverPort = (String) JOptionPane.showInputDialog("Server Port (numbers only)");
-				TA_port.setText(serverPort);
+				TF_port.setText(serverPort);
 			}
 			ServerSyncConfig.pullServerConfig = true;
 		}
@@ -219,13 +214,13 @@ public class Main {
 
 		int port = 0;
 		try {
-			port = Integer.parseInt(TA_port.getText());
+			port = Integer.parseInt(TF_port.getText());
 		} catch (NumberFormatException e) {
 			error = true;
 			updateText("Invalid port, please use only numbers");
 		}
 		ServerSyncConfig.SERVER_PORT = port;
-		ServerSyncConfig.SERVER_IP = TA_ipAddress.getText();
+		ServerSyncConfig.SERVER_IP = TF_ipAddress.getText();
 
 		switch (mode) {
 		case 0:
@@ -235,10 +230,9 @@ public class Main {
 			break;
 		default:
 			if (!error) {
-				//TODO disable sync button untill finished
 				updateText("Starting update process...");
 				toggleButton();
-				t = new Thread(updateMods);
+				t = new Thread(new OfflineClientWorker());
 				t.start();
 			}
 			break;
@@ -250,6 +244,7 @@ public class Main {
 			B_sync.setEnabled(false);
 		} else {
 			B_sync.setEnabled(true);
+			B_sync.setText("Sync");
 		}
 	}
 
