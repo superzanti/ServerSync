@@ -24,6 +24,10 @@ Don't trust anyone with this mod. This mod allows ANY server running it to put A
 
 RECENT UPDATES:
 -----------
+Version 2.5.0
+* Added more functionality to the GUI
+* Changed Ignoring rules to whitelist for configs
+
 Version 2.4.7
 * Added support for flans mod content packs 
 
