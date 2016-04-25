@@ -117,6 +117,6 @@ What you should expect to see
 
 When the program starts up you will see a very lightweight console with general information on progress etc.
 
-![Information Console](http://s16.postimg.org/swag8elmt/Serversync_Grab.jpg)
+![Information Console](http://s31.postimg.org/bxc807u63/ss_snap.png)
 
 Error messages will appear if the server cannot be found or there is some exception in the mod while downloading updates. All these errors should be fairly self explanatory and easy to fix.
