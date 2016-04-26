@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.Mod;
+import com.superzanti.serversync.util.SyncFile;
 import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.Server;
 
@@ -20,18 +20,18 @@ import runme.Main;
  * @author Rheimus
  *
  */
-public class OfflineClientWorker implements Runnable {
+public class ClientWorker implements Runnable {
 
 	private boolean errorInUpdates;
 	private boolean updateHappened;
 	private boolean finished;
 	private Logger logs;
 
-	private List<Mod> clientMods;
+	private List<SyncFile> clientFiles;
 
-	public OfflineClientWorker() {
+	public ClientWorker() {
 		logs = new Logger();
-		clientMods = new ArrayList<Mod>();
+		clientFiles = new ArrayList<SyncFile>();
 		errorInUpdates = false;
 		updateHappened = false;
 		finished = false;
@@ -67,18 +67,17 @@ public class OfflineClientWorker implements Runnable {
 
 	@Override
 	public void run() {
-		Server server = new Server(this, ServerSyncConfig.SERVER_IP, ServerSyncConfig.SERVER_PORT);
+		Server server = new Server(this, SyncConfig.SERVER_IP, SyncConfig.SERVER_PORT);
 		boolean updateNeeded = false;
 		updateHappened = false;
-		//TODO fix client mod pushing
 
 		try {
 			// Get clients mod list
 			List<Path> cMods = PathUtils.fileListDeep(Paths.get("../mods/"));
 			List<Path> cConfigs = PathUtils.fileListDeep(Paths.get("../config/"));
 			for (Path path : cMods) {
-				Mod m = new Mod(path);
-				clientMods.add(m);
+				SyncFile f = new SyncFile(path);
+				clientFiles.add(f);
 			}
 
 			server.connect();
@@ -86,11 +85,11 @@ public class OfflineClientWorker implements Runnable {
 			server.getConfig();
 			for (Path path : cConfigs) {
 				String fileName = path.getFileName().toString();
-				if (ServerSyncConfig.INCLUDE_LIST.contains(fileName)) {
-					clientMods.add(new Mod(path,false));
+				if (SyncConfig.INCLUDE_LIST.contains(fileName)) {
+					clientFiles.add(new SyncFile(path,false));
 				}
 			}
-			updateNeeded = server.isUpdateNeeded(clientMods);
+			updateNeeded = server.isUpdateNeeded(clientFiles);
 
 			if (updateNeeded) {
 				updateHappened = true;
@@ -98,41 +97,40 @@ public class OfflineClientWorker implements Runnable {
 
 				// get all files on server
 				logs.updateLogs("Getting mods...");
-				ArrayList<Mod> serverMods = server.getFiles();
+				ArrayList<SyncFile> serverFiles = server.getFiles();
 
-				logs.updateLogs("Ignoring: " + ServerSyncConfig.IGNORE_LIST, Logger.FULL_LOG);
+				logs.updateLogs("Ignoring: " + SyncConfig.IGNORE_LIST, Logger.FULL_LOG);
 				// run calculations to figure out how big the bar is
-				float numberOfFiles = clientMods.size() + serverMods.size();
+				float numberOfFiles = clientFiles.size() + serverFiles.size();
 				float percentScale = numberOfFiles / 100;
 				float currentPercent = 0;
 
 				/* UPDATING */
 				// Client only mods are added on the server side and treated as normal mods by the client
-				for (Mod mod : serverMods) {
+				for (SyncFile file : serverFiles) {
 					// Update status
 					currentPercent++;
 
-					Path clientFile = mod.CLIENT_MODPATH;
-					System.out.println(mod.CLIENT_MODPATH.toString());
+					Path clientPath = file.CLIENT_MODPATH;
 					// Get file at rPath location
-					boolean exists = Files.exists(clientFile);
+					boolean exists = Files.exists(clientPath);
 
 					// Exists
 					if (exists) {
-						Mod clientMod = new Mod(clientFile);
-						if (!clientMod.compare(mod)) {
-							server.updateFile(mod.MODPATH.toString(), clientFile.toFile());
+						SyncFile clientFile = new SyncFile(clientPath);
+						if (!clientFile.compare(file)) {
+							server.updateFile(file.MODPATH.toString(), clientPath.toFile());
 						} else {
-							logs.updateLogs(mod.fileName + " is up to date");
+							logs.updateLogs(file.fileName + " is up to date");
 						}
 					} else {
 						// only need to check for ignore here as we are working
 						// on the servers file tree
-						if (mod.isSetToIgnore() && !mod.clientOnlyMod) {
-							logs.updateLogs("<>" + mod.fileName + " set to ignore");
+						if (file.isSetToIgnore() && !file.clientOnlyMod) {
+							logs.updateLogs("<>" + file.fileName + " set to ignore");
 						} else {
-							logs.updateLogs(mod.fileName + " Does not exist...", Logger.FULL_LOG);
-							server.updateFile(mod.MODPATH.toString(), clientFile.toFile());
+							logs.updateLogs(file.fileName + " Does not exist...", Logger.FULL_LOG);
+							server.updateFile(file.MODPATH.toString(), clientPath.toFile());
 						}
 					}
 					Main.updateProgress((int) (currentPercent / percentScale));
@@ -140,27 +138,27 @@ public class OfflineClientWorker implements Runnable {
 
 				/* DELETION */
 				// Parse clients file tree
-				for (Mod mod : clientMods) {
+				for (SyncFile file : clientFiles) {
 					currentPercent++;
 
 					// check for files that need to be deleted
-					if (mod.isSetToIgnore()) {
-						logs.updateLogs(mod.fileName + " set to ignore", Logger.FULL_LOG);
+					if (file.isSetToIgnore()) {
+						logs.updateLogs(file.fileName + " set to ignore", Logger.FULL_LOG);
 					} else {
 						// Not present in server list
-						logs.updateLogs("Checking client's " + mod.fileName + " against server", Logger.FULL_LOG);
-						boolean exists = server.modExists(mod);
+						logs.updateLogs("Checking client's " + file.fileName + " against server", Logger.FULL_LOG);
+						boolean exists = server.modExists(file);
 						if (!exists) {
-							logs.updateLogs(mod.fileName + " Does not match... attempting phase 1 delete",
+							logs.updateLogs(file.fileName + " Does not match... attempting phase 1 delete",
 									Logger.FULL_LOG);
 
 							// File fails to delete
-							if (!mod.delete()) {
-								logs.updateLogs(mod.fileName + "Failed to delete flagging for deleteOnExit",
+							if (!file.delete()) {
+								logs.updateLogs(file.fileName + "Failed to delete flagging for deleteOnExit",
 										Logger.FULL_LOG);
-								mod.deleteOnExit();
+								file.deleteOnExit();
 							} else {
-								logs.updateLogs("<>" + mod.fileName + " deleted");
+								logs.updateLogs("<>" + file.fileName + " deleted");
 							}
 							updateHappened = true;
 						}

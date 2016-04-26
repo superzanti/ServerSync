@@ -18,7 +18,7 @@ import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 
-public class ServerSyncConfig {
+public class SyncConfig {
 	public static Configuration config;
 	public static String SERVER_IP;
 	public static int SERVER_PORT;
@@ -41,9 +41,6 @@ public class ServerSyncConfig {
 	public static boolean pullServerConfig = true;
 	public static boolean configPresent = false;
 
-	@Deprecated
-	public static int BUTTON_ID;
-
 	/**
 	 * Loads/Initializes config parameters from serversync.cfg
 	 * 
@@ -55,7 +52,6 @@ public class ServerSyncConfig {
 		try {
 			setupConfig();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -65,7 +61,6 @@ public class ServerSyncConfig {
 		try {
 			setupConfig();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

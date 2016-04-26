@@ -11,7 +11,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 import com.superzanti.serversync.util.Md5;
-import com.superzanti.serversync.util.Mod;
+import com.superzanti.serversync.util.SyncFile;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -28,20 +28,14 @@ public class ServerWorker implements Runnable {
 	private static ObjectInputStream ois;
 	private static ObjectOutputStream oos;
 	// Contains all mods on the server, including client-side mods etc
-    private static ArrayList<Mod> allList = new ArrayList<Mod>();
+    private static ArrayList<SyncFile> allList = new ArrayList<SyncFile>();
     // Contians mods located in the servers clientmods directory
-    private static ArrayList<Mod> clientOnlyList = new ArrayList<Mod>();
+    private static ArrayList<SyncFile> clientOnlyList = new ArrayList<SyncFile>();
 	
-	protected ServerWorker(Socket socket, ArrayList<Mod> allFiles, ServerSocket theServer){
+	protected ServerWorker(Socket socket, ArrayList<SyncFile> allFiles, ServerSocket theServer){
 		clientsocket = socket;
 		allList = allFiles;
 		ServerSync.logger.info("Connection established with " + clientsocket);
-		return;
-	}
-	
-	protected ServerWorker(Socket socket, ArrayList<Mod> allFiles, ArrayList<Mod> clientMods, ServerSocket theServer) {
-		this(socket,allFiles,theServer);
-		clientOnlyList = clientMods;
 		return;
 	}
 
@@ -57,20 +51,20 @@ public class ServerWorker implements Runnable {
 				String message = (String) ois.readObject();
 				ServerSync.logger.info("Received message: "+message+" from connection "+clientsocket);
 		
-				if(message.equals(ServerSyncConfig.SECURE_CHECK)) {
-					oos.writeObject(ServerSyncConfig.LAST_UPDATE);
+				if(message.equals(SyncConfig.SECURE_CHECK)) {
+					oos.writeObject(SyncConfig.LAST_UPDATE);
 					oos.flush();
 				}
 				
-				if(message.equals(ServerSyncConfig.SECURE_CHECKMODS)) {
+				if(message.equals(SyncConfig.SECURE_CHECKMODS)) {
 					@SuppressWarnings("unchecked")
-					ArrayList<String> serverModList = Mod.listModNames(allList);
+					ArrayList<String> serverModList = SyncFile.listModNames(allList);
 					ServerSync.logger.info("Syncable mods are: " + serverModList.toString());
 					oos.writeObject(serverModList);
 					oos.flush();
 				}
 				
-				if(message.equals(ServerSyncConfig.SECURE_RECURSIVE)) {
+				if(message.equals(SyncConfig.SECURE_RECURSIVE)) {
 					/*ArrayList<String> ml = new ArrayList<String>();
 					for (Mod mod : allList) {
 						ml.add(mod.MODPATH.toString());
@@ -79,7 +73,7 @@ public class ServerWorker implements Runnable {
 					oos.flush();
 				}
 				
-				if(message.equals(ServerSyncConfig.SECURE_CHECKSUM)) {
+				if(message.equals(SyncConfig.SECURE_CHECKSUM)) {
 					String theFile = (String) ois.readObject();
 					File f = new File(theFile);
 					String serverChecksum = Md5.md5String(f);
@@ -94,7 +88,7 @@ public class ServerWorker implements Runnable {
 				}
 				*/
 				
-				if(message.equals(ServerSyncConfig.SECURE_UPDATE)) {
+				if(message.equals(SyncConfig.SECURE_UPDATE)) {
 					ServerSync.logger.info("Writing file to client...");
 					String theFile = (String) ois.readObject();
 					File f = new File(theFile);
@@ -109,7 +103,7 @@ public class ServerWorker implements Runnable {
 					break;
 				}
 				
-				if(message.equals(ServerSyncConfig.GET_CONFIG)) {
+				if(message.equals(SyncConfig.GET_CONFIG)) {
 					ServerSync.logger.info("Sending config to client...");
 					File f = new File("./config/serversync.cfg");
 					byte[] buff = new byte[clientsocket.getSendBufferSize()];
@@ -132,17 +126,17 @@ public class ServerWorker implements Runnable {
 					oos.flush();
 				}
 				
-				if(message.equals(ServerSyncConfig.SECURE_EXISTS)) {
+				if(message.equals(SyncConfig.SECURE_EXISTS)) {
 					String theMod = (String) ois.readObject();
 					boolean exists = false;
-					for(Mod m : allList) {
+					for(SyncFile m : allList) {
 						if (m.fileName.equals(theMod)) {
 							exists = true;
 							break;
 						}
 					}
 					if (!exists) {
-						for(Mod m : clientOnlyList) {
+						for(SyncFile m : clientOnlyList) {
 							if (m.fileName.equals(theMod)) {
 								exists = true;
 								break;
@@ -159,7 +153,7 @@ public class ServerWorker implements Runnable {
 					}
 				}
 				
-				if(message.equals(ServerSyncConfig.SECURE_EXIT)) {
+				if(message.equals(SyncConfig.SECURE_EXIT)) {
 					break;
 				}
 			}

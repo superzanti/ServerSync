@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -100,14 +101,9 @@ public class PathUtils {
 		return pathBuilder.toString();
 	}
 
-	public static File getMinecraftDirectory(File workDir) {
-		try {
-			return new File(walkUp(1, workDir.getAbsolutePath()));
-		} catch (Exception e) {
-			// TODO get last entry of minecraft from path
-			e.printStackTrace();
-		}
-		return workDir;
+	public static Path getMinecraftDirectory() throws IOException {
+		Path minecraft = Paths.get("../");
+		return minecraft.toRealPath();
 	}
 
 	private static List<String> getPathParts(String path) {
@@ -127,22 +123,26 @@ public class PathUtils {
 
 	public static ArrayList<Path> fileListDeep(Path dir) {
 		try {
-			Stream<Path> ds = Files.walk(dir);
-			
-			ArrayList<Path> dirList = new ArrayList<Path>();
-			
-			Iterator<Path> it = ds.iterator();
-			while(it.hasNext()) {
-				Path tp = it.next();
-				// discard directories
-				if(!Files.isDirectory(tp)) {
-					dirList.add(tp);
+			if (Files.exists(dir)) {
+				Stream<Path> ds = Files.walk(dir);
+
+				ArrayList<Path> dirList = new ArrayList<Path>();
+
+				Iterator<Path> it = ds.iterator();
+				while (it.hasNext()) {
+					Path tp = it.next();
+					// discard directories
+					if (!Files.isDirectory(tp)) {
+						dirList.add(tp);
+					}
 				}
+				ds.close();
+				return dirList;
+			} else {
+				return null;
 			}
-			ds.close();
-		
-			return dirList;
-		} catch(IOException e) {
+
+		} catch (IOException e) {
 			System.out.println("Could not traverse directory");
 		}
 		return null;

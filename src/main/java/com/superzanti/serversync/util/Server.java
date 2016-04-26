@@ -8,15 +8,14 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.superzanti.serversync.OfflineClientWorker;
-import com.superzanti.serversync.ServerSyncConfig;
+import com.superzanti.serversync.ClientWorker;
+import com.superzanti.serversync.SyncConfig;
 
 import runme.Main;
 
@@ -36,47 +35,32 @@ public class Server {
 	private InetAddress host = null;
 	private Logger logs;
 
-	public Server(OfflineClientWorker caller, String ip, int port) {
+	public Server(ClientWorker caller, String ip, int port) {
 		IP_ADDRESS = ip;
 		PORT = port;
 		logs = caller.getLogger();
 	}
 
-	public boolean connect() {
-		try {
-			host = InetAddress.getByName(ServerSyncConfig.SERVER_IP);
-		} catch (UnknownHostException e) {
-			logs.updateLogs("Exception caught! - " + e, Logger.FULL_LOG);
-			logs.updateLogs("Could not find server, check your cfg settings");
-			return false;
-		}
+	public boolean connect() throws IOException {
+		host = InetAddress.getByName(SyncConfig.SERVER_IP);
 		logs.updateLogs("Establishing a socket connection to the server...", Logger.FULL_LOG);
+
 		clientSocket = new Socket();
 		logs.updateLogs("< Connecting to server >");
-		try {
-			clientSocket.connect(new InetSocketAddress(host.getHostName(), ServerSyncConfig.SERVER_PORT), 5000);
-		} catch (Exception e) {
-			logs.updateLogs("Could not connect to: " + ServerSyncConfig.SERVER_IP + ":" + ServerSyncConfig.SERVER_PORT);
-			return false;
-		}
 
-		logs.updateLogs("Socket established", Logger.FULL_LOG);
+		clientSocket.connect(new InetSocketAddress(host.getHostName(), SyncConfig.SERVER_PORT), 5000);
 
 		// write to socket using ObjectOutputStream
 		logs.updateLogs("Creating input/output streams...", Logger.FULL_LOG);
-		try {
-			oos = new ObjectOutputStream(clientSocket.getOutputStream());
-			ois = new ObjectInputStream(clientSocket.getInputStream());
-		} catch (IOException e) {
-			logs.updateLogs("Could not obtain streams", Logger.FULL_LOG);
-			return false;
-		}
+		oos = new ObjectOutputStream(clientSocket.getOutputStream());
+		ois = new ObjectInputStream(clientSocket.getInputStream());
+
 		return true;
 	}
 
 	public void exit() throws IOException {
 		logs.updateLogs("Telling server to exit...", Logger.FULL_LOG);
-		oos.writeObject(ServerSyncConfig.SECURE_EXIT);
+		oos.writeObject(SyncConfig.SECURE_EXIT);
 		oos.flush();
 	}
 
@@ -118,7 +102,7 @@ public class Server {
 
 		clientSocket = new Socket();
 		try {
-			clientSocket.connect(new InetSocketAddress(host.getHostName(), ServerSyncConfig.SERVER_PORT), 5000);
+			clientSocket.connect(new InetSocketAddress(host.getHostName(), SyncConfig.SERVER_PORT), 5000);
 		} catch (IOException e) {
 			logs.updateLogs("Could not connect to server at: " + IP_ADDRESS + ":" + PORT);
 			return false;
@@ -136,15 +120,15 @@ public class Server {
 	}
 
 	@SuppressWarnings("unchecked")
-	public boolean isUpdateNeeded(List<Mod> clientMods) {
+	public boolean isUpdateNeeded(List<SyncFile> clientMods) {
 		try {
-			// TODO fix last update functionality from config
+			// TODO check last updated information
 
-			oos.writeObject(ServerSyncConfig.SECURE_CHECKMODS);
+			oos.writeObject(SyncConfig.SECURE_CHECKMODS);
 			oos.flush();
 			// List of mod names
 			ArrayList<String> serverModNames = (ArrayList<String>) ois.readObject();
-			ArrayList<String> clientModNames = Mod.listModNames(clientMods);
+			ArrayList<String> clientModNames = SyncFile.listModNames(clientMods);
 
 			// Remove ignored mods from mod list
 			logs.updateLogs("Syncable client mods are: " + clientModNames.toString(), Logger.FULL_LOG);
@@ -163,19 +147,15 @@ public class Server {
 	}
 
 	@SuppressWarnings("unchecked")
-	public ArrayList<Mod> getFiles() throws IOException {
-		oos.writeObject(ServerSyncConfig.SECURE_RECURSIVE);
+	public ArrayList<SyncFile> getFiles() throws IOException {
+		oos.writeObject(SyncConfig.SECURE_RECURSIVE);
 		oos.flush();
 
 		try {
-			ArrayList<Mod> serverMods = new ArrayList<Mod>();
-			serverMods = (ArrayList<Mod>) ois.readObject();
-			//ArrayList<String> serverFiles = (ArrayList<String>) ois.readObject();
+			ArrayList<SyncFile> serverMods = new ArrayList<SyncFile>();
+			serverMods = (ArrayList<SyncFile>) ois.readObject();
 			logs.updateLogs("Recieved server file tree", Logger.FULL_LOG);
-			/*for (String s : serverFiles) {
-				//TODO need to get version information from server
-				serverMods.add(new Mod(Paths.get(s)));
-			}*/
+
 			return serverMods;
 		} catch (ClassNotFoundException e) {
 			logs.updateLogs("Failed to read class: " + e.getMessage(), Logger.FULL_LOG);
@@ -184,7 +164,7 @@ public class Server {
 	}
 
 	public boolean getConfig() throws IOException {
-		oos.writeObject(ServerSyncConfig.GET_CONFIG);
+		oos.writeObject(SyncConfig.GET_CONFIG);
 		oos.flush();
 
 		Path config = Paths.get("../config/serversync.cfg");
@@ -204,12 +184,12 @@ public class Server {
 
 		logs.updateLogs("Sucessfully updated config");
 		logs.updateLogs("Reloading config");
-		ServerSyncConfig.getServerDetailsDirty(config);
+		SyncConfig.getServerDetailsDirty(config);
 		return true;
 	}
 
-	public boolean modExists(Mod mod) throws IOException {
-		oos.writeObject(ServerSyncConfig.SECURE_EXISTS);
+	public boolean modExists(SyncFile mod) throws IOException {
+		oos.writeObject(SyncConfig.SECURE_EXISTS);
 		oos.flush();
 		oos.writeObject(mod.fileName);
 		oos.flush();
@@ -236,11 +216,13 @@ public class Server {
 		oos.writeObject(filePath);
 		oos.flush();
 		/*
-		Path root = Paths.get("../");
-		Path relPath = root.relativize(currentFile.toPath());
-		currentFile = relPath.toFile();
-		*/
-		
+		 * Path root = Paths.get("../"); Path relPath =
+		 * root.relativize(currentFile.toPath()); currentFile =
+		 * relPath.toFile();
+		 */
+
+		// TODO update to NIO
+
 		long fileSize = 0l;
 		boolean gotFileSize = false;
 
@@ -251,7 +233,7 @@ public class Server {
 			System.out.println("Could not get file size");
 		}
 
-		oos.writeObject(ServerSyncConfig.SECURE_UPDATE);
+		oos.writeObject(SyncConfig.SECURE_UPDATE);
 		oos.flush();
 		oos.writeObject(filePath);
 		oos.flush();

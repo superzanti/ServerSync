@@ -23,11 +23,10 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import com.sun.glass.events.KeyEvent;
-import com.superzanti.serversync.OfflineClientWorker;
-import com.superzanti.serversync.ServerSyncConfig;
+import com.superzanti.serversync.ClientWorker;
+import com.superzanti.serversync.SyncConfig;
 
 public class Main {
-	private static Delete deleteOldMods = new Delete();
 
 	public static final String SECURE_FILESIZE = "11b4278c7e5a79003db77272c1ed2cf5";
 	public static final String SECURE_PUSH_CLIENTMODS = "0ad95bb1734520dc1fa3c737f8a57d91";
@@ -142,15 +141,15 @@ public class Main {
 			System.out.println("attempting to init config file: " + config.toAbsolutePath().toString());
 			// ServerSyncConfig.init(config.toFile());
 			try {
-				ServerSyncConfig.getServerDetailsDirty(config);
+				SyncConfig.getServerDetailsDirty(config);
 			} catch (IOException e) {
 				e.printStackTrace();
 				return;
 			}
-			TF_ipAddress.setText(ServerSyncConfig.SERVER_IP);
-			TF_port.setText(Integer.toString(ServerSyncConfig.SERVER_PORT));
-			ServerSyncConfig.pullServerConfig = false;
-			ServerSyncConfig.configPresent = true;
+			TF_ipAddress.setText(SyncConfig.SERVER_IP);
+			TF_port.setText(Integer.toString(SyncConfig.SERVER_PORT));
+			SyncConfig.pullServerConfig = false;
+			SyncConfig.configPresent = true;
 			TF_port.requestFocus();
 		}
 	}
@@ -175,6 +174,7 @@ public class Main {
 	}
 
 	public static void updateText(final String string) {
+		//TODO UI appears to freeze under strain
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
@@ -208,7 +208,7 @@ public class Main {
 				String serverPort = (String) JOptionPane.showInputDialog("Server Port (numbers only)");
 				TF_port.setText(serverPort);
 			}
-			ServerSyncConfig.pullServerConfig = true;
+			SyncConfig.pullServerConfig = true;
 		}
 
 
@@ -219,20 +219,18 @@ public class Main {
 			error = true;
 			updateText("Invalid port, please use only numbers");
 		}
-		ServerSyncConfig.SERVER_PORT = port;
-		ServerSyncConfig.SERVER_IP = TF_ipAddress.getText();
+		SyncConfig.SERVER_PORT = port;
+		SyncConfig.SERVER_IP = TF_ipAddress.getText();
 
 		switch (mode) {
 		case 0:
-			updateText("Starting deletion process...");
-			t = new Thread(deleteOldMods);
-			t.start();
+			//TODO refctor this to no longer need different modes
 			break;
 		default:
 			if (!error) {
 				updateText("Starting update process...");
 				toggleButton();
-				t = new Thread(new OfflineClientWorker());
+				t = new Thread(new ClientWorker());
 				t.start();
 			}
 			break;

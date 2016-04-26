@@ -46,7 +46,7 @@ public class ServerSync {
 				}
 			}
 		}
-		ServerSyncConfig.init(PreEvent);
+		SyncConfig.init(PreEvent);
 		
 
 		// Client side

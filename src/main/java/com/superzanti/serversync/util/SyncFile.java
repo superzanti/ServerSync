@@ -17,7 +17,7 @@ import java.util.jar.JarFile;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
-import com.superzanti.serversync.ServerSyncConfig;
+import com.superzanti.serversync.SyncConfig;
 
 /**
  * Holds relevant information about mods obtianed through mcmod.info.<br>
@@ -32,13 +32,12 @@ import com.superzanti.serversync.ServerSyncConfig;
  * @author Rheimus
  *
  */
-public class Mod implements Serializable {
+public class SyncFile implements Serializable {
 	private static final long serialVersionUID = -3869215783959173682L;
 	public String version;
 	public String name;
 	public String fileName;
 	transient public Path MODPATH;
-	//TODO fix client modpath
 	transient public Path CLIENT_MODPATH;
 	public boolean clientOnlyMod = false;
 	public boolean isConfig = false;
@@ -57,10 +56,11 @@ public class Mod implements Serializable {
 	 * @param isMod
 	 * @throws IOException
 	 */
-	public Mod(Path modPath, boolean isMod) throws IOException {
+	public SyncFile(Path modPath, boolean isMod) throws IOException {
 		MODPATH = modPath;
 		Path cModPath = modPath;
 		Path root = Paths.get("../");
+		//TODO update this code chunk to be more OOP
 		if (modPath.toString().contains("clientmods")) {
 			clientOnlyMod = true;
 			cModPath = root.relativize(Paths.get(modPath.toString().replaceFirst("clientmods", "mods")));
@@ -75,15 +75,15 @@ public class Mod implements Serializable {
 			isMod = false;
 		}
 		
-		if (isMod) {
+		if (isMod && isZipJar(fileName)) {
 			populateModInformation();
 		}
 		
 		if (version == null) {
-			version = Mod.UNKNOWN_VERSION;
+			version = SyncFile.UNKNOWN_VERSION;
 		}
 		if (name == null) {
-			name = Mod.UNKNOWN_NAME;
+			name = SyncFile.UNKNOWN_NAME;
 		}
 	}
 	
@@ -92,26 +92,35 @@ public class Mod implements Serializable {
 	 * @param modPath - Path to the mod
 	 * @throws IOException
 	 */
-	public Mod(Path modPath) throws IOException {
-		// TODO make serializable
+	public SyncFile(Path modPath) throws IOException {
 		this(modPath,true);
 	}
 	
 	public boolean isSetToIgnore() {
-		if (ServerSyncConfig.IGNORE_LIST.contains(fileName)) {
+		if (SyncConfig.IGNORE_LIST.contains(fileName)) {
 			isIgnored = true;
 		}
 		return isIgnored;
 	}
 	
 	public boolean isIncluded() {
-		List<String> includes = ServerSyncConfig.INCLUDE_LIST;
+		List<String> includes = SyncConfig.INCLUDE_LIST;
 		// Strip witespace
 		String cleanedName = fileName.replaceAll(" ", "");
 		if (includes.contains(cleanedName)) {
 			return true;
 		}
 		return false;
+	}
+	
+	private boolean isZipJar(String fileName) throws IOException {
+		//TODO find better way to do this
+		boolean isZip = false;
+		if (fileName.endsWith(".zip") || fileName.endsWith(".jar")) {
+			isZip = true;
+		}
+		
+		return isZip;
 	}
 	
 	private void populateModInformation() throws IOException {
@@ -170,9 +179,9 @@ public class Mod implements Serializable {
 	 * @return True if versions are the same<br>
 	 *         False if versions are different or if version is unknown
 	 */
-	public boolean compare(Mod serversMod) {
+	public boolean compare(SyncFile serversMod) {
 		System.out.println(serversMod.version + " : " + version);
-		if (!serversMod.version.equals(Mod.UNKNOWN_VERSION)) {
+		if (!serversMod.version.equals(SyncFile.UNKNOWN_VERSION)) {
 			return this.version.equals(serversMod.version);
 		}
 		return false;
@@ -183,27 +192,24 @@ public class Mod implements Serializable {
 	}
 
 	public void deleteOnExit() {
-		// TODO NIO version of this?
-		// MODPATH.toFile().deleteOnExit(); // Old school IO method
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
 				try {
 					Files.delete(MODPATH);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
 		});
 	}
 
-	public static ArrayList<String> listModNames(List<Mod>... modLists) {
+	public static ArrayList<String> listModNames(List<SyncFile>... modLists) {
 		if (modLists != null && modLists.length > 0) {
 			ArrayList<String> names = new ArrayList<String>();
 			int len = modLists.length;
 			for (int i = 0; i < len; i++) {
-				for (Mod mod : modLists[i]) {
+				for (SyncFile mod : modLists[i]) {
 					names.add(mod.fileName);
 				}
 			}
@@ -212,12 +218,10 @@ public class Mod implements Serializable {
 		return null;
 	}
 
-	public static ArrayList<Mod> parseList(List<String> paths) throws IOException {
-		ArrayList<Mod> mods = new ArrayList<Mod>();
-		for (String path : paths) {
-			Path p = Paths.get(path);
-			mods.add(new Mod(p));
-
+	public static ArrayList<SyncFile> parseList(List<Path> paths) throws IOException {
+		ArrayList<SyncFile> mods = new ArrayList<SyncFile>();
+		for (Path path : paths) {
+			mods.add(new SyncFile(path));
 		}
 		return mods;
 	}
