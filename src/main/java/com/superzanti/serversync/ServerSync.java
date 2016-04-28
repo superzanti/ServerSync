@@ -30,12 +30,13 @@ public class ServerSync {
 
 	@EventHandler
 	public static void PreLoad(FMLPreInitializationEvent PreEvent) {
-		// MinecraftForge.EVENT_BUS.register(new SyncClient());
-
-		// setup the logger for the mod
+		// setup the minecraft logger for the server
 		logger = PreEvent.getModLog();
 
 		// Grab the configuration file and load in the values
+		SyncConfig.init(PreEvent);
+		
+		// Create clientmods directory
 		if (proxy.isServer()) {
 			Path clientOnlyMods = Paths.get("clientmods/");
 			if (!Files.exists(clientOnlyMods)) {				
@@ -46,7 +47,6 @@ public class ServerSync {
 				}
 			}
 		}
-		SyncConfig.init(PreEvent);
 		
 
 		// Client side
@@ -58,8 +58,8 @@ public class ServerSync {
 		// Server side
 		if (proxy.isServer()) {
 			logger.info("I am a server");
-			SyncServer syncserver = new SyncServer();
-			Thread syncthread = new Thread(syncserver);
+			ServerSetup setup = new ServerSetup();
+			Thread syncthread = new Thread(setup);
 			syncthread.start();
 		}
 	}
