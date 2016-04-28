@@ -8,6 +8,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import com.superzanti.serversync.util.Md5;
@@ -118,11 +121,11 @@ public class ServerWorker implements Runnable {
 				}
 				
 				if(message.equals(Main.SECURE_FILESIZE)) {
+					//TODO update to NIO
 					ServerSync.logger.info("Writing filesize to client...");
 					String theFile = (String) ois.readObject();
-					File f = new File(theFile);
-					long l = f.length();
-					oos.writeLong(l);
+					Path p = Paths.get(theFile);
+					oos.writeLong(Files.size(p));
 					oos.flush();
 				}
 				
