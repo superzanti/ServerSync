@@ -8,7 +8,7 @@ Currently you can sync:
 * Flans content packs
 * Configs
 
-**Currently for Minecraft 1.7.10 Forge 1614**
+**Currently for Minecraft 1.7.10 Forge 1614+**
 
 If you don't feel like compiling from source and simply want to download a jar file see the releases tab, I update these periodically when theres a large enough addition/change. Please read the disclaimer before downloading.
 
@@ -24,6 +24,8 @@ Don't trust anyone with this mod. This mod allows ANY server running it to put A
 
 RECENT UPDATES:
 -----------
+Version 2.5.1
+* Fixed bug when interacting with zip/jar files
 Version 2.5.0
 * Added more functionality to the GUI
 * Changed Ignoring rules to whitelist for configs
@@ -44,7 +46,7 @@ FREQUENTLY ASKED QUESTIONS:
 -----------
 * "This mod isn't doing anything!"
   * This version of serversync is run independant of minecraft (minecraft should be closed when running serversync), I did this as minecraft did not need to be running for the program to work and the previous method required you to open and close minecraft several times which if you have any more than 2-3 mods then loading time gets very taxing.
-  * Run serversync.jar from your mods folder or create a shortcut, you will need to set up the servers ip/port details in serversync.cfg
+  * Run serversync.jar from your mods folder or create a shortcut, serversync will auto populate server details from the config if present
 * "I can't connect to my server"
   * Did you check that the config files ip/port details are correct on both server and client
   * Are you using your external/internal IP address apropriately?
@@ -58,15 +60,13 @@ FREQUENTLY ASKED QUESTIONS:
 * "You're a horrible programmer"
   * You're entitled to that opinion.
 * "Can you make this work without using a custom main menu?"
-  * This fork of serversync is run without opening minecraft and in fact is no longer really supporting the in-game feature of the previous incarnation, it is still present and can be used but the new features like client mod pushing and support for flans etc are not implimented yet.
+  * This fork of serversync is run without opening minecraft and in fact is no longer supporting the in-game feature of the previous incarnation.
 * "Why does this mod spit out so much 'junk' in my console?"
   * It's simply to help users know that they're not being attacked. It will tell them what IP they're connected to, what mod is being downloaded and more. My hope is that people will actually see this while it's running to know for sure that they can trust their admin. Hey, not everyone reads this. Also now that serversync is it's own entity the entire console is there for debugging purposes.
 * "I have files such as optifine that I don't want the server to delete"
-  * Specify this in the config file. Ignore list has entries by default that should be easy to follow.
-  * Or add optifine/other client mods to the folder clientmods on the server, create one if it does not exist. Set B:PushClientMods=true in the config.
-  * Mods in the clientmods folder are automatically added to the ignore list, however some of these may create user based config files that need to be added to the ignore list manually. Check the handy serversync log generated in the minecraft/logs folder (client) for detailed information, this will probably be quite long so I added "<>" to entries that I personally deemed to be significant, such as file deletions.
-* "I want to change how the UI looks so it doesn't say 'The Verse' "
-  * That part of the mod requires CustomMainMenu, read up on the CustomMainMenu documents for all of that, I'm not really supporting CMM at the moment as running the game is pretty much unnecessary for this program to function and causes a bunch of issues with the mods being loaded and unaccessable to be writen/deleted (and it is just downright slow to load the game multiple times).
+  * Specify this in the config files IGNORE_LIST
+  * Add client only mods to the clientmods directory on the server
+  * Mods in the clientmods folder are automatically added to the ignore list
 
 What does it do exactly?
 -----------
@@ -86,6 +86,16 @@ What does it do exactly?
 * If the client does not have the file it will send the update command to download it
 * After iterating through all of the server files the client will then iterate through all of it's own files
 * If the client has a file that the server does not, it will delete it.
+
+What you should expect to see
+--------------
+
+When the program starts up you will see a very lightweight console with general information on progress etc.
+
+![Information Console](http://s31.postimg.org/bxc807u63/ss_snap.png)
+
+Error messages will appear if the server cannot be found or there is some exception in the mod while downloading updates. All these errors should be fairly self explanatory and easy to fix.
+
 
 Compiling
 --------------
@@ -111,12 +121,3 @@ Then change the working directory of your eclipse to
 ```
 
 Have at it.
-
-What you should expect to see
---------------
-
-When the program starts up you will see a very lightweight console with general information on progress etc.
-
-![Information Console](http://s31.postimg.org/bxc807u63/ss_snap.png)
-
-Error messages will appear if the server cannot be found or there is some exception in the mod while downloading updates. All these errors should be fairly self explanatory and easy to fix.
