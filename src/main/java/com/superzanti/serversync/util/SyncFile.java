@@ -15,18 +15,24 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonStreamParser;
 import com.superzanti.serversync.SyncConfig;
 
 /**
  * Holds relevant information about mods obtianed through mcmod.info.<br>
  * <br>
- * Use CLIENT_MODPATH for any interactions on the client side, this will cause<br>
- * the mod to look in the clients mods/ directory regardless of where the file<br>
- * is on the server<br><br>
+ * Use CLIENT_MODPATH for any interactions on the client side, this will cause
+ * <br>
+ * the mod to look in the clients mods/ directory regardless of where the file
+ * <br>
+ * is on the server<br>
+ * <br>
  * 
- * Useful for instance when the server sends client-side mods from the clientmods<br>
+ * Useful for instance when the server sends client-side mods from the
+ * clientmods<br>
  * directory
  * 
  * @author Rheimus
@@ -44,13 +50,15 @@ public class SyncFile implements Serializable {
 	private boolean isIgnored = false;
 	public static final String UNKNOWN_VERSION = "unknown_version";
 	public static final String UNKNOWN_NAME = "unknown_name";
-	
+
 	private File serMODPATH;
 	private File serCLIENT_MODPATH;
-	
+
 	/**
-	 * Holds various information about mods, Use CLIENT_MODPATH for client side operations<br>
-	 * this will parse files to the appropriate directory for the client, such as client-only mods
+	 * Holds various information about mods, Use CLIENT_MODPATH for client side
+	 * operations<br>
+	 * this will parse files to the appropriate directory for the client, such
+	 * as client-only mods
 	 * 
 	 * @param modPath
 	 * @param isMod
@@ -60,7 +68,7 @@ public class SyncFile implements Serializable {
 		MODPATH = modPath;
 		Path cModPath = modPath;
 		Path root = Paths.get("../");
-		//TODO update this code chunk to be more OOP
+		// TODO update this code chunk to be more OOP
 		if (modPath.toString().contains("clientmods")) {
 			clientOnlyMod = true;
 			cModPath = root.relativize(Paths.get(modPath.toString().replaceFirst("clientmods", "mods")));
@@ -69,16 +77,16 @@ public class SyncFile implements Serializable {
 		}
 		CLIENT_MODPATH = cModPath;
 		fileName = MODPATH.getFileName().toString();
-		
+
 		if (fileName.contains(".cfg")) {
 			isConfig = true;
 			isMod = false;
 		}
-		
+
 		if (isMod && isZipJar(fileName)) {
 			populateModInformation();
 		}
-		
+
 		if (version == null) {
 			version = SyncFile.UNKNOWN_VERSION;
 		}
@@ -86,23 +94,25 @@ public class SyncFile implements Serializable {
 			name = SyncFile.UNKNOWN_NAME;
 		}
 	}
-	
+
 	/**
 	 * Shortcut constructor that assumes the created file is a mod
-	 * @param modPath - Path to the mod
+	 * 
+	 * @param modPath
+	 *            - Path to the mod
 	 * @throws IOException
 	 */
 	public SyncFile(Path modPath) throws IOException {
-		this(modPath,true);
+		this(modPath, true);
 	}
-	
+
 	public boolean isSetToIgnore() {
 		if (SyncConfig.IGNORE_LIST.contains(fileName)) {
 			isIgnored = true;
 		}
 		return isIgnored;
 	}
-	
+
 	public boolean isIncluded() {
 		List<String> includes = SyncConfig.INCLUDE_LIST;
 		// Strip witespace
@@ -112,62 +122,47 @@ public class SyncFile implements Serializable {
 		}
 		return false;
 	}
-	
+
 	private boolean isZipJar(String fileName) throws IOException {
-		//TODO find better way to do this
+		// TODO find better way to do this
 		boolean isZip = false;
 		if (fileName.endsWith(".zip") || fileName.endsWith(".jar")) {
 			isZip = true;
 		}
-		
+
 		return isZip;
 	}
-	
+
 	private void populateModInformation() throws IOException {
 		if (Files.exists(MODPATH)) {
 			JarFile packagedMod = new JarFile(MODPATH.toFile());
 			JarEntry modInfo = packagedMod.getJarEntry("mcmod.info");
 			if (modInfo != null) {
 				InputStream is = packagedMod.getInputStream(modInfo);
-				JsonReader jReader = new JsonReader(new InputStreamReader(is));
-				// Returns in order?
-				while (jReader.hasNext()) {
-					JsonToken nextToken = jReader.peek();
-					if (nextToken.equals(JsonToken.NAME)) {
-
-						String nextName = jReader.nextName();
-						if (nextName.equals("version")) {
-							version = jReader.nextString();
-							break; // This break should in theory always come
-									// after the name has been obtained, saves
-									// reading the whole file
+				InputStreamReader read = new InputStreamReader(is);
+				JsonStreamParser parser = new JsonStreamParser(read);
+				
+				while (parser.hasNext()) {
+					JsonElement element = parser.next();
+					if (element.isJsonArray()) {
+						// This will be the opening document array
+						JsonArray jArray = element.getAsJsonArray();
+						
+						// Get each array of objects
+						// array 1 {"foo":"bar"}, array 2 {"foo":"bar"}
+						for (JsonElement jObject : jArray) {
+							// This will contain all of the mod info
+							JsonObject info = jObject.getAsJsonObject();
+							version = info.get("version").getAsString();
+							name = info.get("name").getAsString();
 						}
-						if (nextName.equals("name")) {
-							name = jReader.nextString();
-						}
-
-					}
-					// Dumping parts that I don't need
-					if (nextToken.equals(JsonToken.STRING)) {
-						jReader.nextString();
-					}
-					if (nextToken.equals(JsonToken.BEGIN_ARRAY)) {
-						jReader.beginArray();
-					}
-					if (nextToken.equals(JsonToken.END_ARRAY)) {
-						jReader.endArray();
-					}
-					if (nextToken.equals(JsonToken.BEGIN_OBJECT)) {
-						jReader.beginObject();
-					}
-					if (nextToken.equals(JsonToken.END_OBJECT)) {
-						jReader.endObject();
 					}
 				}
-				jReader.close();
+				read.close();
 				is.close();
+				packagedMod.close();
+
 			}
-			packagedMod.close();
 		}
 	}
 
@@ -225,7 +220,7 @@ public class SyncFile implements Serializable {
 		}
 		return mods;
 	}
-	
+
 	private void readObject(ObjectInputStream is) throws ClassNotFoundException, IOException {
 		is.defaultReadObject();
 		if (serMODPATH != null) {
@@ -235,7 +230,7 @@ public class SyncFile implements Serializable {
 			CLIENT_MODPATH = serCLIENT_MODPATH.toPath();
 		}
 	}
-	
+
 	private void writeObject(ObjectOutputStream os) throws IOException {
 		serMODPATH = MODPATH.toFile();
 		serCLIENT_MODPATH = CLIENT_MODPATH.toFile();
