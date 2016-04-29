@@ -32,31 +32,33 @@ public class ServerSetup implements Runnable {
 		ArrayList<Path> tempList = null;
 		ArrayList<String> directories = new ArrayList<String>();
 		/* DEFAULT DIRECTORIES */
-		directories.add("./mods");
+		directories.add("mods");
 		
 		if (SyncConfig.PUSH_CLIENT_MODS) {
-			directories.add("./clientmods");
+			directories.add("clientmods");
 		}
 		
-		if (Files.exists(Paths.get("./flan"))) {
-			directories.add("./flan");
+		if (Files.exists(Paths.get("flan"))) {
+			directories.add("flan");
 			ServerSync.logger.info("Found flans mod, adding content packs to modlist");
 		}
 
 		try {
 			for (String directory : directories) {
+				String dirString = Paths.get(directory).toAbsolutePath().normalize().toString();
 				tempList = PathUtils.fileListDeep(Paths.get(directory));
-				ServerSync.logger.info("Getting all of: " + directory);
+				ServerSync.logger.info("Getting all of: " + dirString);
 				if (tempList != null) {
 					allMods.addAll(SyncFile.parseList(tempList));
 				} else {
-					ServerSync.logger.error("Could not access: " + directory);
+					ServerSync.logger.error("Could not access: " + dirString);
 				}
+				ServerSync.logger.info("Finished getting: " + dirString);
 			}
 			
 			/* CONFIGS */
 			if (!SyncConfig.INCLUDE_LIST.isEmpty()) {
-				tempList = PathUtils.fileListDeep(Paths.get("./config"));
+				tempList = PathUtils.fileListDeep(Paths.get("config"));
 				if (tempList != null) {
 					for (Path path : tempList) {
 						if (SyncConfig.INCLUDE_LIST.contains(path.getFileName().toString().replaceAll(" ", ""))) {

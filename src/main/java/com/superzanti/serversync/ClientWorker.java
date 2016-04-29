@@ -86,7 +86,7 @@ public class ClientWorker implements Runnable {
 			for (Path path : cConfigs) {
 				String fileName = path.getFileName().toString();
 				if (SyncConfig.INCLUDE_LIST.contains(fileName)) {
-					clientFiles.add(new SyncFile(path,false));
+					clientFiles.add(new SyncFile(path, false));
 				}
 			}
 			updateNeeded = server.isUpdateNeeded(clientFiles);
@@ -106,7 +106,8 @@ public class ClientWorker implements Runnable {
 				float currentPercent = 0;
 
 				/* UPDATING */
-				// Client only mods are added on the server side and treated as normal mods by the client
+				// Client only mods are added on the server side and treated as
+				// normal mods by the client
 				for (SyncFile file : serverFiles) {
 					// Update status
 					currentPercent++;
@@ -182,25 +183,26 @@ public class ClientWorker implements Runnable {
 			if (errorInUpdates) {
 				logs.updateLogs(
 						"Errors occured, please check ip/port details are correct. For a detailed log check the logs folder in your minecraft directory");
-			}
-		}
-
-		try
-
-		{
-			if (!updateHappened) {
-				Main.updateText("No update needed, for a full log check the logs folder in the minecraft directory");
-				Main.updateProgress(100);
 			} else {
-				logs.updateLogs("Files updated", Logger.FULL_LOG);
-				Main.updateProgress(100);
+				try {
+					if (!updateHappened) {
+						Main.updateText(
+								"No update needed, for a full log check the logs folder in the minecraft directory");
+						Main.updateProgress(100);
+					} else {
+						logs.updateLogs("Files updated", Logger.FULL_LOG);
+						Main.updateProgress(100);
+					}
+					Thread.sleep(100);
+					Main.toggleButton();
+				} catch (InterruptedException e) {
+					logs.updateLogs("Exception caught! - " + e, Logger.FULL_LOG);
+					Main.toggleButton();
+				}
 			}
-			Thread.sleep(100);
-			Main.toggleButton();
-		} catch (InterruptedException e) {
-			logs.updateLogs("Exception caught! - " + e,Logger.FULL_LOG);
+			finished = true;
 		}
-		finished = true;
+
 	}
 
 }
