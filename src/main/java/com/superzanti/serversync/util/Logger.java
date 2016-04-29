@@ -1,6 +1,8 @@
 package com.superzanti.serversync.util;
 
-import runme.Main;
+import java.lang.reflect.InvocationTargetException;
+
+import com.superzanti.serversync.gui.Console;
 
 /**
  * Manager for serversyncs logs
@@ -12,10 +14,12 @@ public class Logger {
 	private Log userLog;
 	public static final String FULL_LOG = "full";
 	public static final String USER_LOG = "user";
+	private Console console;
 	
 	public Logger() {
 		fullLog = new Log("serversync-detailed");
 		userLog = new Log("serversync-ui");
+		console = new Console();
 	}
 	
 	public boolean save() {
@@ -26,6 +30,8 @@ public class Logger {
 	/**
 	 * Shorthand for upadteLogs(string,true), updates GUI console text as well
 	 * @param s - Text to update logs with
+	 * @throws InterruptedException 
+	 * @throws InvocationTargetException 
 	 */
 	public void updateLogs(String s) {
 		updateLogs(s,true);
@@ -48,7 +54,16 @@ public class Logger {
 		userLog.add(s);
 
 		if (update) {
-			Main.updateText(userLog.getReadableContent());
+			//Main.updateText(userLog.getReadableContent());
+			try {
+				console.updateText(userLog.getReadableContent());
+			} catch (InvocationTargetException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 }

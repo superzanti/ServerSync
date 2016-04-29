@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,6 +17,7 @@ import java.util.List;
 
 import com.superzanti.serversync.ClientWorker;
 import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.gui.FileProgress;
 
 import runme.Main;
 
@@ -41,19 +43,34 @@ public class Server {
 		logs = caller.getLogger();
 	}
 
-	public boolean connect() throws IOException {
-		host = InetAddress.getByName(SyncConfig.SERVER_IP);
+	public boolean connect() {
+		try {
+			host = InetAddress.getByName(SyncConfig.SERVER_IP);
+		} catch (UnknownHostException e) {
+			Main.updateText("Could not connect to host: " + SyncConfig.SERVER_IP);
+			return false;
+		}
+
 		logs.updateLogs("Establishing a socket connection to the server...", Logger.FULL_LOG);
-
 		clientSocket = new Socket();
-		logs.updateLogs("< Connecting to server >");
 
-		clientSocket.connect(new InetSocketAddress(host.getHostName(), SyncConfig.SERVER_PORT), 5000);
+		logs.updateLogs("< Connecting to server >");
+		try {
+			clientSocket.connect(new InetSocketAddress(host.getHostName(), SyncConfig.SERVER_PORT), 5000);
+		} catch (IOException e) {
+			Main.updateText("Could not connect to server at: " + SyncConfig.SERVER_IP + ":" + SyncConfig.SERVER_PORT);
+			return false;
+		}
 
 		// write to socket using ObjectOutputStream
 		logs.updateLogs("Creating input/output streams...", Logger.FULL_LOG);
-		oos = new ObjectOutputStream(clientSocket.getOutputStream());
-		ois = new ObjectInputStream(clientSocket.getInputStream());
+		try {
+			oos = new ObjectOutputStream(clientSocket.getOutputStream());
+			ois = new ObjectInputStream(clientSocket.getInputStream());
+		} catch (IOException e) {
+			logs.updateLogs("Failed to obtain input/output streams from client", Logger.FULL_LOG);
+			return false;
+		}
 
 		return true;
 	}
@@ -225,6 +242,7 @@ public class Server {
 
 		long fileSize = 0l;
 		boolean gotFileSize = false;
+		FileProgress GUIUpdater = new FileProgress();
 
 		try {
 			fileSize = ois.readLong();
@@ -255,8 +273,9 @@ public class Server {
 				progress = Math.ceil(byteP / factor * 100);
 			}
 			wr.write(outBuffer, 0, bytesReceived);
-			Main.updateText("<" + (int) progress + "%> Updating " + currentFile.getName());
+			GUIUpdater.updateProgress((int)progress, currentFile.getName());
 		}
+		GUIUpdater.resetTitle();
 		wr.flush();
 		wr.close();
 		reinitConnection();

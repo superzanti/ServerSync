@@ -23,6 +23,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import com.sun.glass.events.KeyEvent;
+import com.superzanti.lib.RefStrings;
 import com.superzanti.serversync.ClientWorker;
 import com.superzanti.serversync.SyncConfig;
 
@@ -30,7 +31,6 @@ public class Main {
 
 	public static final String SECURE_FILESIZE = "11b4278c7e5a79003db77272c1ed2cf5";
 	public static final String SECURE_PUSH_CLIENTMODS = "0ad95bb1734520dc1fa3c737f8a57d91";
-	private static int mode = 10;
 
 	private static JTextArea TA_info = new JTextArea();
 	private static JTextField TF_ipAddress = new JTextField();
@@ -42,7 +42,7 @@ public class Main {
 	private static void GUI() {
 		Dimension sDetailsElements = new Dimension(140, 20);
 
-		F_root = new JFrame("Serversync");
+		F_root = new JFrame("Serversync " + RefStrings.VERSION);
 		F_root.setResizable(false);
 		F_root.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		F_root.setPreferredSize(new Dimension(600, 300));
@@ -89,7 +89,7 @@ public class Main {
 			public void keyReleased(java.awt.event.KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					F_root.requestFocus();
-					startWorker(mode);
+					startWorker();
 				}
 			}
 
@@ -126,7 +126,7 @@ public class Main {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				startWorker(mode);
+				startWorker();
 			}
 		});
 
@@ -155,13 +155,6 @@ public class Main {
 	}
 
 	public static void main(String[] args) throws InterruptedException, IOException {
-		if (args.length > 0) {
-			for (String arg : args) {
-				if (arg.equalsIgnoreCase("delete")) {
-					mode = 0;
-				}
-			}
-		}
 
 		SwingUtilities.invokeLater(new Runnable() {
 
@@ -173,29 +166,20 @@ public class Main {
 		});
 	}
 
-	public static void updateText(final String string) {
-		//TODO UI appears to freeze under strain
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				TA_info.setText(string);
-			}
-
-		});
+	public static void updateText(String string) {
+		// TODO UI appears to freeze under strain
+		TA_info.setText(string);
 	}
 
-	public static void updateProgress(final int progress) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				F_root.setTitle("Serversync - " + progress + "%");
-				B_sync.setText(progress + "%");
-			}
-
-		});
+	public static void updateProgress(int progress) {
+		B_sync.setText(progress + "%");
 	}
 
-	private static void startWorker(int mode) {
+	public static void updateFileProgress(String progress) {
+		F_root.setTitle(progress);
+	}
+
+	private static void startWorker() {
 		boolean error = false;
 		Thread t;
 		if (TF_ipAddress.getText().equals("") || TF_port.getText().equals("")) {
@@ -211,32 +195,29 @@ public class Main {
 			SyncConfig.pullServerConfig = true;
 		}
 
-
 		int port = 0;
 		try {
 			port = Integer.parseInt(TF_port.getText());
+			if (!(port <= 49151 && port > 0)) {
+				error = true;
+				updateText("Port out of range, valid range: 1 - 49151");
+			}
 		} catch (NumberFormatException e) {
 			error = true;
-			updateText("Invalid port, please use only numbers");
+			updateText("Invalid port");
 		}
 		SyncConfig.SERVER_PORT = port;
 		SyncConfig.SERVER_IP = TF_ipAddress.getText();
 
-		switch (mode) {
-		case 0:
-			//TODO refctor this to no longer need different modes
-			break;
-		default:
-			if (!error) {
-				updateText("Starting update process...");
-				toggleButton();
-				t = new Thread(new ClientWorker());
-				t.start();
-			}
-			break;
+		if (!error) {
+			updateText("Starting update process...");
+			toggleButton();
+			t = new Thread(new ClientWorker());
+			t.start();
 		}
+
 	}
-	
+
 	public static void toggleButton() {
 		if (B_sync.isEnabled()) {
 			B_sync.setEnabled(false);
