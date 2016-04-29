@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.SyncFile;
 import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.Server;
+import com.superzanti.serversync.util.SyncFile;
 
 import runme.Main;
 
@@ -65,6 +65,34 @@ public class ClientWorker implements Runnable {
 		return finished;
 	}
 
+	private void closeWorker(Server server) {
+		server.close();
+		if (!finished) {
+			try {
+				if (!updateHappened && !errorInUpdates) {
+					Main.updateText(
+							"No update needed, for a full log check the logs folder in the minecraft directory");
+					Main.updateProgress(100);
+				} else {
+					logs.updateLogs("Files updated", Logger.FULL_LOG);
+					Main.updateProgress(100);
+				}
+				if (errorInUpdates) {
+					logs.updateLogs(
+							"Errors occured, please check ip/port details are correct. For a detailed log check the logs folder in your minecraft directory");
+				}
+				Thread.sleep(100);
+				Main.toggleButton();
+			} catch (InterruptedException e) {
+				logs.updateLogs("Exception caught! - " + e, Logger.FULL_LOG);
+				Main.toggleButton();
+			}
+			finished = true;
+		} else {
+			Main.toggleButton();
+		}
+	}
+
 	@Override
 	public void run() {
 		Server server = new Server(this, SyncConfig.SERVER_IP, SyncConfig.SERVER_PORT);
@@ -75,18 +103,28 @@ public class ClientWorker implements Runnable {
 			// Get clients mod list
 			List<Path> cMods = PathUtils.fileListDeep(Paths.get("../mods/"));
 			List<Path> cConfigs = PathUtils.fileListDeep(Paths.get("../config/"));
-			for (Path path : cMods) {
-				SyncFile f = new SyncFile(path);
-				clientFiles.add(f);
+			if (cMods != null) {
+				for (Path path : cMods) {
+					SyncFile f = new SyncFile(path);
+					clientFiles.add(f);
+				}
 			}
 
-			server.connect();
+			if (!server.connect()) {
+				errorInUpdates = true;
+				finished = true;
+				closeWorker(server);
+				return;
+			}
+
 			logs.updateLogs("Updating serversync config...");
 			server.getConfig();
-			for (Path path : cConfigs) {
-				String fileName = path.getFileName().toString();
-				if (SyncConfig.INCLUDE_LIST.contains(fileName)) {
-					clientFiles.add(new SyncFile(path, false));
+			if (cConfigs != null) {
+				for (Path path : cConfigs) {
+					String fileName = path.getFileName().toString();
+					if (SyncConfig.INCLUDE_LIST.contains(fileName)) {
+						clientFiles.add(new SyncFile(path, false));
+					}
 				}
 			}
 			updateNeeded = server.isUpdateNeeded(clientFiles);
@@ -166,9 +204,6 @@ public class ClientWorker implements Runnable {
 						Main.updateProgress((int) (currentPercent / percentScale));
 					}
 				}
-			} else {
-				logs.updateLogs("No Updates Needed");
-				Thread.sleep(1000);
 			}
 
 			server.exit();
@@ -179,28 +214,7 @@ public class ClientWorker implements Runnable {
 			e.printStackTrace();
 			errorInUpdates = true;
 		} finally {
-			server.close();
-			if (errorInUpdates) {
-				logs.updateLogs(
-						"Errors occured, please check ip/port details are correct. For a detailed log check the logs folder in your minecraft directory");
-			} else {
-				try {
-					if (!updateHappened) {
-						Main.updateText(
-								"No update needed, for a full log check the logs folder in the minecraft directory");
-						Main.updateProgress(100);
-					} else {
-						logs.updateLogs("Files updated", Logger.FULL_LOG);
-						Main.updateProgress(100);
-					}
-					Thread.sleep(100);
-					Main.toggleButton();
-				} catch (InterruptedException e) {
-					logs.updateLogs("Exception caught! - " + e, Logger.FULL_LOG);
-					Main.toggleButton();
-				}
-			}
-			finished = true;
+			closeWorker(server);
 		}
 
 	}
