@@ -10,9 +10,17 @@ public class Console implements Runnable {
 
 	String text = "";
 	
-	public void updateText(String text) throws InvocationTargetException, InterruptedException {
+	public void updateText(String text) {
 		this.text = text;
-		SwingUtilities.invokeAndWait(this);
+		try {
+			SwingUtilities.invokeAndWait(this);
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	@Override

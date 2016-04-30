@@ -24,8 +24,13 @@ Don't trust anyone with this mod. This mod allows ANY server running it to put A
 
 RECENT UPDATES:
 -----------
+Version 2.5.2
+* Fixed missing class JsonReader should work properly now
+* Fixed minor issue with file deletion
+
 Version 2.5.1
 * Fixed bug when interacting with zip/jar files
+
 Version 2.5.0
 * Added more functionality to the GUI
 * Changed Ignoring rules to whitelist for configs
@@ -102,11 +107,11 @@ Compiling
 
 Simply git clone the repo, cd into the folder and run 
 ```
-./gradlew build
+./gradlew shadowJar
 ```
 or for windows
 ```
-gradlew.bat build
+gradlew.bat shadowJar
 ```
 
 If you would like to setup a workspace to work on these files simply run

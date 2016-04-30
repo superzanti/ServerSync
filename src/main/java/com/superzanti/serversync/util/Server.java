@@ -17,6 +17,7 @@ import java.util.List;
 
 import com.superzanti.serversync.ClientWorker;
 import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.gui.Console;
 import com.superzanti.serversync.gui.FileProgress;
 
 import runme.Main;
@@ -44,10 +45,11 @@ public class Server {
 	}
 
 	public boolean connect() {
+		Console con = new Console();
 		try {
-			host = InetAddress.getByName(SyncConfig.SERVER_IP);
+			host = InetAddress.getByName(IP_ADDRESS);
 		} catch (UnknownHostException e) {
-			Main.updateText("Could not connect to host: " + SyncConfig.SERVER_IP);
+			con.updateText("Could not connect to host: " + IP_ADDRESS);
 			return false;
 		}
 
@@ -56,9 +58,9 @@ public class Server {
 
 		logs.updateLogs("< Connecting to server >");
 		try {
-			clientSocket.connect(new InetSocketAddress(host.getHostName(), SyncConfig.SERVER_PORT), 5000);
+			clientSocket.connect(new InetSocketAddress(host.getHostName(), PORT), 5000);
 		} catch (IOException e) {
-			Main.updateText("Could not connect to server at: " + SyncConfig.SERVER_IP + ":" + SyncConfig.SERVER_PORT);
+			con.updateText("Could not connect to server at: " + IP_ADDRESS + ":" + PORT);
 			return false;
 		}
 

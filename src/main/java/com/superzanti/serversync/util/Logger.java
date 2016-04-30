@@ -54,16 +54,7 @@ public class Logger {
 		userLog.add(s);
 
 		if (update) {
-			//Main.updateText(userLog.getReadableContent());
-			try {
-				console.updateText(userLog.getReadableContent());
-			} catch (InvocationTargetException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			console.updateText(userLog.getReadableContent());
 		}
 	}
 }
