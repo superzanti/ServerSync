@@ -1,5 +1,6 @@
 package com.superzanti.serversync;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -192,13 +193,15 @@ public class ClientWorker implements Runnable {
 									Logger.FULL_LOG);
 
 							// File fails to delete
-							if (!file.delete()) {
+							try {
+								file.delete();
+								logs.updateLogs("<>" + file.fileName + " deleted");
+							} catch(IOException e) {
 								logs.updateLogs(file.fileName + "Failed to delete flagging for deleteOnExit",
 										Logger.FULL_LOG);
 								file.deleteOnExit();
-							} else {
-								logs.updateLogs("<>" + file.fileName + " deleted");
 							}
+						
 							updateHappened = true;
 						}
 						Main.updateProgress((int) (currentPercent / percentScale));
