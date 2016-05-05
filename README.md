@@ -12,6 +12,7 @@ Currently you can sync:
 
 If you don't feel like compiling from source and simply want to download a jar file see the releases tab, I update these periodically when theres a large enough addition/change. Please read the disclaimer before downloading.
 
+https://jenkins.dir.ac/job/serversync/ - Jenkins hosted by the lovely Robert Perry
 
 DISCLAIMER:
 -----------
