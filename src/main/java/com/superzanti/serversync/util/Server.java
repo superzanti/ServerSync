@@ -77,12 +77,20 @@ public class Server {
 		return true;
 	}
 
+	/**
+	 * Terminates the listener thread on the server for this client
+	 * @throws IOException
+	 */
 	public void exit() throws IOException {
 		logs.updateLogs("Telling server to exit...", Logger.FULL_LOG);
 		oos.writeObject(SyncConfig.SECURE_EXIT);
 		oos.flush();
 	}
 
+	/**
+	 * Releases resources related to this server instance, MUST call this when interaction is finished if a server is opened
+	 * @return
+	 */
 	public boolean close() {
 		logs.updateLogs("Closing connections...", Logger.FULL_LOG);
 		try {

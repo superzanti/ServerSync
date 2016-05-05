@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,13 +56,9 @@ public class SyncFile implements Serializable {
 	private File serCLIENT_MODPATH;
 
 	/**
-	 * Holds various information about mods, Use CLIENT_MODPATH for client side
-	 * operations<br>
-	 * this will parse files to the appropriate directory for the client, such
-	 * as client-only mods
-	 * 
+	 * Main constructor, populates file information
 	 * @param modPath
-	 * @param isMod
+	 * @param isMod false to skip populating mod information from mcmod.info
 	 * @throws IOException
 	 */
 	public SyncFile(Path modPath, boolean isMod) throws IOException {
@@ -106,13 +103,21 @@ public class SyncFile implements Serializable {
 		this(modPath, true);
 	}
 
+	/**
+	 * Returns true if the configs ignore list contains the file name of this SyncFile
+	 * @return true if ignored, false otherwise
+	 */
 	public boolean isSetToIgnore() {
 		if (SyncConfig.IGNORE_LIST.contains(fileName)) {
 			isIgnored = true;
 		}
 		return isIgnored;
 	}
-
+	
+	/**
+	 * Only used for config files, set based on serversyncs rule list INCLUDE_LIST
+	 * @return true if the configs include list contains this SyncFiles file name
+	 */
 	public boolean isIncluded() {
 		List<String> includes = SyncConfig.INCLUDE_LIST;
 		// Strip witespace
@@ -123,8 +128,13 @@ public class SyncFile implements Serializable {
 		return false;
 	}
 
-	private boolean isZipJar(String fileName) throws IOException {
-		// TODO find better way to do this
+	/**
+	 * Tests file to see if it is a packaged/zipped file
+	 * @param fileName
+	 * @return true if file is a package
+	 */
+	private boolean isZipJar(String fileName) {
+		// TODO make a better way to do this, perhaps use failure of javas ZippedFile class
 		boolean isZip = false;
 		if (fileName.endsWith(".zip") || fileName.endsWith(".jar")) {
 			isZip = true;
@@ -182,8 +192,20 @@ public class SyncFile implements Serializable {
 		return false;
 	}
 
+	/**
+	 * Deletes the file this SyncFile refers to
+	 * @return true if file deleted successfully
+	 * @throws IOException
+	 */
 	public boolean delete() throws IOException {
-		return Files.deleteIfExists(MODPATH);
+		boolean success = false;
+		try {
+			success = Files.deleteIfExists(MODPATH);
+		} catch (DirectoryNotEmptyException e) {
+			System.out.println("Trying to delete a directory, are you sure this is what you want to do?");
+			System.out.println(e.getMessage());
+		}
+		return success;
 	}
 
 	public void deleteOnExit() {
@@ -213,6 +235,12 @@ public class SyncFile implements Serializable {
 		return null;
 	}
 
+	/**
+	 * This is intended to be a shortcut for creating a bunch of SyncFiles from the output of PathUtils fileListDeep
+	 * @param paths a list of paths to convert to SyncFiles
+	 * @return A list of SyncFiles
+	 * @throws IOException
+	 */
 	public static ArrayList<SyncFile> parseList(List<Path> paths) throws IOException {
 		ArrayList<SyncFile> mods = new ArrayList<SyncFile>();
 		for (Path path : paths) {
@@ -221,6 +249,7 @@ public class SyncFile implements Serializable {
 		return mods;
 	}
 
+	/* Serialization methods */
 	private void readObject(ObjectInputStream is) throws ClassNotFoundException, IOException {
 		is.defaultReadObject();
 		if (serMODPATH != null) {
