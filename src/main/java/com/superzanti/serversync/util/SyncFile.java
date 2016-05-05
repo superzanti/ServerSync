@@ -44,6 +44,7 @@ public class SyncFile implements Serializable {
 	public String version;
 	public String name;
 	public String fileName;
+	private String md5FileContents;
 	transient public Path MODPATH;
 	transient public Path CLIENT_MODPATH;
 	public boolean clientOnlyMod = false;
@@ -86,6 +87,8 @@ public class SyncFile implements Serializable {
 
 		if (version == null) {
 			version = SyncFile.UNKNOWN_VERSION;
+			// Get hashed file contents if version could not be obtained used in compare functionality
+			md5FileContents = Md5.md5String(MODPATH.toFile());
 		}
 		if (name == null) {
 			name = SyncFile.UNKNOWN_NAME;
@@ -177,17 +180,18 @@ public class SyncFile implements Serializable {
 	}
 
 	/**
-	 * Compares mod versions
+	 * Compares mod versions from mcmod.info or compares file contents if version could not be found
 	 * 
 	 * @param serversMod
 	 *            - servers version of the mod
-	 * @return True if versions are the same<br>
-	 *         False if versions are different or if version is unknown
+	 * @return True if versions or content are the same<br>
+	 *         False if versions are different or if version is unknown and contents could not be read
 	 */
 	public boolean compare(SyncFile serversMod) {
-		System.out.println(serversMod.version + " : " + version);
 		if (!serversMod.version.equals(SyncFile.UNKNOWN_VERSION)) {
 			return this.version.equals(serversMod.version);
+		} else if (md5FileContents != null && serversMod.md5FileContents != null) {
+			return this.md5FileContents.equals(serversMod.md5FileContents);
 		}
 		return false;
 	}

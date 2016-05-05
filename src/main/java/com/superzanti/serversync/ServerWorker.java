@@ -77,9 +77,8 @@ public class ServerWorker implements Runnable {
 				}
 				
 				if(message.equals(SyncConfig.SECURE_CHECKSUM)) {
-					String theFile = (String) ois.readObject();
-					File f = new File(theFile);
-					String serverChecksum = Md5.md5String(f);
+					File theFile = (File) ois.readObject();
+					String serverChecksum = Md5.md5String(theFile);
 					oos.writeObject(serverChecksum);
 					oos.flush();
 				}
