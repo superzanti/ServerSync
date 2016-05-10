@@ -32,9 +32,6 @@ public class ServerSync {
 	public static void PreLoad(FMLPreInitializationEvent PreEvent) {
 		// setup the minecraft logger for the server
 		logger = PreEvent.getModLog();
-
-		// Grab the configuration file and load in the values
-		SyncConfig.init(PreEvent);
 		
 		// Create clientmods directory
 		if (proxy.isServer()) {
@@ -58,6 +55,8 @@ public class ServerSync {
 		// Server side
 		if (proxy.isServer()) {
 			logger.info("I am a server");
+			// Grab the configuration file and load in the values
+			SyncConfig.init(PreEvent);
 			ServerSetup setup = new ServerSetup();
 			Thread syncthread = new Thread(setup);
 			syncthread.start();
