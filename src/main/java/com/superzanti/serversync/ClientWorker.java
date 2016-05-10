@@ -145,6 +145,7 @@ public class ClientWorker implements Runnable {
 				float currentPercent = 0;
 
 				/* UPDATING */
+				logs.updateLogs("<------> Starting Update Process <------>");
 				// Client only mods are added on the server side and treated as
 				// normal mods by the client
 				for (SyncFile file : serverFiles) {
@@ -177,6 +178,7 @@ public class ClientWorker implements Runnable {
 				}
 
 				/* DELETION */
+				logs.updateLogs("<------> Starting Deletion Process <------>");
 				// Parse clients file tree
 				for (SyncFile file : clientFiles) {
 					currentPercent++;
