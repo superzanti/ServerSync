@@ -16,7 +16,7 @@ https://jenkins.dir.ac/job/serversync/ - Jenkins hosted by the lovely Robert Per
 
 DISCLAIMER:
 -----------
-This mod is only meant for personal use or for developers that constantly push their OWN mods. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to distribute other people's mods.
+This mod is only intended for personal use or for developers that constantly push their OWN mods. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to distribute other people's mods.
 
 Depending on the copyright and/or pattent laws in your area using this mod with other developer's mods for a commercial purpose could be ILLEGAL.
 
@@ -26,6 +26,8 @@ Don't trust anyone with this mod. This mod allows ANY server running it to put A
 RECENT UPDATES:
 -----------
 Version 2.5.2
+* Removed unnecessary config loading on FML's client side
+* Fixed potential crash if clientmods directory did not exist
 * Fixed missing class JsonReader should work properly now
 * Fixed minor issue with file deletion
 
