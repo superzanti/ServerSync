@@ -26,6 +26,7 @@ import com.sun.glass.events.KeyEvent;
 import com.superzanti.lib.RefStrings;
 import com.superzanti.serversync.ClientWorker;
 import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.util.MCConfigReader.MCCReader;
 
 public class Main {
 
@@ -141,7 +142,7 @@ public class Main {
 			System.out.println("attempting to init config file: " + config.toAbsolutePath().toString());
 			// ServerSyncConfig.init(config.toFile());
 			try {
-				SyncConfig.getServerDetailsDirty(config);
+				SyncConfig.getServerDetails(config);
 			} catch (IOException e) {
 				e.printStackTrace();
 				return;
@@ -155,7 +156,6 @@ public class Main {
 	}
 
 	public static void main(String[] args) throws InterruptedException, IOException {
-
 		SwingUtilities.invokeLater(new Runnable() {
 
 			@Override

@@ -211,7 +211,7 @@ public class Server {
 
 		logs.updateLogs("Sucessfully updated config");
 		logs.updateLogs("Reloading config");
-		SyncConfig.getServerDetailsDirty(config);
+		SyncConfig.getServerDetails(config);
 		return true;
 	}
 

@@ -1,6 +1,5 @@
 package com.superzanti.serversync;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,6 +11,9 @@ import java.util.Collections;
 import java.util.List;
 
 import com.superzanti.serversync.util.PathUtils;
+import com.superzanti.serversync.util.MCConfigReader.MCCArray;
+import com.superzanti.serversync.util.MCConfigReader.MCCElement;
+import com.superzanti.serversync.util.MCConfigReader.MCCReader;
 
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.common.config.ConfigCategory;
@@ -65,55 +67,32 @@ public class SyncConfig {
 		}
 	}
 
-	public static void getServerDetailsDirty(Path configFile) throws IOException {
+	public static void getServerDetails(Path configFile) throws IOException {
 		//TODO read as proper file format?
-		BufferedReader br = Files.newBufferedReader(configFile);
-		String chars = "";
-		while (true) {
-			if (br.ready()) {
-				chars += br.readLine();
-			} else {
-				break;
-			}
+		MCCReader cReader = new MCCReader(Files.newBufferedReader(configFile));
+		MCCArray eArray = new MCCArray();
+		MCCElement element;
+		while ((element = cReader.readNextElement()) != null) {
+			eArray.add(element);
 		}
-		chars = chars.replaceAll("[}{]", " ");
-		// System.out.println(chars);
-		MINECRAFT_PORT = Integer.parseInt(getChunk(chars, "MINECRAFT_PORT=").trim());
-		SERVER_IP = getChunk(chars, "SERVER_IP=").trim();
-		SERVER_PORT = Integer.parseInt(getChunk(chars, "SERVER_PORT=").trim());
-		SECURE_CHECK = getChunk(chars, "SECURE_CHECK=").trim();
-		SECURE_CHECKMODS = getChunk(chars, "SECURE_CHECKMODS=").trim();
-		SECURE_RECURSIVE = getChunk(chars, "SECURE_RECURSIVE=").trim();
-		SECURE_CHECKSUM = getChunk(chars, "SECURE_CHECKSUM=").trim();
-		SECURE_UPDATE = getChunk(chars, "SECURE_UPDATE=").trim();
-		SECURE_EXISTS = getChunk(chars, "SECURE_EXISTS=").trim();
-		SECURE_EXIT = getChunk(chars, "SECURE_EXIT=").trim();
-		LAST_UPDATE = getChunk(chars, "LAST_UPDATE=").trim();
-		PUSH_CLIENT_MODS = Boolean.valueOf(getChunk(chars, "PushClientMods=").trim());
-		IGNORE_LIST = getArray(chars, "IGNORE_LIST");
-		INCLUDE_LIST = getArray(chars, "INCLUDE_LIST");
+		cReader.close();
+		
+		MINECRAFT_PORT = eArray.getElementByName("MINECRAFT_PORT").getInt();
+		SERVER_IP = eArray.getElementByName("SERVER_IP").getString();
+		SERVER_PORT = eArray.getElementByName("SERVER_PORT").getInt();
+		SECURE_CHECK = eArray.getElementByName("SECURE_CHECK").getString();
+		SECURE_CHECKMODS = eArray.getElementByName("SECURE_CHECKMODS").getString();
+		SECURE_RECURSIVE = eArray.getElementByName("SECURE_RECURSIVE").getString();
+		SECURE_CHECKSUM = eArray.getElementByName("SECURE_CHECKSUM").getString();
+		SECURE_UPDATE = eArray.getElementByName("SECURE_UPDATE").getString();
+		SECURE_EXISTS = eArray.getElementByName("SECURE_EXISTS").getString();
+		SECURE_EXIT = eArray.getElementByName("SECURE_EXIT").getString();
+		LAST_UPDATE = eArray.getElementByName("LAST_UPDATE").getString();
+		PUSH_CLIENT_MODS = eArray.getElementByName("PUSH_CLIENT_MODS").getBoolean();
+		IGNORE_LIST = eArray.getElementByName("MOD_IGNORE_LIST").getList();
+		INCLUDE_LIST = eArray.getElementByName("CONFIG_INCLUDE_LIST").getList();
 
 		System.out.println("finished loading config");
-	}
-
-	private static String getChunk(String config, String target) {
-		String proc = "";
-		proc = config.substring(config.indexOf(target) + target.length());
-		proc = proc.substring(0, proc.indexOf(" "));
-
-		return proc;
-	}
-
-	private static List<String> getArray(String config, String target) {
-		List<String> proc = new ArrayList<String>();
-		String _proc = "";
-		_proc = config.substring(config.indexOf(target) + target.length());
-		_proc = _proc.substring(2, _proc.indexOf(">"));
-		String[] dirtyArray = _proc.split("        ");
-		for (String e : dirtyArray) {
-			proc.add(e.trim());
-		}
-		return proc;
 	}
 
 	private static void setupConfig() throws IOException {
@@ -159,34 +138,38 @@ public class SyncConfig {
 		if (PUSH_CLIENT_MODS) {
 			String[] oldList = ignoreList.getStringList();
 			Path clientMods = Paths.get("clientmods/");
-			ArrayList<Path> files = PathUtils.fileListDeep(clientMods);
-			ArrayList<String> saveableFiles = new ArrayList<String>();
-
-			for (Path path : files) {
-				boolean found = false;
-				String saveable = path.getFileName().toString();
-				// Duplicate check
-				for (String oldPath : oldList) {
-					if (oldPath.equals(saveable)) {
-						found = true;
-						break;
+			if (Files.exists(clientMods)) {
+				ArrayList<Path> files = PathUtils.fileListDeep(clientMods);
+				ArrayList<String> saveableFiles = new ArrayList<String>();
+				
+				for (Path path : files) {
+					boolean found = false;
+					String saveable = path.getFileName().toString();
+					// Duplicate check
+					for (String oldPath : oldList) {
+						if (oldPath.equals(saveable)) {
+							found = true;
+							break;
+						}
+					}
+					if (!found) {
+						// file not found in ignore list
+						saveableFiles.add(saveable);
 					}
 				}
-				if (!found) {
-					// file not found in ignore list
-					saveableFiles.add(saveable);
+				
+				for (String fileName : oldList) {
+					// add in previous entries
+					saveableFiles.add(fileName);
 				}
+				// for the lulz, should sort files with mods first followed by configs
+				Collections.sort(saveableFiles);
+				Collections.reverse(saveableFiles);
+				
+				ignoreList.set(saveableFiles.toArray(new String[] {}));
+			} else {
+				Files.createDirectories(clientMods);
 			}
-
-			for (String path : oldList) {
-				// add in previous entries
-				saveableFiles.add(path);
-			}
-			// for the lulz, should sort files with mods first followed by configs
-			Collections.sort(saveableFiles);
-			Collections.reverse(saveableFiles);
-
-			ignoreList.set(saveableFiles.toArray(new String[] {}));
 		}
 
 		IGNORE_LIST = Arrays.asList(ignoreList.getStringList());
