@@ -62,18 +62,18 @@ FREQUENTLY ASKED QUESTIONS:
   * Are you ignoring a file that is neccecary to connect to the server?
 * "This is so insecure I hate it!"
   * As per the disclaimer this is not intended to be a super secure system, it's more for personal use. Want to play with your kids/partner but you dont feel like teaching all of them exactly how to update mods.
-  * The config file allows you to put in your own hashes for the server client commands. This would take a real genious to pull files off the server or send files to you.
+  * The config file allows you to put in your own hashes for the server client commands. This would take a real genious to pull files off the server.
 * "Can you add feature X? Or fix bug Y?"
   * I don't know. Go submit it to the issues and I'll check it out.
 * "You're a horrible programmer"
   * You're entitled to that opinion.
 * "Can you make this work without using a custom main menu?"
-  * This fork of serversync is run without opening minecraft and in fact is no longer supporting the in-game feature of the previous incarnation.
+  * Serversync is run without opening minecraft and in fact is no longer supporting the in-game feature of the previous incarnation.
 * "Why does this mod spit out so much 'junk' in my console?"
-  * It's simply to help users know that they're not being attacked. It will tell them what IP they're connected to, what mod is being downloaded and more. My hope is that people will actually see this while it's running to know for sure that they can trust their admin. Hey, not everyone reads this. Also now that serversync is it's own entity the entire console is there for debugging purposes.
+  * It's simply to help users know that they're not being attacked. It will tell them what IP they're connected to, what mod is being downloaded and more. My hope is that people will actually see this while it's running to know for sure that they can trust their admin. Hey, not everyone reads this. Also now that serversync is it's own entity the entire console is there for debugging purposes (on the client side at least).
 * "I have files such as optifine that I don't want the server to delete"
-  * Specify this in the config files IGNORE_LIST
-  * Add client only mods to the clientmods directory on the server
+  * Specify this in the configs IGNORE_LIST
+  * Add client only mods to the clientmods directory on the server if you are a server admin
   * Mods in the clientmods folder are automatically added to the ignore list
 
 What does it do exactly?
