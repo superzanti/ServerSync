@@ -9,10 +9,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.superzanti.serversync.ClientWorker;
@@ -189,30 +187,52 @@ public class Server {
 		}
 		return null;
 	}
+	
+	@SuppressWarnings("unchecked")
+	public ArrayList<SyncFile> getClientOnlyFiles() throws IOException {
+		oos.writeObject(Main.SECURE_PUSH_CLIENTMODS);
+		oos.flush();
 
+		try {
+			ArrayList<SyncFile> serverMods = new ArrayList<SyncFile>();
+			serverMods = (ArrayList<SyncFile>) ois.readObject();
+			logs.updateLogs("Recieved client only files", Logger.FULL_LOG);
+
+			return serverMods;
+		} catch (ClassNotFoundException e) {
+			logs.updateLogs("Failed to read class: " + e.getMessage(), Logger.FULL_LOG);
+		}
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
 	public boolean getConfig() throws IOException {
 		oos.writeObject(SyncConfig.GET_CONFIG);
 		oos.flush();
-
-		Path config = Paths.get("../config/serversync.cfg");
-		Files.createDirectories(config.getParent());
-
-		FileOutputStream wr = new FileOutputStream(config.toFile());
-
-		byte[] outBuffer = new byte[clientSocket.getReceiveBufferSize()];
-		int bytesReceived = 0;
-
-		while ((bytesReceived = ois.read(outBuffer)) > 0) {
-			wr.write(outBuffer, 0, bytesReceived);
+		
+		try {
+			HashMap<String, List<String>> rules = (HashMap<String, List<String>>) ois.readObject();
+			ArrayList<String> ignored = new ArrayList<String>(rules.get("ignore"));
+			ArrayList<String> included = new ArrayList<String>(rules.get("include"));
+			
+			ArrayList<String> myIgnored = new ArrayList<String>(SyncConfig.IGNORE_LIST);
+			ArrayList<String> myIncluded = new ArrayList<String>(SyncConfig.INCLUDE_LIST);
+			
+			ignored.removeAll(myIgnored);
+			included.removeAll(myIncluded);
+			
+			if (!ignored.isEmpty() || !included.isEmpty()) {
+				logs.updateLogs("configs out of sync, updating...");
+				SyncConfig.IGNORE_LIST.addAll(ignored);
+				SyncConfig.INCLUDE_LIST.addAll(included);
+				SyncConfig.updateClient();
+			}
+			return true;
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
 		}
-		wr.flush();
-		wr.close();
-		reinitConnection();
-
-		logs.updateLogs("Sucessfully updated config");
-		logs.updateLogs("Reloading config");
-		SyncConfig.getServerDetails(config);
-		return true;
 	}
 
 	public boolean modExists(SyncFile mod) throws IOException {
@@ -224,6 +244,29 @@ public class Server {
 		boolean modExists = ois.readBoolean();
 
 		return modExists;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public boolean getSecurityDetails() throws IOException {
+		oos.writeObject(SyncConfig.SEC_HANDSHAKE);
+		oos.flush();
+		
+		try {
+			HashMap<String,String> security = (HashMap<String,String>)ois.readObject();
+			SyncConfig.SECURE_CHECK = security.get("SECURE_CHECK");
+			SyncConfig.SECURE_CHECKMODS = security.get("SECURE_CHECKMODS");
+			SyncConfig.SECURE_CHECKSUM = security.get("SECURE_CHECKSUM");
+			SyncConfig.SECURE_EXISTS = security.get("SECURE_EXISTS");
+			SyncConfig.SECURE_EXIT = security.get("SECURE_EXIT");
+			SyncConfig.SECURE_RECURSIVE = security.get("SECURE_RECURSIVE");
+			SyncConfig.SECURE_UPDATE = security.get("SECURE_UPDATE");
+			logs.updateLogs("Recieved security details from server");
+			return true;
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 	/**

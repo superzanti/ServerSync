@@ -26,7 +26,6 @@ import com.sun.glass.events.KeyEvent;
 import com.superzanti.lib.RefStrings;
 import com.superzanti.serversync.ClientWorker;
 import com.superzanti.serversync.SyncConfig;
-import com.superzanti.serversync.util.MCConfigReader.MCCReader;
 
 public class Main {
 
@@ -152,6 +151,15 @@ public class Main {
 			SyncConfig.pullServerConfig = false;
 			SyncConfig.configPresent = true;
 			TF_port.requestFocus();
+		} else {
+			//TODO create client config if none exists
+			SyncConfig.createClient(config);
+			try {
+				SyncConfig.getServerDetails(config);
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
 	}
 
