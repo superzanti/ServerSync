@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,6 +15,7 @@ import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.MCConfigReader.MCCArray;
 import com.superzanti.serversync.util.MCConfigReader.MCCElement;
 import com.superzanti.serversync.util.MCConfigReader.MCCReader;
+import com.superzanti.serversync.util.MCConfigReader.MCCWriter;
 
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.common.config.ConfigCategory;
@@ -22,6 +24,8 @@ import net.minecraftforge.common.config.Property;
 
 public class SyncConfig {
 	public static Configuration config;
+	private static Path configPath;
+	public static boolean serverSide = false;
 	public static String SERVER_IP;
 	public static int SERVER_PORT;
 	public static int MINECRAFT_PORT;
@@ -33,7 +37,9 @@ public class SyncConfig {
 	public static String SECURE_EXISTS;
 	public static String SECURE_EXIT;
 	public static Boolean PUSH_CLIENT_MODS;
+	public static Boolean REFUSE_CLIENT_MODS = false;
 	public static final String GET_CONFIG = "GIMME";
+	public static final String SEC_HANDSHAKE = "SHAKE_THAT";
 	public static List<String> ClientMods = new ArrayList<String>();
 	public static List<String> IGNORE_LIST;
 	public static List<String> INCLUDE_LIST;
@@ -50,7 +56,9 @@ public class SyncConfig {
 	 *            forge pre-initialization event
 	 */
 	public static void init(FMLPreInitializationEvent PreEvent) {
-		config = new Configuration(PreEvent.getSuggestedConfigurationFile());
+		File cf = PreEvent.getSuggestedConfigurationFile();
+		configPath = cf.toPath();
+		config = new Configuration(cf);
 		try {
 			setupConfig();
 		} catch (IOException e) {
@@ -59,6 +67,7 @@ public class SyncConfig {
 	}
 
 	public static void init(File configFile) {
+		configPath = configFile.toPath();
 		config = new Configuration(configFile);
 		try {
 			setupConfig();
@@ -66,9 +75,121 @@ public class SyncConfig {
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * Create default client side config
+	 * @param config
+	 * @return
+	 */
+	public static boolean createClient(Path config) {
+		try {
+			MCCWriter cWriter = new MCCWriter(Files.newBufferedWriter(config,StandardOpenOption.CREATE_NEW));
+			cWriter.writeOpenCategory("general");
+			ArrayList<String> comments = new ArrayList<String>();
+			comments.add("Set this to true to refuse client mods pushed by the server, [default: false]");
+			cWriter.writeElement(new MCCElement("general", "B", "REFUSE_CLIENT_MODS", "false", comments));
+			cWriter.newLine();
+			comments.clear();
+			cWriter.writeCloseCategory();
+			
+			cWriter.writeOpenCategory("rules");
+			comments.add("These configs are included, by default configs are not synced.");
+			cWriter.writeElement(new MCCElement("rules", "S", "CONFIG_INCLUDE_LIST", new ArrayList<String>(), comments));
+			cWriter.newLines(2);
+			comments.clear();
+			comments.add("These mods are ignored by serversync, add your client mods here to stop serversync deleting them.");
+			cWriter.writeElement(new MCCElement("rules", "S", "MOD_IGNORE_LIST", new ArrayList<String>(), comments));
+			cWriter.newLine();
+			comments.clear();
+			cWriter.writeCloseCategory();
+			
+			cWriter.writeOpenCategory("serverconnection");
+			comments.add("The port in which the minecraft server is running, not the serversync port [range: 1 ~ 49151, default: 25565]");
+			cWriter.writeElement(new MCCElement("serverconnection", "I", "MINECRAFT_PORT", "25565", comments));
+			cWriter.newLines(2);
+			comments.clear();
+			comments.add("The IP address of the server [default: 127.0.0.1]");
+			cWriter.writeElement(new MCCElement("serverconnection", "S", "SERVER_IP", "127.0.0.1", comments));
+			cWriter.newLines(2);
+			comments.clear();
+			comments.add("The port that your server will be serving on [range: 1 ~ 49151, default: 38067]");
+			cWriter.writeElement(new MCCElement("serverconnection", "I", "SERVER_PORT", "38067", comments));
+			cWriter.newLine();
+			comments.clear();
+			cWriter.writeCloseCategory();
+			
+			cWriter.writeOpenCategory("storagevariables");
+			comments.add("DO NOT EDIT THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! (If you are a server feel free to change it as much as you want to update your clients) [default: 20150608_000500]");
+			cWriter.writeElement(new MCCElement("storagevariables", "S", "LAST_UPDATE", "20150608_000500", comments));
+			cWriter.newLine();
+			comments.clear();
+			cWriter.writeCloseCategory();
+			
+			cWriter.close();
+			return true;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	public static boolean updateClient() {
+		try {
+			MCCWriter cWriter = new MCCWriter(Files.newBufferedWriter(configPath,StandardOpenOption.TRUNCATE_EXISTING));
+			cWriter.writeOpenCategory("general");
+			ArrayList<String> comments = new ArrayList<String>();
+			comments.add("Set this to true to refuse client mods pushed by the server, [default: false]");
+			cWriter.writeElement(new MCCElement("general", "B", "REFUSE_CLIENT_MODS", String.valueOf(REFUSE_CLIENT_MODS), comments));
+			cWriter.newLine();
+			comments.clear();
+			cWriter.writeCloseCategory();
+			
+			cWriter.writeOpenCategory("rules");
+			comments.add("These configs are included, by default configs are not synced.");
+			cWriter.writeElement(new MCCElement("rules", "S", "CONFIG_INCLUDE_LIST", new ArrayList<String>(SyncConfig.INCLUDE_LIST), comments));
+			cWriter.newLines(2);
+			comments.clear();
+			comments.add("These mods are ignored by serversync, add your client mods here to stop serversync deleting them.");
+			cWriter.writeElement(new MCCElement("rules", "S", "MOD_IGNORE_LIST", new ArrayList<String>(SyncConfig.IGNORE_LIST), comments));
+			cWriter.newLine();
+			comments.clear();
+			cWriter.writeCloseCategory();
+			
+			cWriter.writeOpenCategory("serverconnection");
+			comments.add("The port in which the minecraft server is running, not the serversync port [range: 1 ~ 49151, default: 25565]");
+			cWriter.writeElement(new MCCElement("serverconnection", "I", "MINECRAFT_PORT", String.valueOf(SyncConfig.MINECRAFT_PORT), comments));
+			cWriter.newLines(2);
+			comments.clear();
+			comments.add("The IP address of the server [default: 127.0.0.1]");
+			cWriter.writeElement(new MCCElement("serverconnection", "S", "SERVER_IP", SyncConfig.SERVER_IP, comments));
+			cWriter.newLines(2);
+			comments.clear();
+			comments.add("The port that your server will be serving on [range: 1 ~ 49151, default: 38067]");
+			cWriter.writeElement(new MCCElement("serverconnection", "I", "SERVER_PORT", String.valueOf(SyncConfig.SERVER_PORT), comments));
+			cWriter.newLine();
+			comments.clear();
+			cWriter.writeCloseCategory();
+			
+			cWriter.writeOpenCategory("storagevariables");
+			comments.add("DO NOT EDIT THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! (If you are a server feel free to change it as much as you want to update your clients) [default: 20150608_000500]");
+			cWriter.writeElement(new MCCElement("storagevariables", "S", "LAST_UPDATE", SyncConfig.LAST_UPDATE, comments));
+			cWriter.newLine();
+			comments.clear();
+			cWriter.writeCloseCategory();
+			
+			cWriter.close();
+			return true;
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 
 	public static void getServerDetails(Path configFile) throws IOException {
 		//TODO read as proper file format?
+		configPath = configFile;
 		MCCReader cReader = new MCCReader(Files.newBufferedReader(configFile));
 		MCCArray eArray = new MCCArray();
 		MCCElement element;
@@ -80,15 +201,19 @@ public class SyncConfig {
 		MINECRAFT_PORT = eArray.getElementByName("MINECRAFT_PORT").getInt();
 		SERVER_IP = eArray.getElementByName("SERVER_IP").getString();
 		SERVER_PORT = eArray.getElementByName("SERVER_PORT").getInt();
-		SECURE_CHECK = eArray.getElementByName("SECURE_CHECK").getString();
-		SECURE_CHECKMODS = eArray.getElementByName("SECURE_CHECKMODS").getString();
-		SECURE_RECURSIVE = eArray.getElementByName("SECURE_RECURSIVE").getString();
-		SECURE_CHECKSUM = eArray.getElementByName("SECURE_CHECKSUM").getString();
-		SECURE_UPDATE = eArray.getElementByName("SECURE_UPDATE").getString();
-		SECURE_EXISTS = eArray.getElementByName("SECURE_EXISTS").getString();
-		SECURE_EXIT = eArray.getElementByName("SECURE_EXIT").getString();
+		if (serverSide) {
+			SECURE_CHECK = eArray.getElementByName("SECURE_CHECK").getString();
+			SECURE_CHECKMODS = eArray.getElementByName("SECURE_CHECKMODS").getString();
+			SECURE_RECURSIVE = eArray.getElementByName("SECURE_RECURSIVE").getString();
+			SECURE_CHECKSUM = eArray.getElementByName("SECURE_CHECKSUM").getString();
+			SECURE_UPDATE = eArray.getElementByName("SECURE_UPDATE").getString();
+			SECURE_EXISTS = eArray.getElementByName("SECURE_EXISTS").getString();
+			SECURE_EXIT = eArray.getElementByName("SECURE_EXIT").getString();
+			PUSH_CLIENT_MODS = eArray.getElementByName("PUSH_CLIENT_MODS").getBoolean();
+		} else {
+			REFUSE_CLIENT_MODS = eArray.getElementByName("REFUSE_CLIENT_MODS").getBoolean();
+		}
 		LAST_UPDATE = eArray.getElementByName("LAST_UPDATE").getString();
-		PUSH_CLIENT_MODS = eArray.getElementByName("PUSH_CLIENT_MODS").getBoolean();
 		IGNORE_LIST = eArray.getElementByName("MOD_IGNORE_LIST").getList();
 		INCLUDE_LIST = eArray.getElementByName("CONFIG_INCLUDE_LIST").getList();
 

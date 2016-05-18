@@ -12,6 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import com.superzanti.serversync.util.Md5;
 import com.superzanti.serversync.util.SyncFile;
@@ -35,9 +37,10 @@ public class ServerWorker implements Runnable {
     // Contians mods located in the servers clientmods directory
     private static ArrayList<SyncFile> clientOnlyList = new ArrayList<SyncFile>();
 	
-	protected ServerWorker(Socket socket, ArrayList<SyncFile> allFiles, ServerSocket theServer){
+	protected ServerWorker(Socket socket, ArrayList<SyncFile> allFiles, ArrayList<SyncFile> clientFiles, ServerSocket theServer){
 		clientsocket = socket;
 		allList = allFiles;
+		clientOnlyList = clientFiles;
 		ServerSync.logger.info("Connection established with " + clientsocket);
 		return;
 	}
@@ -68,10 +71,6 @@ public class ServerWorker implements Runnable {
 				}
 				
 				if(message.equals(SyncConfig.SECURE_RECURSIVE)) {
-					/*ArrayList<String> ml = new ArrayList<String>();
-					for (Mod mod : allList) {
-						ml.add(mod.MODPATH.toString());
-					}*/
 					oos.writeObject(allList);
 					oos.flush();
 				}
@@ -83,12 +82,10 @@ public class ServerWorker implements Runnable {
 					oos.flush();
 				}
 				
-				/*// Not currently in use as clientmods are included in allList
 				if(message.equals(Main.SECURE_PUSH_CLIENTMODS)) {
 					oos.writeObject(clientOnlyList);
 					oos.flush();
 				}
-				*/
 				
 				if(message.equals(SyncConfig.SECURE_UPDATE)) {
 					ServerSync.logger.info("Writing file to client...");
@@ -106,17 +103,26 @@ public class ServerWorker implements Runnable {
 				}
 				
 				if(message.equals(SyncConfig.GET_CONFIG)) {
-					ServerSync.logger.info("Sending config to client...");
-					File f = new File("./config/serversync.cfg");
-					byte[] buff = new byte[clientsocket.getSendBufferSize()];
-					int bytesRead = 0;
-					InputStream in = new FileInputStream(f);
-					while((bytesRead = in.read(buff))>0) {
-						oos.write(buff,0,bytesRead);
-					}
-					in.close();
+					ServerSync.logger.info("Sending config info to client...");
+					HashMap<String, List<String>> rules = new HashMap<String, List<String>>();
+					rules.put("ignore", SyncConfig.IGNORE_LIST);
+					rules.put("include", SyncConfig.INCLUDE_LIST);
+					//TODO add security info in transfer
+					oos.writeObject(rules);
 					oos.flush();
-					break;
+				}
+				
+				if(message.equals(SyncConfig.SEC_HANDSHAKE)) {
+					HashMap<String,String> security = new HashMap<String, String>();
+					security.put("SECURE_CHECK", SyncConfig.SECURE_CHECK);
+					security.put("SECURE_CHECKMODS", SyncConfig.SECURE_CHECKMODS);
+					security.put("SECURE_CHECKSUM", SyncConfig.SECURE_CHECKSUM);
+					security.put("SECURE_EXISTS", SyncConfig.SECURE_EXISTS);
+					security.put("SECURE_EXIT", SyncConfig.SECURE_EXIT);
+					security.put("SECURE_RECURSIVE", SyncConfig.SECURE_RECURSIVE);
+					security.put("SECURE_UPDATE", SyncConfig.SECURE_UPDATE);
+					oos.writeObject(security);
+					oos.flush();
 				}
 				
 				if(message.equals(Main.SECURE_FILESIZE)) {

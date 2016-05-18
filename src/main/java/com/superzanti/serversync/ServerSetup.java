@@ -27,15 +27,30 @@ public class ServerSetup implements Runnable {
 
 	// This is what's in our folders
 	private static ArrayList<SyncFile> allMods = new ArrayList<SyncFile>();
+	private static ArrayList<SyncFile> clientMods = new ArrayList<SyncFile>();
 	
 	protected ServerSetup() {
+		SyncConfig.serverSide = true;
 		ArrayList<Path> tempList = null;
 		ArrayList<String> directories = new ArrayList<String>();
 		/* DEFAULT DIRECTORIES */
 		directories.add("mods");
+		//TODO add ability to include directories in the config
 		
 		if (SyncConfig.PUSH_CLIENT_MODS) {
-			directories.add("clientmods");
+			tempList = PathUtils.fileListDeep(Paths.get("clientmods"));
+			ServerSync.logger.info("Getting all of: clientmods");
+			if (tempList != null) {
+				try {
+					clientMods.addAll(SyncFile.parseList(tempList));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else {
+				ServerSync.logger.error("Could not access: clientmods");
+			}
+			ServerSync.logger.info("Finished getting: clientmods");
 		}
 		
 		if (Files.exists(Paths.get("flan"))) {
@@ -91,7 +106,7 @@ public class ServerSetup implements Runnable {
 			try {
 				Socket socket = server.accept();
 				ServerWorker sc;
-				sc = new ServerWorker(socket, allMods, server);
+				sc = new ServerWorker(socket, allMods, clientMods, server);
 				new Thread(sc).start();
 			} catch (Exception e) {
 				ServerSync.logger.info("Error occured." + e);

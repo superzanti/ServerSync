@@ -118,8 +118,15 @@ public class ClientWorker implements Runnable {
 				return;
 			}
 
-			logs.updateLogs("Updating serversync config...");
+			logs.updateLogs("Checking config...");
 			server.getConfig();
+			
+			if(!server.getSecurityDetails()) {
+				errorInUpdates = true;
+				finished = true;
+				closeWorker(server);
+				return;
+			}
 			if (cConfigs != null) {
 				for (Path path : cConfigs) {
 					String fileName = path.getFileName().toString();
@@ -137,6 +144,15 @@ public class ClientWorker implements Runnable {
 				// get all files on server
 				logs.updateLogs("Getting mods...");
 				ArrayList<SyncFile> serverFiles = server.getFiles();
+				/* CLIENT MODS */
+				if (!SyncConfig.REFUSE_CLIENT_MODS) {
+					ArrayList<SyncFile> serverCOMods = server.getClientOnlyFiles();
+					serverFiles.addAll(serverCOMods);
+					logs.updateLogs("Accepting client mods! Added client mods to server list");
+				} else {
+					logs.updateLogs("Refusing client mods from server!");
+				}
+				
 
 				logs.updateLogs("Ignoring: " + SyncConfig.IGNORE_LIST, Logger.FULL_LOG);
 				// run calculations to figure out how big the bar is
@@ -146,8 +162,8 @@ public class ClientWorker implements Runnable {
 
 				/* UPDATING */
 				logs.updateLogs("<------> Starting Update Process <------>");
-				// Client only mods are added on the server side and treated as
-				// normal mods by the client
+				
+				/* COMMON MODS */
 				for (SyncFile file : serverFiles) {
 					// Update status
 					currentPercent++;
@@ -162,7 +178,7 @@ public class ClientWorker implements Runnable {
 						if (!clientFile.compare(file)) {
 							server.updateFile(file.MODPATH.toString(), clientPath.toFile());
 						} else {
-							logs.updateLogs(file.fileName + " is up to date");
+							logs.updateLogs(file.fileName + " is up to date", Logger.FULL_LOG);
 						}
 					} else {
 						// only need to check for ignore here as we are working

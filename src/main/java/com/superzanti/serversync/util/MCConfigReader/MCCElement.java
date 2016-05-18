@@ -6,22 +6,37 @@ import java.util.ArrayList;
 public class MCCElement {
 	private final String category;
 	private Type type;
+	private String typeTag;
 	private String value;
 	private String name;
 	private ArrayList<String> values;
+	private ArrayList<String> comments;
 	public final boolean isArray;
+	public boolean hasComment;
 	
-	public MCCElement(String category,String type,String name,String value) {
+	public MCCElement(String category,String type,String name,String value, ArrayList<String> elementComments) {
 		this.category = category;
+		this.comments = elementComments;
 		this.name = name;
 		setType(type);
 		this.isArray = false;
+		if (comments.isEmpty()) {
+			this.hasComment = false;
+		} else {
+			this.hasComment = true;
+		}
 		this.value = value;
 		this.values = null;
 	}
 	
-	public MCCElement(String category,String type,String name, ArrayList<String> values) {
+	public MCCElement(String category,String type,String name, ArrayList<String> values, ArrayList<String> elementComments) {
 		this.category = category;
+		this.comments = elementComments;
+		if (comments.isEmpty()) {
+			this.hasComment = false;
+		} else {
+			this.hasComment = true;
+		}
 		this.name = name;
 		setType(type);
 		this.values = values;
@@ -39,6 +54,21 @@ public class MCCElement {
 		if (type.equals("I")) {
 			this.type = Integer.class;
 		}
+		this.typeTag = type;
+	}
+	
+	public void addComment(String comment) {
+		this.comments.add(comment);
+		this.hasComment = true;
+	}
+	
+	public void removeComments() {
+		this.comments = null;
+		this.hasComment = false;
+	}
+	
+	public ArrayList<String> getComments() {
+		return this.comments;
 	}
 	
 	public ArrayList<String> getList() {
@@ -52,8 +82,16 @@ public class MCCElement {
 		return category;
 	}
 	
-	public java.lang.reflect.Type getType() {
+	public Type getType() {
 		return type;
+	}
+	
+	/**
+	 * 
+	 * @return String representation of the type of data this element holds
+	 */
+	public String getTypeTag() {
+		return typeTag;
 	}
 	
 	public boolean getBoolean() {
