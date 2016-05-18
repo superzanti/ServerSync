@@ -17,18 +17,24 @@ public class MCCReader extends BufferedReader {
 	
 	public MCCElement readNextElement() throws IOException {
 		String line;
+		ArrayList<String> elementComments = new ArrayList<String>();
+		MCCElement el;
 		while ((line = this.readLine()) != null) {
+			//TODO read and attach comments to elements
 			if (line.contains("#")) {
+				elementComments.add(line);
 				continue;
 			}
 			if (line.contains("}")) {
-				category = null;
+				category = "unsorted";
+				elementComments.clear();
 				continue;
 			}
 			if (line.contains("{")) {
 				String[] cat = line.trim().split(" ");
 				// Should get category name
 				category = cat[0];
+				elementComments.clear();
 				// Move to next line
 				continue;
 			}
@@ -36,12 +42,16 @@ public class MCCReader extends BufferedReader {
 				String type = getType(line);
 				String name = getName(line);
 				String value = getValue(line);
-				return new MCCElement(category,type,name,value);
+				el = new MCCElement(category,type,name,value,elementComments);
+				elementComments.clear();
+				return el;
 			}
 			if (line.contains(":") && line.contains("<")) {
 				String type = getType(line);
 				String name = getName(line);
-				return new MCCElement(category,type,name,getValues());
+				el = new MCCElement(category,type,name,getValues(),elementComments);
+				elementComments.clear();
+				return el;
 			}
 		}
 		return null;
