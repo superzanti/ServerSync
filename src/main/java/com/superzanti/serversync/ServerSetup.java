@@ -63,10 +63,11 @@ public class ServerSetup implements Runnable {
 				String dirString = Paths.get(directory).toAbsolutePath().normalize().toString();
 				tempList = PathUtils.fileListDeep(Paths.get(directory));
 				ServerSync.logger.info("Getting all of: " + dirString);
+				
 				if (tempList != null) {
 					allMods.addAll(SyncFile.parseList(tempList));
 				} else {
-					ServerSync.logger.error("Could not access: " + dirString);
+					ServerSync.logger.info("Failed to access: " + dirString);
 				}
 				ServerSync.logger.info("Finished getting: " + dirString);
 			}
@@ -76,7 +77,7 @@ public class ServerSetup implements Runnable {
 				tempList = PathUtils.fileListDeep(Paths.get("config"));
 				if (tempList != null) {
 					for (Path path : tempList) {
-						if (SyncConfig.INCLUDE_LIST.contains(path.getFileName().toString().replaceAll(" ", ""))) {
+						if (SyncConfig.INCLUDE_LIST.contains(path.getFileName().toString())) {
 							allMods.add(new SyncFile(path,false));
 						}
 					}

@@ -154,17 +154,20 @@ public class Server {
 			// List of mod names
 			ArrayList<String> serverModNames = (ArrayList<String>) ois.readObject();
 			ArrayList<String> clientModNames = SyncFile.listModNames(clientMods);
+			
+			// Remove client only mods and other user ignored files from comparison list
+			clientModNames.removeAll(new ArrayList<String>(SyncConfig.IGNORE_LIST));
 
-			// Remove ignored mods from mod list
 			logs.updateLogs("Syncable client mods are: " + clientModNames.toString(), Logger.FULL_LOG);
 			logs.updateLogs("Syncable server mods are: " + serverModNames.toString(), Logger.FULL_LOG);
+			
+			ArrayList<String> _SMNC = (ArrayList<String>) serverModNames.clone();
+			ArrayList<String> _CMNC = (ArrayList<String>) clientModNames.clone();
+			
+			_SMNC.removeAll(clientModNames);
+			_CMNC.removeAll(serverModNames);
 
-			serverModNames.removeAll(clientModNames);
-			if (SyncConfig.REFUSE_CLIENT_MODS) {
-				serverModNames.removeAll(new ArrayList<String>(SyncConfig.IGNORE_LIST));
-			}
-
-			if (serverModNames.size() == 0) {
+			if (_SMNC.size() == 0 && _CMNC.size() == 0) {
 				return false;
 			}
 		} catch (Exception e) {
