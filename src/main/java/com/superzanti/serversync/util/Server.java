@@ -160,6 +160,9 @@ public class Server {
 			logs.updateLogs("Syncable server mods are: " + serverModNames.toString(), Logger.FULL_LOG);
 
 			serverModNames.removeAll(clientModNames);
+			if (SyncConfig.REFUSE_CLIENT_MODS) {
+				serverModNames.removeAll(new ArrayList<String>(SyncConfig.IGNORE_LIST));
+			}
 
 			if (serverModNames.size() == 0) {
 				return false;

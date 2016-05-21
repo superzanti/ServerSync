@@ -64,7 +64,7 @@ public class ServerWorker implements Runnable {
 				
 				if(message.equals(SyncConfig.SECURE_CHECKMODS)) {
 					@SuppressWarnings("unchecked")
-					ArrayList<String> serverModList = SyncFile.listModNames(allList);
+					ArrayList<String> serverModList = SyncFile.listModNames(allList,clientOnlyList);
 					ServerSync.logger.info("Syncable mods are: " + serverModList.toString());
 					oos.writeObject(serverModList);
 					oos.flush();
