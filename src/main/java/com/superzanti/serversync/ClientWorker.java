@@ -69,29 +69,25 @@ public class ClientWorker implements Runnable {
 	private void closeWorker(Server server) {
 		server.close();
 		if (!finished) {
-			try {
-				if (!updateHappened && !errorInUpdates) {
-					Main.updateText(
-							"No update needed, for a full log check the logs folder in the minecraft directory");
-					Main.updateProgress(100);
-				} else {
-					logs.updateLogs("Files updated", Logger.FULL_LOG);
-					Main.updateProgress(100);
-				}
-				if (errorInUpdates) {
-					logs.updateLogs(
-							"Errors occured, please check ip/port details are correct. For a detailed log check the logs folder in your minecraft directory");
-				}
-				Thread.sleep(100);
-				Main.toggleButton();
-			} catch (InterruptedException e) {
-				logs.updateLogs("Exception caught! - " + e, Logger.FULL_LOG);
-				Main.toggleButton();
+			if (!updateHappened && !errorInUpdates) {
+				Main.updateText("No update needed, for a full log check the logs folder in the minecraft directory");
+				Main.updateProgress(100);
+			} else {
+				logs.updateLogs("Files updated", Logger.FULL_LOG);
+				Main.updateProgress(100);
 			}
+			if (errorInUpdates) {
+				logs.updateLogs(
+						"Errors occured, please check ip/port details are correct. For a detailed log check the logs folder in your minecraft directory");
+			}
+			Main.toggleButton();
+			System.out.println("Toggling button, unfinished");
 			finished = true;
 		} else {
 			Main.toggleButton();
+			System.out.println("Toggling button, finished");
 		}
+
 	}
 
 	@Override
@@ -114,17 +110,15 @@ public class ClientWorker implements Runnable {
 			if (!server.connect()) {
 				errorInUpdates = true;
 				finished = true;
-				closeWorker(server);
 				return;
 			}
 
 			logs.updateLogs("Checking config...");
 			server.getConfig();
-			
-			if(!server.getSecurityDetails()) {
+
+			if (!server.getSecurityDetails()) {
 				errorInUpdates = true;
 				finished = true;
-				closeWorker(server);
 				return;
 			}
 			if (cConfigs != null) {
@@ -152,7 +146,6 @@ public class ClientWorker implements Runnable {
 				} else {
 					logs.updateLogs("Refusing client mods from server!");
 				}
-				
 
 				logs.updateLogs("Ignoring: " + SyncConfig.IGNORE_LIST, Logger.FULL_LOG);
 				// run calculations to figure out how big the bar is
@@ -162,7 +155,7 @@ public class ClientWorker implements Runnable {
 
 				/* UPDATING */
 				logs.updateLogs("<------> Starting Update Process <------>");
-				
+
 				/* COMMON MODS */
 				for (SyncFile file : serverFiles) {
 					// Update status
@@ -214,12 +207,12 @@ public class ClientWorker implements Runnable {
 							try {
 								file.delete();
 								logs.updateLogs("<>" + file.fileName + " deleted");
-							} catch(IOException e) {
+							} catch (IOException e) {
 								logs.updateLogs(file.fileName + "Failed to delete flagging for deleteOnExit",
 										Logger.FULL_LOG);
 								file.deleteOnExit();
 							}
-						
+
 							updateHappened = true;
 						}
 						Main.updateProgress((int) (currentPercent / percentScale));

@@ -28,6 +28,8 @@ import com.superzanti.serversync.ClientWorker;
 import com.superzanti.serversync.SyncConfig;
 
 public class Main {
+	
+	/* AWT EVENT DISPATCHER THREAD */
 
 	public static final String SECURE_FILESIZE = "11b4278c7e5a79003db77272c1ed2cf5";
 	public static final String SECURE_PUSH_CLIENTMODS = "0ad95bb1734520dc1fa3c737f8a57d91";
@@ -152,7 +154,7 @@ public class Main {
 			SyncConfig.configPresent = true;
 			TF_port.requestFocus();
 		} else {
-			//TODO create client config if none exists
+			// TODO create client config if none exists
 			SyncConfig.createClient(config);
 			try {
 				SyncConfig.getServerDetails(config);
@@ -227,12 +229,20 @@ public class Main {
 	}
 
 	public static void toggleButton() {
-		if (B_sync.isEnabled()) {
-			B_sync.setEnabled(false);
-		} else {
-			B_sync.setEnabled(true);
-			B_sync.setText("Sync");
+		class ButtonToggle implements Runnable {
+
+			@Override
+			public void run() {
+				if (B_sync.isEnabled()) {
+					B_sync.setEnabled(false);
+				} else {
+					B_sync.setEnabled(true);
+					B_sync.setText("Sync");
+				}
+			}
+			
 		}
+		SwingUtilities.invokeLater(new ButtonToggle());
 	}
 
 }
