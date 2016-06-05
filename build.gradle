@@ -12,24 +12,24 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
     }
 }
 
-apply plugin: 'forge'
-apply plugin: 'eclipse'
+apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'java'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 
-version = "2.5.2"
+version = "3.0.1"
 group= "com.superzanti.serversync" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "serversync"
 
 minecraft {
-    version = "1.7.10-10.13.3.1403-1.7.10"
-    runDir = "eclipse"
+    version = "1.9.4-12.17.0.1951"
+    runDir = "runtime/client"
+    mappings = "snapshot_20160604"
 }
 
 configurations {
@@ -57,7 +57,7 @@ dependencies {
     runtime 'com.google.code.gson:gson:2.6.2'
     includedLibs 'com.google.code.gson:gson:2.6.2'
     shadow 'com.google.code.gson:gson:2.6.2'
-      
+
     // real examples
     //compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
     //compile 'com.googlecode.efficient-java-matrix-library:ejml:0.24' // adds ejml to the dev env
@@ -77,11 +77,11 @@ processResources
     // replace stuff in mcmod.info, nothing else
     from(sourceSets.main.resources.srcDirs) {
         include 'mcmod.info'
-                
+
         // replace version and mcversion
         expand 'version':project.version, 'mcversion':project.minecraft.version
     }
-        
+
     // copy everything else, thats not the mcmod.info
     from(sourceSets.main.resources.srcDirs) {
         exclude 'mcmod.info'

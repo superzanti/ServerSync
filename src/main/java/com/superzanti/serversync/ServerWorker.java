@@ -18,8 +18,8 @@ import java.util.List;
 import com.superzanti.serversync.util.Md5;
 import com.superzanti.serversync.util.SyncFile;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import runme.Main;
 
 /**
@@ -94,7 +94,7 @@ public class ServerWorker implements Runnable {
 				if(message.equals(SyncConfig.SECURE_UPDATE)) {
 					ServerSync.logger.info("Writing file to client...");
 					String theFile = (String) ois.readObject();
-					File f = new File(theFile);
+					File f = new File(theFile.replace("\\", "/"));
 					byte[] buff = new byte[clientsocket.getSendBufferSize()];
 					int bytesRead = 0;
 					InputStream in = new FileInputStream(f);
@@ -133,7 +133,7 @@ public class ServerWorker implements Runnable {
 					//TODO update to NIO
 					ServerSync.logger.info("Writing filesize to client...");
 					String theFile = (String) ois.readObject();
-					Path p = Paths.get(theFile);
+					Path p = Paths.get(theFile.replace("\\", "/"));
 					oos.writeLong(Files.size(p));
 					oos.flush();
 				}

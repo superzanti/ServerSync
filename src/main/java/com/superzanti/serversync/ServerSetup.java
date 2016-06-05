@@ -10,9 +10,8 @@ import java.util.ArrayList;
 
 import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.SyncFile;
-
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * Sets up listener for clients on the server
@@ -73,12 +72,15 @@ public class ServerSetup implements Runnable {
 			}
 			
 			/* CONFIGS */
-			if (!SyncConfig.INCLUDE_LIST.isEmpty()) {
+			/* Either have the whitelist disabled *OR* enabled + check the include list */
+			if (!SyncConfig.CONFIG_WHITELIST || !SyncConfig.INCLUDE_LIST.isEmpty()) {
 				tempList = PathUtils.fileListDeep(Paths.get("config"));
 				if (tempList != null) {
 					for (Path path : tempList) {
-						if (SyncConfig.INCLUDE_LIST.contains(path.getFileName().toString())) {
-							allMods.add(new SyncFile(path,false));
+						if(!path.getFileName().toString().equalsIgnoreCase("serversync.cfg")) {
+							if (!SyncConfig.CONFIG_WHITELIST || SyncConfig.INCLUDE_LIST.contains(path.getFileName().toString())) {
+								allMods.add(new SyncFile(path, false));
+							}
 						}
 					}
 				}

@@ -5,30 +5,29 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.SidedProxy;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.Logger;
 
 import com.superzanti.lib.RefStrings;
 import com.superzanti.serversync.proxy.ClientProxy;
 import com.superzanti.serversync.proxy.CommonProxy;
 
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.Mod.EventHandler;
-import cpw.mods.fml.common.SidedProxy;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.common.MinecraftForge;
 
 /**
  * Main class, used to initialize config/logger, register proxies/events and register the mod for FML loading
  * @author superzanti
  */
-@Mod(modid = RefStrings.MODID, name = RefStrings.NAME, version = RefStrings.VERSION)
+@Mod(modid = RefStrings.MODID, name = RefStrings.NAME, version = RefStrings.VERSION, acceptableRemoteVersions = "*")
 public class ServerSync {
 	public static Logger logger;
 	
 	@SidedProxy(modId = RefStrings.MODID, clientSide = "com.superzanti.serversync.proxy.ClientProxy", serverSide = "com.superzanti.serversync.proxy.CommonProxy")
 	private static CommonProxy proxy;
 
-	@EventHandler
+	@Mod.EventHandler
 	public static void PreLoad(FMLPreInitializationEvent PreEvent) {
 		// setup the minecraft logger for the server
 		logger = PreEvent.getModLog();
@@ -36,7 +35,7 @@ public class ServerSync {
 		// Create clientmods directory
 		if (proxy.isServer()) {
 			Path clientOnlyMods = Paths.get("clientmods/");
-			if (!Files.exists(clientOnlyMods)) {				
+			if (!Files.exists(clientOnlyMods)) {
 				try {
 					Files.createDirectories(clientOnlyMods);
 				} catch (IOException e) {

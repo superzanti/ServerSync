@@ -17,10 +17,10 @@ import com.superzanti.serversync.util.MCConfigReader.MCCElement;
 import com.superzanti.serversync.util.MCConfigReader.MCCReader;
 import com.superzanti.serversync.util.MCConfigReader.MCCWriter;
 
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 public class SyncConfig {
 	public static Configuration config;
@@ -41,6 +41,7 @@ public class SyncConfig {
 	public static final String GET_CONFIG = "GIMME";
 	public static final String SEC_HANDSHAKE = "SHAKE_THAT";
 	public static List<String> ClientMods = new ArrayList<String>();
+	public static Boolean CONFIG_WHITELIST;
 	public static List<String> IGNORE_LIST;
 	public static List<String> INCLUDE_LIST;
 	public static String LAST_UPDATE;
@@ -59,16 +60,6 @@ public class SyncConfig {
 		File cf = PreEvent.getSuggestedConfigurationFile();
 		configPath = cf.toPath();
 		config = new Configuration(cf);
-		try {
-			setupConfig();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public static void init(File configFile) {
-		configPath = configFile.toPath();
-		config = new Configuration(configFile);
 		try {
 			setupConfig();
 		} catch (IOException e) {
@@ -253,6 +244,9 @@ public class SyncConfig {
 
 		PUSH_CLIENT_MODS = config.getBoolean("PUSH_CLIENT_MODS", Configuration.CATEGORY_GENERAL, false,
 				"set true to push client side mods from clientmods directory, set on server");
+
+		CONFIG_WHITELIST = config.getBoolean("CONFIG_WHITELIST", Configuration.CATEGORY_GENERAL, true,
+				"set true to have the config include list work as a whitelist");
 
 		ignoreList = config.get("Rules", "MOD_IGNORE_LIST", new String[]{},
 				"These mods are ignored by serversync, list auto updates with mods added to the clientmods directory.");
