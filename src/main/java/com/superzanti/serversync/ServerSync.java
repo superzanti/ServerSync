@@ -20,7 +20,7 @@ import net.minecraftforge.common.MinecraftForge;
  * Main class, used to initialize config/logger, register proxies/events and register the mod for FML loading
  * @author superzanti
  */
-@Mod(modid = RefStrings.MODID, name = RefStrings.NAME, version = RefStrings.VERSION)
+@Mod(modid = RefStrings.MODID, name = RefStrings.NAME, version = RefStrings.VERSION, acceptableRemoteVersions = "*")
 public class ServerSync {
 	public static Logger logger;
 	

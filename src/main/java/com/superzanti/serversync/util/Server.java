@@ -299,7 +299,7 @@ public class Server {
 
 		// TODO update to NIO
 
-		long fileSize = 0l;
+		long fileSize = 0L;
 		boolean gotFileSize = false;
 		FileProgress GUIUpdater = new FileProgress();
 

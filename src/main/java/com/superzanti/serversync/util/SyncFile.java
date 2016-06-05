@@ -166,6 +166,12 @@ public class SyncFile implements Serializable {
 						for (JsonElement jObject : jArray) {
 							// This will contain all of the mod info
 							JsonObject info = jObject.getAsJsonObject();
+							if(info == null)
+								continue;
+
+							if(!info.has("version") || !info.has("name"))
+								continue;
+
 							version = info.get("version").getAsString();
 							name = info.get("name").getAsString();
 						}

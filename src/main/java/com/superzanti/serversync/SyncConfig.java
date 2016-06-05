@@ -41,6 +41,7 @@ public class SyncConfig {
 	public static final String GET_CONFIG = "GIMME";
 	public static final String SEC_HANDSHAKE = "SHAKE_THAT";
 	public static List<String> ClientMods = new ArrayList<String>();
+	public static Boolean CONFIG_WHITELIST;
 	public static List<String> IGNORE_LIST;
 	public static List<String> INCLUDE_LIST;
 	public static String LAST_UPDATE;
@@ -243,6 +244,9 @@ public class SyncConfig {
 
 		PUSH_CLIENT_MODS = config.getBoolean("PUSH_CLIENT_MODS", Configuration.CATEGORY_GENERAL, false,
 				"set true to push client side mods from clientmods directory, set on server");
+
+		CONFIG_WHITELIST = config.getBoolean("CONFIG_WHITELIST", Configuration.CATEGORY_GENERAL, true,
+				"set true to have the config include list work as a whitelist");
 
 		ignoreList = config.get("Rules", "MOD_IGNORE_LIST", new String[]{},
 				"These mods are ignored by serversync, list auto updates with mods added to the clientmods directory.");
