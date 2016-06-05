@@ -18,8 +18,8 @@ import java.util.List;
 import com.superzanti.serversync.util.Md5;
 import com.superzanti.serversync.util.SyncFile;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import runme.Main;
 
 /**

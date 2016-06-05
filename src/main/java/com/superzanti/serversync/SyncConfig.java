@@ -17,10 +17,10 @@ import com.superzanti.serversync.util.MCConfigReader.MCCElement;
 import com.superzanti.serversync.util.MCConfigReader.MCCReader;
 import com.superzanti.serversync.util.MCConfigReader.MCCWriter;
 
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 public class SyncConfig {
 	public static Configuration config;
@@ -59,16 +59,6 @@ public class SyncConfig {
 		File cf = PreEvent.getSuggestedConfigurationFile();
 		configPath = cf.toPath();
 		config = new Configuration(cf);
-		try {
-			setupConfig();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public static void init(File configFile) {
-		configPath = configFile.toPath();
-		config = new Configuration(configFile);
 		try {
 			setupConfig();
 		} catch (IOException e) {
