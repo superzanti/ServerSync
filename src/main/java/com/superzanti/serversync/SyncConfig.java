@@ -83,7 +83,12 @@ public class SyncConfig {
 	 */
 	public static boolean createClient(Path config) {
 		try {
-			MCCWriter cWriter = new MCCWriter(Files.newBufferedWriter(config,StandardOpenOption.CREATE_NEW));
+			// Probably redundant here but hey just in case
+			if (!Files.exists(config)) {
+				Files.createDirectories(config.getParent()); // Fix if config dir does not exist
+				Files.createFile(config);
+			}
+			MCCWriter cWriter = new MCCWriter(Files.newBufferedWriter(config));
 			cWriter.writeOpenCategory("general");
 			ArrayList<String> comments = new ArrayList<String>();
 			comments.add("Set this to true to refuse client mods pushed by the server, [default: false]");

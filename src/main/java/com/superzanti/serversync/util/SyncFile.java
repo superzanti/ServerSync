@@ -58,8 +58,10 @@ public class SyncFile implements Serializable {
 
 	/**
 	 * Main constructor, populates file information
+	 * 
 	 * @param modPath
-	 * @param isMod false to skip populating mod information from mcmod.info
+	 * @param isMod
+	 *            false to skip populating mod information from mcmod.info
 	 * @throws IOException
 	 */
 	public SyncFile(Path modPath, boolean isMod) throws IOException {
@@ -87,7 +89,8 @@ public class SyncFile implements Serializable {
 
 		if (version == null) {
 			version = SyncFile.UNKNOWN_VERSION;
-			// Get hashed file contents if version could not be obtained used in compare functionality
+			// Get hashed file contents if version could not be obtained used in
+			// compare functionality
 			md5FileContents = Md5.md5String(MODPATH.toFile());
 		}
 		if (name == null) {
@@ -107,7 +110,9 @@ public class SyncFile implements Serializable {
 	}
 
 	/**
-	 * Returns true if the configs ignore list contains the file name of this SyncFile
+	 * Returns true if the configs ignore list contains the file name of this
+	 * SyncFile
+	 * 
 	 * @return true if ignored, false otherwise
 	 */
 	public boolean isSetToIgnore() {
@@ -116,10 +121,13 @@ public class SyncFile implements Serializable {
 		}
 		return isIgnored;
 	}
-	
+
 	/**
-	 * Only used for config files, set based on serversyncs rule list INCLUDE_LIST
-	 * @return true if the configs include list contains this SyncFiles file name
+	 * Only used for config files, set based on serversyncs rule list
+	 * INCLUDE_LIST
+	 * 
+	 * @return true if the configs include list contains this SyncFiles file
+	 *         name
 	 */
 	public boolean isIncluded() {
 		List<String> includes = SyncConfig.INCLUDE_LIST;
@@ -133,11 +141,13 @@ public class SyncFile implements Serializable {
 
 	/**
 	 * Tests file to see if it is a packaged/zipped file
+	 * 
 	 * @param fileName
 	 * @return true if file is a package
 	 */
 	private boolean isZipJar(String fileName) {
-		// TODO make a better way to do this, perhaps use failure of javas ZippedFile class
+		// TODO make a better way to do this, perhaps use failure of javas
+		// ZippedFile class
 		boolean isZip = false;
 		if (fileName.endsWith(".zip") || fileName.endsWith(".jar")) {
 			isZip = true;
@@ -154,18 +164,29 @@ public class SyncFile implements Serializable {
 				InputStream is = packagedMod.getInputStream(modInfo);
 				InputStreamReader read = new InputStreamReader(is);
 				JsonStreamParser parser = new JsonStreamParser(read);
-				
+
 				while (parser.hasNext()) {
 					JsonElement element = parser.next();
 					if (element.isJsonArray()) {
 						// This will be the opening document array
 						JsonArray jArray = element.getAsJsonArray();
-						
+
 						// Get each array of objects
 						// array 1 {"foo":"bar"}, array 2 {"foo":"bar"}
 						for (JsonElement jObject : jArray) {
 							// This will contain all of the mod info
 							JsonObject info = jObject.getAsJsonObject();
+
+							// Skip conditions /////////////////////////////
+							if (info == null) {
+								continue;
+							}
+
+							if (!info.has("version") || !info.has("name")) {
+								continue;
+							}
+							////////////////////////////////////////////////
+							
 							version = info.get("version").getAsString();
 							name = info.get("name").getAsString();
 						}
@@ -180,12 +201,14 @@ public class SyncFile implements Serializable {
 	}
 
 	/**
-	 * Compares mod versions from mcmod.info or compares file contents if version could not be found
+	 * Compares mod versions from mcmod.info or compares file contents if
+	 * version could not be found
 	 * 
 	 * @param serversMod
 	 *            - servers version of the mod
 	 * @return True if versions or content are the same<br>
-	 *         False if versions are different or if version is unknown and contents could not be read
+	 *         False if versions are different or if version is unknown and
+	 *         contents could not be read
 	 */
 	public boolean compare(SyncFile serversMod) {
 		if (!serversMod.version.equals(SyncFile.UNKNOWN_VERSION)) {
@@ -198,6 +221,7 @@ public class SyncFile implements Serializable {
 
 	/**
 	 * Deletes the file this SyncFile refers to
+	 * 
 	 * @return true if file deleted successfully
 	 * @throws IOException
 	 */
@@ -240,8 +264,11 @@ public class SyncFile implements Serializable {
 	}
 
 	/**
-	 * This is intended to be a shortcut for creating a bunch of SyncFiles from the output of PathUtils fileListDeep
-	 * @param paths a list of paths to convert to SyncFiles
+	 * This is intended to be a shortcut for creating a bunch of SyncFiles from
+	 * the output of PathUtils fileListDeep
+	 * 
+	 * @param paths
+	 *            a list of paths to convert to SyncFiles
 	 * @return A list of SyncFiles
 	 * @throws IOException
 	 */
