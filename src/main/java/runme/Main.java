@@ -5,6 +5,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,7 +23,6 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import com.sun.glass.events.KeyEvent;
 import com.superzanti.lib.RefStrings;
 import com.superzanti.serversync.ClientWorker;
 import com.superzanti.serversync.SyncConfig;
