@@ -1,0 +1,43 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+        maven {
+            name = "sonatype"
+            url = "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+    }
+    
+}
+apply plugin: 'net.minecraftforge.gradle.forge'
+
+version = ssversion + "-" + project.name.replace("-",".")
+group= "com.superzanti.serversync" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = ssname
+
+minecraft {
+    version = "1.9.4-12.17.0.1954"
+    runDir = "runtime/client"
+    mappings = "snapshot_20160607"
+}
+
+task pullFromSource(type: Jar, dependsOn: ':ServerSync:build') {
+	destinationDir = file("$rootDir/publish")
+	manifest {
+		attributes 'Main-Class': 'runme.Main'
+	}
+	duplicatesStrategy = "exclude"
+	from(zipTree("$rootDir/publish/serversync-2.5.2.jar"))
+	into('')
+}
+
+//artifacts {
+//	archives pullFromSource
+//}

@@ -1,0 +1,3 @@
+include "1-9-4", "ServerSync" 
+
+rootProject.name = 'ssWrapper'
