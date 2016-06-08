@@ -13,14 +13,11 @@ buildscript {
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
     }
 }
 
 apply plugin: 'forge'
-apply plugin: 'eclipse'
 apply plugin: 'java'
-apply plugin: 'com.github.johnrengelman.shadow'
 
 
 version = "2.5.2"
@@ -29,43 +26,30 @@ archivesBaseName = "serversync"
 
 minecraft {
     version = "1.7.10-10.13.3.1403-1.7.10"
-    runDir = "eclipse"
+    runDir = "run"
 }
 
 configurations {
-	includedLibs
+	shade
+	compile.extendsFrom shade
 }
-
-jar {
-	manifest {
-        attributes 'Main-Class': 'runme.Main'
-    }
-}
-
-shadowJar {
-	dependencies {
-   	 include(dependency('com.google.code.gson:gson:2.6.2'))
-  	}
-  	classifier = ''
-}
-
+	
 dependencies {
-    // you may put jars on which you depend on in ./libs
-    // or you may define them like so..
-    //compile "some.group:artifact:version:classifier"
-    //compile "some.group:artifact:version"
-    runtime 'com.google.code.gson:gson:2.6.2'
-    includedLibs 'com.google.code.gson:gson:2.6.2'
-    shadow 'com.google.code.gson:gson:2.6.2'
-      
-    // real examples
-    //compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
-    //compile 'com.googlecode.efficient-java-matrix-library:ejml:0.24' // adds ejml to the dev env
-
-    // for more info...
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
-
+	shade 'com.google.code.gson:gson:2.6.2'
+}
+	
+jar {
+	destinationDir = file("$rootDir/publish")
+	manifest {
+		attributes 'Main-Class': 'runme.Main'
+	}
+		
+	configurations.shade.each { dep ->
+	    from(project.zipTree(dep)){
+	        exclude 'META-INF', 'META-INF/**'
+	            // you may exclude other things here if you want, or maybe copy the META-INF
+	    }
+	}
 }
 
 processResources
