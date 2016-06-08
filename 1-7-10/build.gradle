@@ -19,7 +19,7 @@ buildscript {
 
 apply plugin: 'forge'
 
-version = ssversion
+version = ssversion + "-" + project.name.replace("-",".")
 group= "com.superzanti.serversync" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = ssname
 
