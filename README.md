@@ -8,11 +8,10 @@ Currently you can sync:
 * Flans content packs
 * Configs
 
-**Currently for Minecraft 1.7.10 Forge 1614+**
+**Currently for Minecraft 1.7.10 Forge 1614+, see MultiVersion branch for 1.8+**
 
 If you don't feel like compiling from source and simply want to download a jar file see the releases tab, I update these periodically when theres a large enough addition/change. Please read the disclaimer before downloading.
 
-https://jenkins.dir.ac/job/serversync/ - Jenkins hosted by the lovely Robert Perry
 
 DISCLAIMER:
 -----------
@@ -20,35 +19,21 @@ This mod is only intended for personal use or for developers that constantly pus
 
 Depending on the copyright and/or pattent laws in your area using this mod with other developer's mods for a commercial purpose could be ILLEGAL.
 
-Don't trust anyone with this mod. This mod allows ANY server running it to put ANY jar file in your mods folder. Any mod means any function of java, such as making a virus or a keylogger. So if you are a client please make sure you trust your server administrator.
+Don't trust anyone with this mod. This mod allows ANY server running it to put ANY file in your mods folder. Any mod means any function of java, such as making a virus or a keylogger. So if you are a client please make sure you trust your server administrator.
 
 
 RECENT UPDATES:
 -----------
+Version 2.5.3
+* Changed from shadow to shade jar building
+* Depricated RefStrings in favour of gradle.properties
+
 Version 2.5.2
 * Removed unnecessary config loading on FML's client side
 * Fixed potential crash if clientmods directory did not exist
 * Fixed missing class JsonReader should work properly now
 * Fixed minor issue with file deletion
 
-Version 2.5.1
-* Fixed bug when interacting with zip/jar files
-
-Version 2.5.0
-* Added more functionality to the GUI
-* Changed Ignoring rules to whitelist for configs
-
-Version 2.4.7
-* Added support for flans mod content packs 
-
-Version 2.4.6
-* Added the ability to push client-only mods
-* Various code optimization/cleanup
-
-Version 2.4.5
-* Added the ability to sync files without opening minecraft
-* Fixed windows deletion issue, not an issue if using "offline" sync
-* Added GUI for "offline" mode
 
 FREQUENTLY ASKED QUESTIONS:
 -----------
@@ -74,7 +59,7 @@ FREQUENTLY ASKED QUESTIONS:
 * "I have files such as optifine that I don't want the server to delete"
   * Specify this in the configs IGNORE_LIST
   * Add client only mods to the clientmods directory on the server if you are a server admin
-  * Mods in the clientmods folder are automatically added to the ignore list
+  * Mods in the clientmods folder are automatically added to the ignore list if pushClientMods = true in the config
 
 What does it do exactly?
 -----------
@@ -110,11 +95,7 @@ Compiling
 
 Simply git clone the repo, cd into the folder and run 
 ```
-./gradlew shadowJar
-```
-or for windows
-```
-gradlew.bat shadowJar
+./gradlew build
 ```
 
 If you would like to setup a workspace to work on these files simply run
