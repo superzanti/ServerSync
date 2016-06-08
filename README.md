@@ -16,3 +16,5 @@ ServerSync in it's current state uses forge's sided proxy to decern between runn
 - Add folder name to __settings.gradle__
 - Make any desired changes in the new directory/project
 - Artifacts by default will be put in the ~/publish directory
+
+### Run builds from the root directory
