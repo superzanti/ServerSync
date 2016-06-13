@@ -63,7 +63,6 @@ public class ServerWorker implements Runnable {
 				}
 				
 				if(message.equals(SyncConfig.SECURE_CHECKMODS)) {
-					@SuppressWarnings("unchecked")
 					ArrayList<String> serverModList = SyncFile.listModNames(allList);
 					
 					// Remove client only mods and server only mods from comparison

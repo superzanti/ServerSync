@@ -248,7 +248,8 @@ public class SyncFile implements Serializable {
 			}
 		});
 	}
-
+	
+	@SafeVarargs
 	public static ArrayList<String> listModNames(List<SyncFile>... modLists) {
 		if (modLists != null && modLists.length > 0) {
 			ArrayList<String> names = new ArrayList<String>();
