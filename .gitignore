@@ -58,6 +58,7 @@ $RECYCLE.BIN/
 .project
 .metadata
 .gradle/
+publish/
 bin/
 build/
 *.tmp
