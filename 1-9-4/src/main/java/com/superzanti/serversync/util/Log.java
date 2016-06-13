@@ -25,8 +25,7 @@ public class Log {
 	
 	/**
 	 * Shortcut method for adding to logs string builder
-	 * @param s String to append
-	 * @return the log, for chaining
+	 * @param s
 	 */
 	public Log add(String s) {
 		this.logContent.append(s);

@@ -30,7 +30,8 @@ public class Logger {
 	/**
 	 * Shorthand for upadteLogs(string,true), updates GUI console text as well
 	 * @param s - Text to update logs with
-	 * 
+	 * @throws InterruptedException 
+	 * @throws InvocationTargetException 
 	 */
 	public void updateLogs(String s) {
 		updateLogs(s,true);

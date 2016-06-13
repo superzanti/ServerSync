@@ -70,22 +70,19 @@ public class ClientWorker implements Runnable {
 		server.close();
 		if (!finished) {
 			if (!updateHappened && !errorInUpdates) {
-				Main.updateText("No update needed, for a full log check the logs folder in the minecraft directory");
+				Main.updateText(Main.strings.getString("update_not_needed"));
 				Main.updateProgress(100);
 			} else {
-				logs.updateLogs("Files updated", Logger.FULL_LOG);
+				logs.updateLogs(Main.strings.getString("update_happened"), Logger.FULL_LOG);
 				Main.updateProgress(100);
 			}
 			if (errorInUpdates) {
-				logs.updateLogs(
-						"Errors occured, please check ip/port details are correct. For a detailed log check the logs folder in your minecraft directory");
+				logs.updateLogs(Main.strings.getString("update_error"));
 			}
 			Main.toggleButton();
-			System.out.println("Toggling button, unfinished");
 			finished = true;
 		} else {
 			Main.toggleButton();
-			System.out.println("Toggling button, finished");
 		}
 
 	}
@@ -113,7 +110,7 @@ public class ClientWorker implements Runnable {
 				return;
 			}
 
-			logs.updateLogs("Checking config...");
+			logs.updateLogs(Main.strings.getString("config_check"));
 			server.getConfig();
 
 			if (!server.getSecurityDetails()) {
@@ -133,28 +130,28 @@ public class ClientWorker implements Runnable {
 
 			if (updateNeeded) {
 				updateHappened = true;
-				logs.updateLogs("The mods between server and client are incompatable... Updating...");
+				logs.updateLogs(Main.strings.getString("mods_incompatable"));
 
 				// get all files on server
-				logs.updateLogs("Getting mods...");
+				logs.updateLogs(Main.strings.getString("mods_get"));
 				ArrayList<SyncFile> serverFiles = server.getFiles();
 				/* CLIENT MODS */
 				if (!SyncConfig.REFUSE_CLIENT_MODS) {
 					ArrayList<SyncFile> serverCOMods = server.getClientOnlyFiles();
 					serverFiles.addAll(serverCOMods);
-					logs.updateLogs("Accepting client mods! Added client mods to server list");
+					logs.updateLogs(Main.strings.getString("mods_accepting_clientmods"));
 				} else {
-					logs.updateLogs("Refusing client mods from server!");
+					logs.updateLogs(Main.strings.getString("mods_refusing_clientmods"));
 				}
 
-				logs.updateLogs("Ignoring: " + SyncConfig.IGNORE_LIST, Logger.FULL_LOG);
+				logs.updateLogs(Main.strings.getString("ignoring") + " " + SyncConfig.IGNORE_LIST, Logger.FULL_LOG);
 				// run calculations to figure out how big the bar is
 				float numberOfFiles = clientFiles.size() + serverFiles.size();
 				float percentScale = numberOfFiles / 100;
 				float currentPercent = 0;
 
 				/* UPDATING */
-				logs.updateLogs("<------> Starting Update Process <------>");
+				logs.updateLogs("<------> "+ Main.strings.getString("update_start") +" <------>");
 
 				/* COMMON MODS */
 				for (SyncFile file : serverFiles) {
@@ -171,15 +168,15 @@ public class ClientWorker implements Runnable {
 						if (!clientFile.compare(file)) {
 							server.updateFile(file.MODPATH.toString(), clientPath.toFile());
 						} else {
-							logs.updateLogs(file.fileName + " is up to date", Logger.FULL_LOG);
+							logs.updateLogs(file.fileName + " " + Main.strings.getString("up_to_date"), Logger.FULL_LOG);
 						}
 					} else {
 						// only need to check for ignore here as we are working
 						// on the servers file tree
 						if (file.isSetToIgnore() && !file.clientOnlyMod) {
-							logs.updateLogs("<>" + file.fileName + " set to ignore");
+							logs.updateLogs("<>"+ Main.strings.getString("ignoring") + " " + file.fileName);
 						} else {
-							logs.updateLogs(file.fileName + " Does not exist...", Logger.FULL_LOG);
+							logs.updateLogs(file.fileName + " " + Main.strings.getString("does_not_exist"), Logger.FULL_LOG);
 							server.updateFile(file.MODPATH.toString(), clientPath.toFile());
 						}
 					}
@@ -187,28 +184,28 @@ public class ClientWorker implements Runnable {
 				}
 
 				/* DELETION */
-				logs.updateLogs("<------> Starting Deletion Process <------>");
+				logs.updateLogs("<------> "+ Main.strings.getString("delete_start") +" <------>");
 				// Parse clients file tree
 				for (SyncFile file : clientFiles) {
 					currentPercent++;
 
 					// check for files that need to be deleted
 					if (file.isSetToIgnore()) {
-						logs.updateLogs(file.fileName + " set to ignore", Logger.FULL_LOG);
+						logs.updateLogs(Main.strings.getString("ignoring") + " " + file.fileName, Logger.FULL_LOG);
 					} else {
 						// Not present in server list
-						logs.updateLogs("Checking client's " + file.fileName + " against server", Logger.FULL_LOG);
+						logs.updateLogs(Main.strings.getString("client_check") + " " + file.fileName, Logger.FULL_LOG);
 						boolean exists = server.modExists(file);
 						if (!exists) {
-							logs.updateLogs(file.fileName + " Does not match... attempting phase 1 delete",
+							logs.updateLogs(file.fileName + " " + Main.strings.getString("does_not_match") +  Main.strings.getString("delete_attempt"),
 									Logger.FULL_LOG);
 
 							// File fails to delete
 							try {
 								file.delete();
-								logs.updateLogs("<>" + file.fileName + " deleted");
+								logs.updateLogs("<>" + file.fileName + " " + Main.strings.getString("delete_success"));
 							} catch (IOException e) {
-								logs.updateLogs(file.fileName + "Failed to delete flagging for deleteOnExit",
+								logs.updateLogs(file.fileName + " " + Main.strings.getString("delete_fail"),
 										Logger.FULL_LOG);
 								file.deleteOnExit();
 							}
@@ -222,7 +219,7 @@ public class ClientWorker implements Runnable {
 
 			server.exit();
 
-			logs.updateLogs("Update Complete! Have a nice day!");
+			logs.updateLogs(Main.strings.getString("update_complete"));
 		} catch (Exception e) {
 			logs.updateLogs("Exception caught! - " + e, Logger.FULL_LOG);
 			e.printStackTrace();

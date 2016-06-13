@@ -24,8 +24,8 @@ public class MCCWriter extends BufferedWriter {
 	 * Writes an opening header for <strong>name</strong> category
 	 * subsequent calls to writeElement() will be added to this category until
 	 * writeCloseCategory() has been called. Nesting indentation is handled automatically
-	 * @param name Name of the category
-	 * @throws IOException If error occurs while writing to file
+	 * @param name
+	 * @throws IOException
 	 */
 	public void writeOpenCategory(String name) throws IOException {
 		this.writeWithIndentation(name + " {");
@@ -42,8 +42,8 @@ public class MCCWriter extends BufferedWriter {
 	/** 
 	 * Writes this element out in its entirety, this will not automatically add new
 	 * lines after the element however it will automatically handle indentation
-	 * @param element The element to output
-	 * @throws IOException If errors happen when writing to file
+	 * @param element
+	 * @throws IOException
 	 */
 	public void writeElement(MCCElement element) throws IOException {
 		if (element.hasComment) {
@@ -96,7 +96,7 @@ public class MCCWriter extends BufferedWriter {
 	 * Writes multiple sets of new lines, equivalent to writing newLine() <strong>num</strong>
 	 * number of times
 	 * @param num number of new lines to write
-	 * @throws IOException if I/O error occours
+	 * @throws IOException
 	 */
 	public void newLines(int num) throws IOException {
 		for (int i = 0; i < num; i++) {

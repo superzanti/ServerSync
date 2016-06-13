@@ -60,10 +60,9 @@ public class SyncFile implements Serializable {
 	 * Main constructor, populates file information
 	 * 
 	 * @param modPath
-	 * 			  Path to mod
 	 * @param isMod
 	 *            false to skip populating mod information from mcmod.info
-	 * @throws IOException if I/O error occurs
+	 * @throws IOException
 	 */
 	public SyncFile(Path modPath, boolean isMod) throws IOException {
 		MODPATH = modPath;
@@ -104,7 +103,7 @@ public class SyncFile implements Serializable {
 	 * 
 	 * @param modPath
 	 *            - Path to the mod
-	 * @throws IOException if I/O error occurs
+	 * @throws IOException
 	 */
 	public SyncFile(Path modPath) throws IOException {
 		this(modPath, true);
@@ -143,7 +142,7 @@ public class SyncFile implements Serializable {
 	/**
 	 * Tests file to see if it is a packaged/zipped file
 	 * 
-	 * @param fileName Name of the zip file to test
+	 * @param fileName
 	 * @return true if file is a package
 	 */
 	private boolean isZipJar(String fileName) {
@@ -224,7 +223,7 @@ public class SyncFile implements Serializable {
 	 * Deletes the file this SyncFile refers to
 	 * 
 	 * @return true if file deleted successfully
-	 * @throws IOException if I/O error occurs
+	 * @throws IOException
 	 */
 	public boolean delete() throws IOException {
 		boolean success = false;
@@ -249,7 +248,7 @@ public class SyncFile implements Serializable {
 			}
 		});
 	}
-
+	
 	@SafeVarargs
 	public static ArrayList<String> listModNames(List<SyncFile>... modLists) {
 		if (modLists != null && modLists.length > 0) {
@@ -272,7 +271,7 @@ public class SyncFile implements Serializable {
 	 * @param paths
 	 *            a list of paths to convert to SyncFiles
 	 * @return A list of SyncFiles
-	 * @throws IOException if I/O error occurs
+	 * @throws IOException
 	 */
 	public static ArrayList<SyncFile> parseList(List<Path> paths) throws IOException {
 		ArrayList<SyncFile> mods = new ArrayList<SyncFile>();

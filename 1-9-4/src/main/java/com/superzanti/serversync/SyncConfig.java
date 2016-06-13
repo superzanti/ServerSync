@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.MCConfigReader.MCCArray;
@@ -48,6 +49,7 @@ public class SyncConfig {
 	private static Property includeList;
 	public static boolean pullServerConfig = true;
 	public static boolean configPresent = false;
+	public static Locale locale = Locale.getDefault(); //TODO update this to be in the config
 
 	/**
 	 * Loads/Initializes config parameters from serversync.cfg
