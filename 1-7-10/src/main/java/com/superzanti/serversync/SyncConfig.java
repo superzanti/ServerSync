@@ -80,8 +80,8 @@ public class SyncConfig {
 	
 	/**
 	 * Create default client side config
-	 * @param config
-	 * @return
+	 * @param config path to the config file
+	 * @return true if config created successfully
 	 */
 	public static boolean createClient(Path config) {
 		try {

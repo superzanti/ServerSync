@@ -77,7 +77,7 @@ public class Server {
 
 	/**
 	 * Terminates the listener thread on the server for this client
-	 * @throws IOException
+	 * @throws IOException if I/O error occurs
 	 */
 	public void exit() throws IOException {
 		logs.updateLogs(Main.strings.getString("debug_server_exit"), Logger.FULL_LOG);
@@ -87,7 +87,7 @@ public class Server {
 
 	/**
 	 * Releases resources related to this server instance, MUST call this when interaction is finished if a server is opened
-	 * @return
+	 * @return true if server closes successfully
 	 */
 	public boolean close() {
 		logs.updateLogs(Main.strings.getString("debug_server_close"), Logger.FULL_LOG);
@@ -283,8 +283,9 @@ public class Server {
 	 *            the location of the file on the server
 	 * @param currentFile
 	 *            the current file being worked on
-	 * @throws IOException
-	 * @throws Exception
+	 * @throws IOException if I/O error occurs
+	 * @throws Exception error?
+	 * @return true if file updated successfully
 	 */
 	public boolean updateFile(String filePath, File currentFile) throws IOException, Exception {
 		oos.writeObject(Main.SECURE_FILESIZE);
