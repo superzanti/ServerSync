@@ -219,7 +219,7 @@ public class Main {
 			public void run() {
 				F_root.setTitle(strings.getString("title") +" - "+ RefStrings.VERSION);
 				ipLabel.setText(strings.getString("server_address"));
-				portLabel.setText(strings.getString("server_address"));
+				portLabel.setText(strings.getString("server_port"));
 				B_sync.setText(strings.getString("go_button"));
 				B_sync.setToolTipText(strings.getString("button_tooltip"));
 				tA_border_title.setTitle(strings.getString("console_title"));
