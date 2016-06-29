@@ -24,6 +24,11 @@ Don't trust anyone with this mod. This mod allows ANY server running it to put A
 
 RECENT UPDATES:
 -----------
+Version 2.6.1
+* Added support for multiple languages
+* Fixed javadoc's
+* Added support for mc 1.8+, 1.9.4 update by - Lordmau5
+
 Version 2.5.3
 * Changed from shadow to shade jar building
 * Depricated RefStrings in favour of gradle.properties
