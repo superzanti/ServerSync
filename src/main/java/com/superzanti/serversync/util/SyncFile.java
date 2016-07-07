@@ -256,6 +256,7 @@ public class SyncFile implements Serializable {
 			int len = modLists.length;
 			for (int i = 0; i < len; i++) {
 				for (SyncFile mod : modLists[i]) {
+					System.out.println(mod.fileName);
 					names.add(mod.fileName);
 				}
 			}

@@ -104,11 +104,15 @@ public class ClientWorker implements Runnable {
 			ArrayList<String> dirs = server.getSyncableDirectories();
 			List<Path> cFiles = new ArrayList<>();
 			for (String dir : dirs) {
+				if (dir.equals("config")) {
+					continue;
+				}
 				List<Path> _files = PathUtils.fileListDeep(Paths.get("../"+dir+"/"));
 				if (_files != null) {
 					cFiles.addAll(_files);
 				}
 			}
+			System.out.println(cFiles);
 			
 			// Get clients file list //////////////////////////////////////
 			List<Path> cConfigs = PathUtils.fileListDeep(Paths.get("../config/"));
@@ -142,15 +146,17 @@ public class ClientWorker implements Runnable {
 			if (cConfigs != null) {
 				for (Path path : cConfigs) {
 					String fileName = path.getFileName().toString();
-					if (SyncConfig.INCLUDE_LIST.contains(fileName)) {
+					if (SyncConfig.INCLUDE_LIST.contains(fileName) && !fileName.equals("serversync.cfg")) {
 						clientFiles.add(new SyncFile(path, false));
 					}
 				}
 			}
 			
+			System.out.println("Checking if update is needed");
 			updateNeeded = server.isUpdateNeeded(clientFiles);
 
 			if (updateNeeded) {
+				System.out.println("update needed");
 				updateHappened = true;
 				logs.updateLogs(Main.strings.getString("mods_incompatable"));
 

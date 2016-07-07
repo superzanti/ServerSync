@@ -84,6 +84,7 @@ public class Server {
 	@SuppressWarnings("unchecked")
 	public ArrayList<String> getSyncableDirectories() throws IOException, ClassNotFoundException {
 		oos.writeObject(SyncConfig.MESSAGE_GET_SYNCABLE_DIRECTORIES);
+		oos.flush();
 		return (ArrayList<String>) ois.readObject();
 	}
 
@@ -160,12 +161,17 @@ public class Server {
 	public boolean isUpdateNeeded(List<SyncFile> clientMods) {
 		try {
 			// TODO check last updated information
-
+			
+			System.out.println("Sending update check to server");
 			oos.writeObject(SyncConfig.MESSAGE_UPDATE_NEEDED);
 			oos.flush();
+			
 			// List of mod names
+			System.out.println("Reading data from server");
 			ArrayList<String> serverModNames = (ArrayList<String>) ois.readObject();
+			System.out.println("reading names from clientMods");
 			ArrayList<String> clientModNames = SyncFile.listModNames(clientMods);
+			System.out.println("finished reading names" + clientModNames);
 			
 			// Remove client only mods and other user ignored files from comparison list
 			clientModNames.removeAll(new ArrayList<String>(SyncConfig.IGNORE_LIST));
@@ -186,6 +192,7 @@ public class Server {
 			logs.updateLogs(Main.strings.getString("update_failed") + ": " + e.getMessage(), Logger.FULL_LOG);
 			return false;
 		}
+		System.out.println("reached end of update needed");
 		return true;
 	}
 

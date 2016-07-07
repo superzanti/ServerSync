@@ -30,11 +30,16 @@ public class ServerSetup implements Runnable {
 	private static ArrayList<SyncFile> clientMods = new ArrayList<SyncFile>();
 	
 	protected ServerSetup() {
+		//TODO mash dir handling together
 		SyncConfig.serverSide = true;
 		ArrayList<Path> _list = null;
 		ArrayList<String> directories = new ArrayList<String>();
 		/* SYNC DIRECTORIES */
 		for (String dir : SyncConfig.DIR_LIST) {
+			// Specific config handling later
+			if (dir.equals("config") || dir.equals("clientmods")) {
+				continue;
+			}
 			directories.add(dir);
 		}
 		//TODO add ability to include directories in the config
