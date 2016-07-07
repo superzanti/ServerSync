@@ -12,21 +12,25 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
     }
 }
 
-apply plugin: 'forge'
+apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'java'
 
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
 
-version = ssversion
+
+version = ssversion + "-1.8+"
 group= "com.superzanti.serversync" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = ssname
+archivesBaseName = ssname 
 
 minecraft {
-    version = "1.7.10-10.13.3.1403-1.7.10"
-    runDir = "run"
+    version = "1.9.4-12.17.0.1954"
+    runDir = "runtime/client"
+    mappings = "snapshot_20160607"
 }
 
 configurations {

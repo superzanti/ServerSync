@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.SyncFile;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * Sets up listener for clients on the server
