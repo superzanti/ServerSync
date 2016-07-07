@@ -7,6 +7,7 @@ Currently you can sync:
 * Mods
 * Flans content packs
 * Configs
+* Anything, config now supports adding custom directories to sync
 
 **Currently for Minecraft 1.7.10 Forge 1614+, see MultiVersion branch for 1.8+**
 
@@ -24,6 +25,9 @@ Don't trust anyone with this mod. This mod allows ANY server running it to put A
 
 RECENT UPDATES:
 -----------
+Version 2.6.3
+* Added ability to define directories to sync in the config
+
 Version 2.6.1
 * Added support for multiple languages
 * Fixed javadoc's
