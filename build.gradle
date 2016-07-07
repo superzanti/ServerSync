@@ -18,6 +18,8 @@ buildscript {
 
 apply plugin: 'forge'
 apply plugin: 'java'
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
 
 
 version = ssversion

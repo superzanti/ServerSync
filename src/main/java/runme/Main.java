@@ -71,7 +71,7 @@ public class Main {
 		F_root.setResizable(false);
 		F_root.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		F_root.setPreferredSize(new Dimension(600, 300));
-		F_root.setIconImage(new ImageIcon(ClassLoader.getSystemResource("tap.png")).getImage());
+		F_root.setIconImage(new ImageIcon(ClassLoader.getSystemResource("ServersyncLogo.png")).getImage());
 
 		P_serverDetails = new JPanel();
 		P_serverDetails.setBackground(Color.DARK_GRAY);

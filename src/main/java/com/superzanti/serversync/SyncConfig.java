@@ -23,30 +23,47 @@ import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 
+/**
+ * Handles all functionality to do with serversyncs config file and
+ * other configuration properties
+ * @author Rheimus
+ *
+ */
 public class SyncConfig {
 	public static Configuration config;
 	private static Path configPath;
-	public static boolean serverSide = false;
+	// Connection details //////////////////
 	public static String SERVER_IP;
 	public static int SERVER_PORT;
 	public static int MINECRAFT_PORT;
-	public static String SECURE_CHECK;
-	public static String SECURE_CHECKMODS;
-	public static String SECURE_RECURSIVE;
-	public static String SECURE_CHECKSUM;
-	public static String SECURE_UPDATE;
-	public static String SECURE_EXISTS;
-	public static String SECURE_EXIT;
+	////////////////////////////////////////
+	// Server messages /////////////////////
+	public static String MESSAGE_CHECK;
+	public static String MESSAGE_UPDATE_NEEDED;
+	public static String MESSAGE_GET_FILE_LIST;
+	public static String MESSAGE_COMPARE;
+	public static String MESSAGE_UPDATE;
+	public static String MESSAGE_FILE_EXISTS;
+	public static String MESSAGE_SERVER_EXIT;
+	public static final String MESSAGE_GET_SYNCABLE_DIRECTORIES = "I WANT THAT ONE";
+	public static final String MESSAGE_GET_CONFIG = "GIMME";
+	public static final String MESSAGE_SEC_HANDSHAKE = "SHAKE_THAT";
+	////////////////////////////////////////
 	public static Boolean PUSH_CLIENT_MODS;
 	public static Boolean REFUSE_CLIENT_MODS = false;
-	public static final String GET_CONFIG = "GIMME";
-	public static final String SEC_HANDSHAKE = "SHAKE_THAT";
 	public static List<String> ClientMods = new ArrayList<String>();
+	public static String LAST_UPDATE;
+	// Our lists ///////////////////////////
 	public static List<String> IGNORE_LIST;
 	public static List<String> INCLUDE_LIST;
-	public static String LAST_UPDATE;
+	public static List<String> DIR_LIST;
+	// Used by forge's config loader //
 	private static Property ignoreList;
 	private static Property includeList;
+	private static Property dirList;
+	////////////////////////////////////////
+	
+	public static boolean serverSide = false;
 	public static boolean pullServerConfig = true;
 	public static boolean configPresent = false;
 	public static Locale locale = Locale.getDefault(); //TODO update this to be in the config
@@ -209,13 +226,13 @@ public class SyncConfig {
 		SERVER_IP = eArray.getElementByName("SERVER_IP").getString();
 		SERVER_PORT = eArray.getElementByName("SERVER_PORT").getInt();
 		if (serverSide) {
-			SECURE_CHECK = eArray.getElementByName("SECURE_CHECK").getString();
-			SECURE_CHECKMODS = eArray.getElementByName("SECURE_CHECKMODS").getString();
-			SECURE_RECURSIVE = eArray.getElementByName("SECURE_RECURSIVE").getString();
-			SECURE_CHECKSUM = eArray.getElementByName("SECURE_CHECKSUM").getString();
-			SECURE_UPDATE = eArray.getElementByName("SECURE_UPDATE").getString();
-			SECURE_EXISTS = eArray.getElementByName("SECURE_EXISTS").getString();
-			SECURE_EXIT = eArray.getElementByName("SECURE_EXIT").getString();
+			MESSAGE_CHECK = eArray.getElementByName("SECURE_CHECK").getString();
+			MESSAGE_UPDATE_NEEDED = eArray.getElementByName("SECURE_CHECKMODS").getString();
+			MESSAGE_GET_FILE_LIST = eArray.getElementByName("SECURE_RECURSIVE").getString();
+			MESSAGE_COMPARE = eArray.getElementByName("SECURE_CHECKSUM").getString();
+			MESSAGE_UPDATE = eArray.getElementByName("SECURE_UPDATE").getString();
+			MESSAGE_FILE_EXISTS = eArray.getElementByName("SECURE_EXISTS").getString();
+			MESSAGE_SERVER_EXIT = eArray.getElementByName("SECURE_EXIT").getString();
 			PUSH_CLIENT_MODS = eArray.getElementByName("PUSH_CLIENT_MODS").getBoolean();
 		} else {
 			REFUSE_CLIENT_MODS = eArray.getElementByName("REFUSE_CLIENT_MODS").getBoolean();
@@ -227,6 +244,10 @@ public class SyncConfig {
 		System.out.println("finished loading config");
 	}
 
+	/**
+	 * Used to setup the Forge side config file when running as a server
+	 * @throws IOException If I/O error occurs
+	 */
 	private static void setupConfig() throws IOException {
 		//TODO add accept client mods for client config file
 		config.load();
@@ -243,19 +264,19 @@ public class SyncConfig {
 		MINECRAFT_PORT = config.getInt("MINECRAFT_PORT", "ServerConnection", 25565, 1, 49151,
 				"The port in which the minecraft server is running, not the serversync port");
 
-		SECURE_CHECK = config.getString("SECURE_CHECK", "ServerEncryption", "0ba4439ee9a46d9d9f14c60f88f45f87",
+		MESSAGE_CHECK = config.getString("SECURE_CHECK", "ServerEncryption", "0ba4439ee9a46d9d9f14c60f88f45f87",
 				"The check command security key phrase");
-		SECURE_CHECKMODS = config.getString("SECURE_CHECKMODS", "ServerEncryption", "3dd3152ae3e427aa2817df12570ea708",
+		MESSAGE_UPDATE_NEEDED = config.getString("SECURE_CHECKMODS", "ServerEncryption", "3dd3152ae3e427aa2817df12570ea708",
 				"The check-mods command security key phrase");
-		SECURE_RECURSIVE = config.getString("SECURE_RECURSIVE", "ServerEncryption", "f8e45531a3ea3d5c1247b004985175a4",
+		MESSAGE_GET_FILE_LIST = config.getString("SECURE_RECURSIVE", "ServerEncryption", "f8e45531a3ea3d5c1247b004985175a4",
 				"The recursive command security key phrase");
-		SECURE_CHECKSUM = config.getString("SECURE_CHECKSUM", "ServerEncryption", "226190d94b21d1b0c7b1a42d855e419d",
+		MESSAGE_COMPARE = config.getString("SECURE_CHECKSUM", "ServerEncryption", "226190d94b21d1b0c7b1a42d855e419d",
 				"The checksum command security key phrase");
-		SECURE_UPDATE = config.getString("SECURE_UPDATE", "ServerEncryption", "3ac340832f29c11538fbe2d6f75e8bcc",
+		MESSAGE_UPDATE = config.getString("SECURE_UPDATE", "ServerEncryption", "3ac340832f29c11538fbe2d6f75e8bcc",
 				"The update command security key phrase");
-		SECURE_EXISTS = config.getString("SECURE_EXISTS", "ServerEncryption", "e087923eb5dd1310f5f25ddd5ae5b580",
+		MESSAGE_FILE_EXISTS = config.getString("SECURE_EXISTS", "ServerEncryption", "e087923eb5dd1310f5f25ddd5ae5b580",
 				"The exists command security key phrase");
-		SECURE_EXIT = config.getString("SECURE_EXIT", "ServerEncryption", "f24f62eeb789199b9b2e467df3b1876b",
+		MESSAGE_SERVER_EXIT = config.getString("SECURE_EXIT", "ServerEncryption", "f24f62eeb789199b9b2e467df3b1876b",
 				"The exit command security key phrase");
 
 		PUSH_CLIENT_MODS = config.getBoolean("PUSH_CLIENT_MODS", Configuration.CATEGORY_GENERAL, false,
@@ -266,6 +287,9 @@ public class SyncConfig {
 		
 		includeList = config.get("Rules", "CONFIG_INCLUDE_LIST", new String[]{},
 				"These configs are included, by default configs are not synced.");
+		
+		dirList = config.get("Rules", "DIRECTORIES_INCLUDE_LIST", new String[]{"mods","config"},
+				"These directories are included, by default mods and configs are included.");
 
 		if (PUSH_CLIENT_MODS) {
 			String[] oldList = ignoreList.getStringList();
@@ -306,6 +330,7 @@ public class SyncConfig {
 
 		IGNORE_LIST = Arrays.asList(ignoreList.getStringList());
 		INCLUDE_LIST = Arrays.asList(includeList.getStringList());
+		DIR_LIST = Arrays.asList(dirList.getStringList());
 
 		LAST_UPDATE = config.getString("LAST_UPDATE", "StorageVariables", "20150608_000500",
 				"DO NOT EDIT THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING! (If you are a server feel free to change it as much as you want to update your clients)");

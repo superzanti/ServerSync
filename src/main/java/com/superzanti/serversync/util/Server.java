@@ -74,6 +74,18 @@ public class Server {
 
 		return true;
 	}
+	
+	/**
+	 * Gets the set of directories that this server wishes to sync
+	 * @return True if server has syncable directories
+	 * @throws IOException if IO error occurs
+	 * @throws ClassNotFoundException Wrong object type passed by server
+	 */
+	@SuppressWarnings("unchecked")
+	public ArrayList<String> getSyncableDirectories() throws IOException, ClassNotFoundException {
+		oos.writeObject(SyncConfig.MESSAGE_GET_SYNCABLE_DIRECTORIES);
+		return (ArrayList<String>) ois.readObject();
+	}
 
 	/**
 	 * Terminates the listener thread on the server for this client
@@ -81,7 +93,7 @@ public class Server {
 	 */
 	public void exit() throws IOException {
 		logs.updateLogs(Main.strings.getString("debug_server_exit"), Logger.FULL_LOG);
-		oos.writeObject(SyncConfig.SECURE_EXIT);
+		oos.writeObject(SyncConfig.MESSAGE_SERVER_EXIT);
 		oos.flush();
 	}
 
@@ -149,7 +161,7 @@ public class Server {
 		try {
 			// TODO check last updated information
 
-			oos.writeObject(SyncConfig.SECURE_CHECKMODS);
+			oos.writeObject(SyncConfig.MESSAGE_UPDATE_NEEDED);
 			oos.flush();
 			// List of mod names
 			ArrayList<String> serverModNames = (ArrayList<String>) ois.readObject();
@@ -179,7 +191,7 @@ public class Server {
 
 	@SuppressWarnings("unchecked")
 	public ArrayList<SyncFile> getFiles() throws IOException {
-		oos.writeObject(SyncConfig.SECURE_RECURSIVE);
+		oos.writeObject(SyncConfig.MESSAGE_GET_FILE_LIST);
 		oos.flush();
 
 		try {
@@ -213,7 +225,7 @@ public class Server {
 
 	@SuppressWarnings("unchecked")
 	public boolean getConfig() throws IOException {
-		oos.writeObject(SyncConfig.GET_CONFIG);
+		oos.writeObject(SyncConfig.MESSAGE_GET_CONFIG);
 		oos.flush();
 		
 		try {
@@ -242,7 +254,7 @@ public class Server {
 	}
 
 	public boolean modExists(SyncFile mod) throws IOException {
-		oos.writeObject(SyncConfig.SECURE_EXISTS);
+		oos.writeObject(SyncConfig.MESSAGE_FILE_EXISTS);
 		oos.flush();
 		oos.writeObject(mod.fileName);
 		oos.flush();
@@ -254,18 +266,18 @@ public class Server {
 	
 	@SuppressWarnings("unchecked")
 	public boolean getSecurityDetails() throws IOException {
-		oos.writeObject(SyncConfig.SEC_HANDSHAKE);
+		oos.writeObject(SyncConfig.MESSAGE_SEC_HANDSHAKE);
 		oos.flush();
 		
 		try {
 			HashMap<String,String> security = (HashMap<String,String>)ois.readObject();
-			SyncConfig.SECURE_CHECK = security.get("SECURE_CHECK");
-			SyncConfig.SECURE_CHECKMODS = security.get("SECURE_CHECKMODS");
-			SyncConfig.SECURE_CHECKSUM = security.get("SECURE_CHECKSUM");
-			SyncConfig.SECURE_EXISTS = security.get("SECURE_EXISTS");
-			SyncConfig.SECURE_EXIT = security.get("SECURE_EXIT");
-			SyncConfig.SECURE_RECURSIVE = security.get("SECURE_RECURSIVE");
-			SyncConfig.SECURE_UPDATE = security.get("SECURE_UPDATE");
+			SyncConfig.MESSAGE_CHECK = security.get("SECURE_CHECK");
+			SyncConfig.MESSAGE_UPDATE_NEEDED = security.get("SECURE_CHECKMODS");
+			SyncConfig.MESSAGE_COMPARE = security.get("SECURE_CHECKSUM");
+			SyncConfig.MESSAGE_FILE_EXISTS = security.get("SECURE_EXISTS");
+			SyncConfig.MESSAGE_SERVER_EXIT = security.get("SECURE_EXIT");
+			SyncConfig.MESSAGE_GET_FILE_LIST = security.get("SECURE_RECURSIVE");
+			SyncConfig.MESSAGE_UPDATE = security.get("SECURE_UPDATE");
 			logs.updateLogs(Main.strings.getString("info_security_recieved"));
 			return true;
 		} catch (ClassNotFoundException e) {
@@ -310,7 +322,7 @@ public class Server {
 			logs.updateLogs(Main.strings.getString("debug_files_size_failed"),Logger.FULL_LOG);
 		}
 
-		oos.writeObject(SyncConfig.SECURE_UPDATE);
+		oos.writeObject(SyncConfig.MESSAGE_UPDATE);
 		oos.flush();
 		oos.writeObject(filePath);
 		oos.flush();

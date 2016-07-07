@@ -36,10 +36,12 @@ public class ServerWorker implements Runnable {
     private static ArrayList<SyncFile> allList = new ArrayList<SyncFile>();
     // Contians mods located in the servers clientmods directory
     private static ArrayList<SyncFile> clientOnlyList = new ArrayList<SyncFile>();
+    private static ArrayList<String> dirList = new ArrayList<String>();
 	
-	protected ServerWorker(Socket socket, ArrayList<SyncFile> allFiles, ArrayList<SyncFile> clientFiles, ServerSocket theServer){
+	protected ServerWorker(Socket socket, ArrayList<SyncFile> allFiles, ArrayList<SyncFile> clientFiles, ArrayList<String> dirList, ServerSocket theServer){
 		clientsocket = socket;
 		allList = allFiles;
+		ServerWorker.dirList = dirList;
 		clientOnlyList = clientFiles;
 		ServerSync.logger.info("Connection established with " + clientsocket);
 		return;
@@ -57,12 +59,12 @@ public class ServerWorker implements Runnable {
 				String message = (String) ois.readObject();
 				ServerSync.logger.info("Received message: "+message+" from connection "+clientsocket);
 		
-				if(message.equals(SyncConfig.SECURE_CHECK)) {
+				if(message.equals(SyncConfig.MESSAGE_CHECK)) {
 					oos.writeObject(SyncConfig.LAST_UPDATE);
 					oos.flush();
 				}
 				
-				if(message.equals(SyncConfig.SECURE_CHECKMODS)) {
+				if(message.equals(SyncConfig.MESSAGE_UPDATE_NEEDED)) {
 					ArrayList<String> serverModList = SyncFile.listModNames(allList);
 					
 					// Remove client only mods and server only mods from comparison
@@ -73,12 +75,17 @@ public class ServerWorker implements Runnable {
 					oos.flush();
 				}
 				
-				if(message.equals(SyncConfig.SECURE_RECURSIVE)) {
+				if(message.equals(SyncConfig.MESSAGE_GET_FILE_LIST)) {
 					oos.writeObject(allList);
 					oos.flush();
 				}
 				
-				if(message.equals(SyncConfig.SECURE_CHECKSUM)) {
+				if(message.equals(SyncConfig.MESSAGE_GET_SYNCABLE_DIRECTORIES)) {
+					oos.writeObject(dirList);
+					oos.flush();
+				}
+				
+				if(message.equals(SyncConfig.MESSAGE_COMPARE)) {
 					File theFile = (File) ois.readObject();
 					String serverChecksum = Md5.md5String(theFile);
 					oos.writeObject(serverChecksum);
@@ -90,7 +97,7 @@ public class ServerWorker implements Runnable {
 					oos.flush();
 				}
 				
-				if(message.equals(SyncConfig.SECURE_UPDATE)) {
+				if(message.equals(SyncConfig.MESSAGE_UPDATE)) {
 					ServerSync.logger.info("Writing file to client...");
 					String theFile = (String) ois.readObject();
 					File f = new File(theFile.replace("\\", "/"));
@@ -105,7 +112,7 @@ public class ServerWorker implements Runnable {
 					break;
 				}
 				
-				if(message.equals(SyncConfig.GET_CONFIG)) {
+				if(message.equals(SyncConfig.MESSAGE_GET_CONFIG)) {
 					ServerSync.logger.info("Sending config info to client...");
 					HashMap<String, List<String>> rules = new HashMap<String, List<String>>();
 					rules.put("ignore", SyncConfig.IGNORE_LIST);
@@ -115,15 +122,15 @@ public class ServerWorker implements Runnable {
 					oos.flush();
 				}
 				
-				if(message.equals(SyncConfig.SEC_HANDSHAKE)) {
+				if(message.equals(SyncConfig.MESSAGE_SEC_HANDSHAKE)) {
 					HashMap<String,String> security = new HashMap<String, String>();
-					security.put("SECURE_CHECK", SyncConfig.SECURE_CHECK);
-					security.put("SECURE_CHECKMODS", SyncConfig.SECURE_CHECKMODS);
-					security.put("SECURE_CHECKSUM", SyncConfig.SECURE_CHECKSUM);
-					security.put("SECURE_EXISTS", SyncConfig.SECURE_EXISTS);
-					security.put("SECURE_EXIT", SyncConfig.SECURE_EXIT);
-					security.put("SECURE_RECURSIVE", SyncConfig.SECURE_RECURSIVE);
-					security.put("SECURE_UPDATE", SyncConfig.SECURE_UPDATE);
+					security.put("SECURE_CHECK", SyncConfig.MESSAGE_CHECK);
+					security.put("SECURE_CHECKMODS", SyncConfig.MESSAGE_UPDATE_NEEDED);
+					security.put("SECURE_CHECKSUM", SyncConfig.MESSAGE_COMPARE);
+					security.put("SECURE_EXISTS", SyncConfig.MESSAGE_FILE_EXISTS);
+					security.put("SECURE_EXIT", SyncConfig.MESSAGE_SERVER_EXIT);
+					security.put("SECURE_RECURSIVE", SyncConfig.MESSAGE_GET_FILE_LIST);
+					security.put("SECURE_UPDATE", SyncConfig.MESSAGE_UPDATE);
 					oos.writeObject(security);
 					oos.flush();
 				}
@@ -137,7 +144,7 @@ public class ServerWorker implements Runnable {
 					oos.flush();
 				}
 				
-				if(message.equals(SyncConfig.SECURE_EXISTS)) {
+				if(message.equals(SyncConfig.MESSAGE_FILE_EXISTS)) {
 					String theMod = (String) ois.readObject();
 					boolean exists = false;
 					for(SyncFile m : allList) {
@@ -164,7 +171,7 @@ public class ServerWorker implements Runnable {
 					}
 				}
 				
-				if(message.equals(SyncConfig.SECURE_EXIT)) {
+				if(message.equals(SyncConfig.MESSAGE_SERVER_EXIT)) {
 					break;
 				}
 			}

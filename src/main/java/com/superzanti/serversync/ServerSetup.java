@@ -31,18 +31,20 @@ public class ServerSetup implements Runnable {
 	
 	protected ServerSetup() {
 		SyncConfig.serverSide = true;
-		ArrayList<Path> tempList = null;
+		ArrayList<Path> _list = null;
 		ArrayList<String> directories = new ArrayList<String>();
-		/* DEFAULT DIRECTORIES */
-		directories.add("mods");
+		/* SYNC DIRECTORIES */
+		for (String dir : SyncConfig.DIR_LIST) {
+			directories.add(dir);
+		}
 		//TODO add ability to include directories in the config
 		
 		if (SyncConfig.PUSH_CLIENT_MODS) {
-			tempList = PathUtils.fileListDeep(Paths.get("clientmods"));
+			_list = PathUtils.fileListDeep(Paths.get("clientmods"));
 			ServerSync.logger.info("Getting all of: clientmods");
-			if (tempList != null) {
+			if (_list != null) {
 				try {
-					clientMods.addAll(SyncFile.parseList(tempList));
+					clientMods.addAll(SyncFile.parseList(_list));
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -60,23 +62,26 @@ public class ServerSetup implements Runnable {
 
 		try {
 			for (String directory : directories) {
-				String dirString = Paths.get(directory).toAbsolutePath().normalize().toString();
-				tempList = PathUtils.fileListDeep(Paths.get(directory));
-				ServerSync.logger.info("Getting all of: " + dirString);
-				
-				if (tempList != null) {
-					allMods.addAll(SyncFile.parseList(tempList));
-				} else {
-					ServerSync.logger.info("Failed to access: " + dirString);
+				Path _d = Paths.get(directory);
+				if (Files.isDirectory(_d)) {
+					String dirString = _d.toAbsolutePath().normalize().toString();
+					_list = PathUtils.fileListDeep(Paths.get(directory));
+					ServerSync.logger.info("Getting all of: " + dirString);
+					
+					if (_list != null) {
+						allMods.addAll(SyncFile.parseList(_list));
+					} else {
+						ServerSync.logger.info("Failed to access: " + dirString);
+					}
+					ServerSync.logger.info("Finished getting: " + dirString);
 				}
-				ServerSync.logger.info("Finished getting: " + dirString);
 			}
 			
 			/* CONFIGS */
 			if (!SyncConfig.INCLUDE_LIST.isEmpty()) {
-				tempList = PathUtils.fileListDeep(Paths.get("config"));
-				if (tempList != null) {
-					for (Path path : tempList) {
+				_list = PathUtils.fileListDeep(Paths.get("config"));
+				if (_list != null) {
+					for (Path path : _list) {
 						if (SyncConfig.INCLUDE_LIST.contains(path.getFileName().toString())) {
 							allMods.add(new SyncFile(path,false));
 						}
@@ -107,7 +112,7 @@ public class ServerSetup implements Runnable {
 			try {
 				Socket socket = server.accept();
 				ServerWorker sc;
-				sc = new ServerWorker(socket, allMods, clientMods, server);
+				sc = new ServerWorker(socket, allMods, clientMods, new ArrayList<String>(SyncConfig.DIR_LIST), server);
 				new Thread(sc).start();
 			} catch (Exception e) {
 				ServerSync.logger.info("Error occured." + e);

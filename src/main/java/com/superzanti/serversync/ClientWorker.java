@@ -94,30 +94,51 @@ public class ClientWorker implements Runnable {
 		updateHappened = false;
 
 		try {
-			// Get clients mod list
-			List<Path> cMods = PathUtils.fileListDeep(Paths.get("../mods/"));
-			List<Path> cConfigs = PathUtils.fileListDeep(Paths.get("../config/"));
-			if (cMods != null) {
-				for (Path path : cMods) {
-					SyncFile f = new SyncFile(path);
-					clientFiles.add(f);
-				}
-			}
-
 			if (!server.connect()) {
 				errorInUpdates = true;
 				finished = true;
 				return;
 			}
-
-			logs.updateLogs(Main.strings.getString("config_check"));
-			server.getConfig();
-
-			if (!server.getSecurityDetails()) {
+			
+			//TODO implement custom dir sync
+			ArrayList<String> dirs = server.getSyncableDirectories();
+			List<Path> cFiles = new ArrayList<>();
+			for (String dir : dirs) {
+				List<Path> _files = PathUtils.fileListDeep(Paths.get("../"+dir+"/"));
+				if (_files != null) {
+					cFiles.addAll(_files);
+				}
+			}
+			
+			// Get clients file list //////////////////////////////////////
+			List<Path> cConfigs = PathUtils.fileListDeep(Paths.get("../config/"));
+			if (!cFiles.isEmpty()) {
+				for (Path path : cFiles) {
+					String name = path.getFileName().toString();
+					if (!SyncConfig.IGNORE_LIST.contains(name)) {						
+						clientFiles.add(new SyncFile(path));
+					}
+				}
+			} else {
+				logs.updateLogs(Main.strings.getString("no_syncable_directories"));
 				errorInUpdates = true;
 				finished = true;
 				return;
 			}
+			//////////////////////////////////////////////////////////////
+
+			logs.updateLogs(Main.strings.getString("config_check"));
+			server.getConfig();
+
+			// Get keys from the server /////////////////////////////////
+			if (!server.getSecurityDetails()) {
+				logs.updateLogs(Main.strings.getString("failed_handshake"));
+				errorInUpdates = true;
+				finished = true;
+				return;
+			}
+			/////////////////////////////////////////////////////////////
+			
 			if (cConfigs != null) {
 				for (Path path : cConfigs) {
 					String fileName = path.getFileName().toString();
@@ -126,6 +147,7 @@ public class ClientWorker implements Runnable {
 					}
 				}
 			}
+			
 			updateNeeded = server.isUpdateNeeded(clientFiles);
 
 			if (updateNeeded) {
