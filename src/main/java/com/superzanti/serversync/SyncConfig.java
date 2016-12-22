@@ -18,7 +18,7 @@ import com.superzanti.serversync.util.MCConfigReader.MCCElement;
 import com.superzanti.serversync.util.MCConfigReader.MCCReader;
 import com.superzanti.serversync.util.MCConfigReader.MCCWriter;
 
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
