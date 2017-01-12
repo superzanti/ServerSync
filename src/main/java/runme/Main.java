@@ -250,8 +250,12 @@ public class Main {
 	}
 
 	public static void updateText(String string) {
-		// TODO UI appears to freeze under strain
-		TA_info.setText(string);
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				TA_info.setText(string);
+			}
+		});
 	}
 
 	public static void updateProgress(int progress) {

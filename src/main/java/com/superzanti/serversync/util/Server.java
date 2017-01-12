@@ -120,7 +120,7 @@ public class Server {
 
 	/**
 	 * Releases resources related to this server instance, MUST call this when interaction is finished if a server is opened
-	 * @return
+	 * @return true if client successfully closes all connections
 	 */
 	public boolean close() {
 		logs.updateLogs(Main.strings.getString("debug_server_close"), Logger.FULL_LOG);
@@ -132,7 +132,7 @@ public class Server {
 			if (clientSocket != null && !clientSocket.isClosed())
 				clientSocket.close();
 		} catch (IOException e) {
-			logs.updateLogs("Exception caught! - " + e.getMessage(), Logger.FULL_LOG);
+			logs.updateLogs("Failed to close client socket: " + e.getMessage(), Logger.FULL_LOG);
 			return false;
 		}
 		logs.updateLogs(Main.strings.getString("debug_server_close_success"), Logger.FULL_LOG);

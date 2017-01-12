@@ -23,9 +23,9 @@ import runme.Main;
  */
 public class ClientWorker implements Runnable {
 
-	private boolean errorInUpdates;
-	private boolean updateHappened;
-	private boolean finished;
+	private boolean errorInUpdates = false;
+	private boolean updateHappened = false;
+	private boolean finished = false;
 	private Logger logs;
 
 	private List<SyncFile> clientFiles;
@@ -67,24 +67,23 @@ public class ClientWorker implements Runnable {
 	}
 
 	private void closeWorker(Server server) {
-		server.close();
-		if (!finished) {
-			if (!updateHappened && !errorInUpdates) {
-				Main.updateText(Main.strings.getString("update_not_needed"));
-				Main.updateProgress(100);
-			} else {
-				logs.updateLogs(Main.strings.getString("update_happened"), Logger.FULL_LOG);
-				Main.updateProgress(100);
-			}
-			if (errorInUpdates) {
-				logs.updateLogs(Main.strings.getString("update_error"));
-			}
-			Main.toggleButton();
-			finished = true;
-		} else {
-			Main.toggleButton();
+		if (server.close()) {
+			logs.updateLogs("Successfully closed all connections", Logger.FULL_LOG);
 		}
-
+		
+		if (!updateHappened && !errorInUpdates) {
+			logs.updateLogs("No update required", Logger.FULL_LOG);
+			Main.updateText(Main.strings.getString("update_not_needed"));
+			Main.updateProgress(100);
+		} else {
+			logs.updateLogs(Main.strings.getString("update_happened"), Logger.FULL_LOG);
+			Main.updateProgress(100);
+		}
+		if (errorInUpdates) {
+			logs.updateLogs(Main.strings.getString("update_error"));
+		}
+		
+		Main.toggleButton();
 	}
 
 	@Override
@@ -102,7 +101,6 @@ public class ClientWorker implements Runnable {
 		ArrayList<String> syncableDirectories = server.getSyncableDirectories();
 		if (syncableDirectories == null) {
 			errorInUpdates = true;
-			finished = true;
 			return;
 		}
 		
@@ -137,7 +135,6 @@ public class ClientWorker implements Runnable {
 			}
 		} else {
 			logs.updateLogs(Main.strings.getString("no_syncable_directories"));
-			errorInUpdates = true;
 			finished = true;
 			return;
 		}
@@ -166,7 +163,6 @@ public class ClientWorker implements Runnable {
 		} catch (IOException e) {
 			logs.updateLogs("Failed to obtain config from server");
 			errorInUpdates = true;
-			finished = true;
 			return;
 		}
 
@@ -174,7 +170,6 @@ public class ClientWorker implements Runnable {
 		if (!server.getSecurityDetails()) {
 			logs.updateLogs(Main.strings.getString("failed_handshake"));
 			errorInUpdates = true;
-			finished = true;
 			return;
 		}
 		/////////////////////////////////////////////////////////////
@@ -196,7 +191,6 @@ public class ClientWorker implements Runnable {
 			if (serverFiles == null) {
 				logs.updateLogs("Failed to get files from server, check detailed log in minecraft/logs");
 				errorInUpdates = true;
-				finished = true;
 				return;
 			}
 			
