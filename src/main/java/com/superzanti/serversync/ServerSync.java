@@ -48,13 +48,11 @@ public class ServerSync {
 
 		// Client side
 		if (proxy.isClient()) {
-			logger.info("I am a client");
 			MinecraftForge.EVENT_BUS.register(new ClientProxy());
 		}
 
 		// Server side
 		if (proxy.isServer()) {
-			logger.info("I am a server");
 			// Grab the configuration file and load in the values
 			SyncConfig.init(PreEvent);
 			ServerSetup setup = new ServerSetup();

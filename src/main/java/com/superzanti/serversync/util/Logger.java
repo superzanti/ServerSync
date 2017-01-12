@@ -45,6 +45,7 @@ public class Logger {
 	public void updateLogs(String s, String logToUpdate) {
 		if (logToUpdate.equals(FULL_LOG))
 			fullLog.add(s);
+			fullLog.saveLog();
 		if (logToUpdate.equals(USER_LOG))
 			userLog.add(s);
 	}
