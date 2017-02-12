@@ -25,6 +25,6 @@ public class Console implements Runnable {
 	
 	@Override
 	public void run() {
-		Main.updateText(text);
+		Main.clientGUI.updateText(text);
 	}
 }

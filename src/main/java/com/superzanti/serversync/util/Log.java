@@ -43,7 +43,7 @@ public class Log {
 		
 		Thread saveT = new Thread(new Runnable(){
 
-			Path logsDir = Paths.get("../logs");
+			Path logsDir = Paths.get("logs");
 			Path log = logsDir.resolve(fileName + EXT);
 			@Override
 			public void run() {

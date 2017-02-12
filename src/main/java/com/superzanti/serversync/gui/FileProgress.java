@@ -28,13 +28,13 @@ public class FileProgress implements Runnable {
 	}
 	
 	public void fileFinished() {
-		Main.updateFileProgress(null, 0);
+		Main.clientGUI.updateFileProgress(null, 0);
 	}
 
 	@Override
 	public void run() {
 		if (sb != null) {
-			Main.updateFileProgress(sb.toString(),progress);
+			Main.clientGUI.updateFileProgress(sb.toString(),progress);
 		}
 	}
 

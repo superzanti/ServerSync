@@ -20,7 +20,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonStreamParser;
-import com.superzanti.serversync.SyncConfig;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.stream.MalformedJsonException;
+
+import runme.Main;
 
 /**
  * Holds relevant information about mods obtianed through mcmod.info.<br>
@@ -46,7 +49,6 @@ public class SyncFile implements Serializable {
 	public String fileName;
 	private String md5FileContents;
 	transient public Path MODPATH;
-	transient public Path CLIENT_MODPATH;
 	public boolean clientOnlyMod = false;
 	public boolean isConfig = false;
 	private boolean isIgnored = false;
@@ -54,7 +56,6 @@ public class SyncFile implements Serializable {
 	public static final String UNKNOWN_NAME = "unknown_name";
 
 	private File serMODPATH;
-	private File serCLIENT_MODPATH;
 
 	/**
 	 * Main constructor, populates file information
@@ -66,16 +67,16 @@ public class SyncFile implements Serializable {
 	 */
 	public SyncFile(Path modPath, boolean isMod) throws IOException {
 		MODPATH = modPath;
-		Path cModPath = modPath;
-		Path root = Paths.get("../");
+		// Where SS is located when this file was created
+		// makes (ServerSyncDir)/path_to_mod/mod
+		Path root = Paths.get(""); 
 		// TODO update this code chunk to be more OOP
-		if (modPath.toString().contains("clientmods")) {
+		if (MODPATH.toString().contains("clientmods")) {
 			clientOnlyMod = true;
-			cModPath = root.relativize(Paths.get(modPath.toString().replaceFirst("clientmods", "mods")));
-		} else {
-			cModPath = root.relativize(cModPath);
+			MODPATH = Paths.get(MODPATH.toString().replaceFirst("clientmods", "mods"));
+			MODPATH = MODPATH.relativize(root);
 		}
-		CLIENT_MODPATH = cModPath;
+		
 		fileName = MODPATH.getFileName().toString();
 
 		if (fileName.contains(".cfg")) {
@@ -116,7 +117,7 @@ public class SyncFile implements Serializable {
 	 * @return true if ignored, false otherwise
 	 */
 	public boolean isSetToIgnore() {
-		if (SyncConfig.IGNORE_LIST.contains(fileName)) {
+		if (Main.CONFIG.MOD_IGNORE_LIST.contains(fileName)) {
 			isIgnored = true;
 		}
 		return isIgnored;
@@ -130,7 +131,7 @@ public class SyncFile implements Serializable {
 	 *         name
 	 */
 	public boolean isIncluded() {
-		List<String> includes = SyncConfig.INCLUDE_LIST;
+		List<String> includes = Main.CONFIG.CONFIG_INCLUDE_LIST;
 		// Strip witespace
 		String cleanedName = fileName.replaceAll(" ", "");
 		if (includes.contains(cleanedName)) {
@@ -156,46 +157,59 @@ public class SyncFile implements Serializable {
 		return isZip;
 	}
 
-	private void populateModInformation() throws IOException {
+	private void populateModInformation() {
 		if (Files.exists(MODPATH)) {
-			JarFile packagedMod = new JarFile(MODPATH.toFile());
-			JarEntry modInfo = packagedMod.getJarEntry("mcmod.info");
-			if (modInfo != null) {
-				InputStream is = packagedMod.getInputStream(modInfo);
-				InputStreamReader read = new InputStreamReader(is);
-				JsonStreamParser parser = new JsonStreamParser(read);
+			try {
 
-				while (parser.hasNext()) {
-					JsonElement element = parser.next();
-					if (element.isJsonArray()) {
-						// This will be the opening document array
-						JsonArray jArray = element.getAsJsonArray();
+				JarFile packagedMod = new JarFile(MODPATH.toFile());
+				JarEntry modInfo = packagedMod.getJarEntry("mcmod.info");
+				if (modInfo != null) {
+					InputStream is = packagedMod.getInputStream(modInfo);
+					InputStreamReader read = new InputStreamReader(is);
+					JsonStreamParser parser = new JsonStreamParser(read);
 
-						// Get each array of objects
-						// array 1 {"foo":"bar"}, array 2 {"foo":"bar"}
-						for (JsonElement jObject : jArray) {
-							// This will contain all of the mod info
-							JsonObject info = jObject.getAsJsonObject();
+					while (parser.hasNext()) {
+						JsonElement element = parser.next();
+						if (element.isJsonArray()) {
+							// This will be the opening document array
+							JsonArray jArray = element.getAsJsonArray();
 
-							// Skip conditions /////////////////////////////
-							if (info == null) {
-								continue;
+							// Get each array of objects
+							// array 1 {"foo":"bar"}, array 2 {"foo":"bar"}
+							for (JsonElement jObject : jArray) {
+								// This will contain all of the mod info
+								JsonObject info = jObject.getAsJsonObject();
+
+								// Skip conditions /////////////////////////////
+								if (info == null) {
+									continue;
+								}
+
+								if (!info.has("version") || !info.has("name")) {
+									continue;
+								}
+								////////////////////////////////////////////////
+
+								version = info.get("version").getAsString();
+								name = info.get("name").getAsString();
 							}
-
-							if (!info.has("version") || !info.has("name")) {
-								continue;
-							}
-							////////////////////////////////////////////////
-							
-							version = info.get("version").getAsString();
-							name = info.get("name").getAsString();
 						}
 					}
-				}
-				read.close();
-				is.close();
-				packagedMod.close();
 
+					read.close();
+					is.close();
+					packagedMod.close();
+				}
+
+			} 
+			catch (MalformedJsonException e) {
+				System.out.println("File: " + fileName + " failed to parse as JSON");
+			} 
+			catch (JsonSyntaxException e) {
+				System.out.println("File: " + fileName + " failed to parse as JSON");				
+			}
+			catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -288,14 +302,10 @@ public class SyncFile implements Serializable {
 		if (serMODPATH != null) {
 			MODPATH = serMODPATH.toPath();
 		}
-		if (serCLIENT_MODPATH != null) {
-			CLIENT_MODPATH = serCLIENT_MODPATH.toPath();
-		}
 	}
 
 	private void writeObject(ObjectOutputStream os) throws IOException {
 		serMODPATH = MODPATH.toFile();
-		serCLIENT_MODPATH = CLIENT_MODPATH.toFile();
 		os.defaultWriteObject();
 	}
 

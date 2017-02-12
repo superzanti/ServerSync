@@ -108,7 +108,7 @@ public class PathUtils {
 	}
 
 	public static Path getMinecraftDirectory() throws IOException {
-		Path minecraft = Paths.get("../");
+		Path minecraft = Paths.get("");
 		return minecraft.toRealPath();
 	}
 

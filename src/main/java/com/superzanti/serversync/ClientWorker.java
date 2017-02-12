@@ -27,6 +27,8 @@ public class ClientWorker implements Runnable {
 	private boolean updateHappened = false;
 	private boolean finished = false;
 	private Logger logs;
+	
+	private Server server;
 
 	private List<SyncFile> clientFiles;
 
@@ -66,52 +68,64 @@ public class ClientWorker implements Runnable {
 		return finished;
 	}
 
-	private void closeWorker(Server server) {
+	private void closeWorker() {
+		if (server == null) {
+			return;
+		}
+		
 		if (server.close()) {
 			logs.updateLogs("Successfully closed all connections", Logger.FULL_LOG);
 		}
 		
 		if (!updateHappened && !errorInUpdates) {
 			logs.updateLogs("No update required", Logger.FULL_LOG);
-			Main.updateText(Main.strings.getString("update_not_needed"));
-			Main.updateProgress(100);
+			Main.clientGUI.updateText(Main.strings.getString("update_not_needed"));
+			Main.clientGUI.updateProgress(100);
 		} else {
 			logs.updateLogs(Main.strings.getString("update_happened"), Logger.FULL_LOG);
-			Main.updateProgress(100);
+			Main.clientGUI.updateProgress(100);
 		}
 		if (errorInUpdates) {
 			logs.updateLogs(Main.strings.getString("update_error"));
 		}
 		
-		Main.toggleButton();
+		Main.clientGUI.toggleButton();
 	}
 
 	@Override
 	public void run() {
-		Server server = new Server(this, SyncConfig.SERVER_IP, SyncConfig.SERVER_PORT);
+		List<Path> clientConfigPaths = PathUtils.fileListDeep(Paths.get("config/"));
+		List<Path> clientFilePaths = new ArrayList<>();
+		
+		server = new Server(this, Main.CONFIG.SERVER_IP, Main.CONFIG.SERVER_PORT);
 		boolean updateNeeded = false;
 		updateHappened = false;
 
 		if (!server.connect()) {
 			errorInUpdates = true;
-			finished = true;
 			return;
 		}
 
 		ArrayList<String> syncableDirectories = server.getSyncableDirectories();
 		if (syncableDirectories == null) {
 			errorInUpdates = true;
+			closeWorker();
 			return;
 		}
 		
-		List<Path> clientConfigPaths = PathUtils.fileListDeep(Paths.get("../config/"));
-		List<Path> clientFilePaths = new ArrayList<>();
+		if (syncableDirectories.isEmpty()) {
+			logs.updateLogs(Main.strings.getString("no_syncable_directories"));
+			finished = true;
+			closeWorker();
+			return;
+		}
+		
 		for (String directory : syncableDirectories) {
 			if (directory.equals("config")) {
 				continue;
 			}
 			
-			List<Path> _files = PathUtils.fileListDeep(Paths.get("../"+directory+"/"));
+			List<Path> _files = PathUtils.fileListDeep(Paths.get(directory+"/"));
 			if (_files != null) {
 				clientFilePaths.addAll(_files);
 			}
@@ -122,7 +136,7 @@ public class ClientWorker implements Runnable {
 		if (!clientFilePaths.isEmpty()) {
 			for (Path path : clientFilePaths) {
 				String name = path.getFileName().toString();
-				if (!SyncConfig.IGNORE_LIST.contains(name)) {	
+				if (!Main.CONFIG.MOD_IGNORE_LIST.contains(name)) {	
 					SyncFile _clientFile = null;
 					try {
 						_clientFile = new SyncFile(path);
@@ -133,17 +147,13 @@ public class ClientWorker implements Runnable {
 					}					
 				}
 			}
-		} else {
-			logs.updateLogs(Main.strings.getString("no_syncable_directories"));
-			finished = true;
-			return;
 		}
 		//////////////////////////////////////////////////////////////
 		
 		if (clientConfigPaths != null) {
 			for (Path path : clientConfigPaths) {
 				String configFileName = path.getFileName().toString();
-				if (SyncConfig.INCLUDE_LIST.contains(configFileName) && !configFileName.equals("serversync.cfg")) {
+				if (Main.CONFIG.CONFIG_INCLUDE_LIST.contains(configFileName) && !configFileName.equals("serversync.cfg")) {
 					SyncFile _clientConfig = null;
 					try {
 						_clientConfig = new SyncFile(path, false);
@@ -158,20 +168,20 @@ public class ClientWorker implements Runnable {
 
 		logs.updateLogs(Main.strings.getString("config_check"));
 		
-		try {
-			server.getConfig();
-		} catch (IOException e) {
+		if (!server.getConfig()) {				
 			logs.updateLogs("Failed to obtain config from server");
 			errorInUpdates = true;
+			closeWorker();
 			return;
 		}
-
+		
 		// Get keys from the server /////////////////////////////////
-		if (!server.getSecurityDetails()) {
-			logs.updateLogs(Main.strings.getString("failed_handshake"));
-			errorInUpdates = true;
-			return;
-		}
+//		if (!server.getSecurityDetails()) {
+//			logs.updateLogs(Main.strings.getString("failed_handshake"));
+//			errorInUpdates = true;
+//			closeWorker();
+//			return;
+//		}
 		/////////////////////////////////////////////////////////////
 
 		logs.updateLogs("Checking if update is needed", Logger.FULL_LOG);
@@ -191,17 +201,19 @@ public class ClientWorker implements Runnable {
 			if (serverFiles == null) {
 				logs.updateLogs("Failed to get files from server, check detailed log in minecraft/logs");
 				errorInUpdates = true;
+				closeWorker();
 				return;
 			}
 			
 			if (serverFiles.isEmpty()) {
 				logs.updateLogs("Server has no syncable files");
 				finished = true;
+				closeWorker();
 				return;
 			}
 			
 			/* CLIENT MODS */
-			if (!SyncConfig.REFUSE_CLIENT_MODS) {
+			if (!Main.CONFIG.REFUSE_CLIENT_MODS) {
 				logs.updateLogs(Main.strings.getString("mods_accepting_clientmods"));
 
 				ArrayList<SyncFile> serverClientOnlyMods = server.getClientOnlyFiles();
@@ -216,7 +228,7 @@ public class ClientWorker implements Runnable {
 				logs.updateLogs(Main.strings.getString("mods_refusing_clientmods"));
 			}
 
-			logs.updateLogs(Main.strings.getString("ignoring") + " " + SyncConfig.IGNORE_LIST, Logger.FULL_LOG);
+			logs.updateLogs(Main.strings.getString("ignoring") + " " + Main.CONFIG.MOD_IGNORE_LIST, Logger.FULL_LOG);
 			
 			// run calculations to figure out how big the progress bar is
 			float numberOfFiles = clientFiles.size() + serverFiles.size();
@@ -231,7 +243,7 @@ public class ClientWorker implements Runnable {
 				// Update status
 				currentPercent++;
 
-				Path clientPath = file.CLIENT_MODPATH;
+				Path clientPath = file.MODPATH;
 				// Get file at rPath location
 				boolean exists = Files.exists(clientPath);
 
@@ -264,7 +276,7 @@ public class ClientWorker implements Runnable {
 					}
 				}
 				
-				Main.updateProgress((int) (currentPercent / percentScale));
+				Main.clientGUI.updateProgress((int) (currentPercent / percentScale));
 			}
 
 			/* DELETION */
@@ -298,18 +310,14 @@ public class ClientWorker implements Runnable {
 
 						updateHappened = true;
 					}
-					Main.updateProgress((int) (currentPercent / percentScale));
+					Main.clientGUI.updateProgress((int) (currentPercent / percentScale));
 				}
 			}
 		}
-
-		server.exit();
-
 		logs.updateLogs(Main.strings.getString("update_complete"));
 		
-		
 		// Teardown
-		closeWorker(server);
+		closeWorker();
 
 	}
 

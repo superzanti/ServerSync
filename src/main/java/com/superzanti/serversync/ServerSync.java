@@ -5,59 +5,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.apache.logging.log4j.Logger;
-
-import com.superzanti.lib.RefStrings;
-import com.superzanti.serversync.proxy.ClientProxy;
-import com.superzanti.serversync.proxy.CommonProxy;
-
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.Mod.EventHandler;
-import cpw.mods.fml.common.SidedProxy;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.common.MinecraftForge;
-
-/**
- * Main class, used to initialize config/logger, register proxies/events and register the mod for FML loading
- * @author superzanti
- */
-@Mod(modid = RefStrings.MODID, name = RefStrings.NAME, version = RefStrings.VERSION, acceptableRemoteVersions = "*")
 public class ServerSync {
-	public static Logger logger;
 	
-	@SidedProxy(modId = RefStrings.MODID, clientSide = "com.superzanti.serversync.proxy.ClientProxy", serverSide = "com.superzanti.serversync.proxy.CommonProxy")
-	private static CommonProxy proxy;
-
-	@EventHandler
-	public static void PreLoad(FMLPreInitializationEvent PreEvent) {
-		// setup the minecraft logger for the server
-		logger = PreEvent.getModLog();
+	//TODO Implement a logger & ditch this middleman class
+	
+	public static void PreLoad() {
 		
-		// Create clientmods directory
-		if (proxy.isServer()) {
-			Path clientOnlyMods = Paths.get("clientmods/");
-			if (!Files.exists(clientOnlyMods)) {				
-				try {
-					Files.createDirectories(clientOnlyMods);
-				} catch (IOException e) {
-					logger.error("Could not create clientmods directory");
-				}
+		// Create clientmods directory if it does not exist
+		Path clientOnlyMods = Paths.get("clientmods/");
+		if (!Files.exists(clientOnlyMods)) {				
+			try {
+				Files.createDirectories(clientOnlyMods);
+			} catch (IOException e) {
+				System.out.println("Could not create clientmods directory");
 			}
 		}
-		
 
-		// Client side
-		if (proxy.isClient()) {
-			MinecraftForge.EVENT_BUS.register(new ClientProxy());
-		}
-
-		// Server side
-		if (proxy.isServer()) {
-			// Grab the configuration file and load in the values
-			SyncConfig.init(PreEvent);
-			ServerSetup setup = new ServerSetup();
-			Thread syncthread = new Thread(setup);
-			syncthread.start();
-		}
+		ServerSetup setup = new ServerSetup();
+		Thread syncthread = new Thread(setup);
+		syncthread.start();
 	}
 }

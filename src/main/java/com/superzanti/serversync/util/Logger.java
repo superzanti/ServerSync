@@ -58,4 +58,12 @@ public class Logger {
 			console.updateText(userLog.getReadableContent());
 		}
 	}
+	
+	public void outputError(Object object) {
+		updateLogs("Failed to write object (" + object + ") to client output stream", Logger.FULL_LOG);
+	}
+	
+	public void inputError(Object object) {
+		updateLogs("Failed to read object from clients input stream: " + object, Logger.FULL_LOG);
+	}
 }
