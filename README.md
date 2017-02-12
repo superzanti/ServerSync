@@ -25,6 +25,7 @@ RECENT UPDATES:
 -----------
 Version 2.6.6
 * Decoupled ServerSync from forge
+
 Version 2.6.3
 * Added ability to define directories to sync in the config
 
