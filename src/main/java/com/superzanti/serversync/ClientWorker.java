@@ -244,8 +244,10 @@ public class ClientWorker implements Runnable {
 				currentPercent++;
 
 				Path clientPath = file.MODPATH;
+				System.out.println(clientPath);
 				// Get file at rPath location
 				boolean exists = Files.exists(clientPath);
+				System.out.println(exists);
 
 				// Exists
 				if (exists) {
@@ -258,7 +260,8 @@ public class ClientWorker implements Runnable {
 						errorInUpdates = true;
 					}
 					
-					if (clientFile != null) {						
+					if (clientFile != null) {		
+						System.out.println("Comparing: " + clientFile.fileName);
 						if (!clientFile.compare(file)) {
 							server.updateFile(file.MODPATH.toString(), clientPath.toFile());
 						} else {
@@ -273,6 +276,7 @@ public class ClientWorker implements Runnable {
 					} else {
 						logs.updateLogs(file.fileName + " " + Main.strings.getString("does_not_exist"), Logger.FULL_LOG);
 						server.updateFile(file.MODPATH.toString(), clientPath.toFile());
+						System.out.println("updated file: " + file.MODPATH.toString());
 					}
 				}
 				

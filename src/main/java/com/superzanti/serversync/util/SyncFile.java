@@ -71,7 +71,7 @@ public class SyncFile implements Serializable {
 		// makes (ServerSyncDir)/path_to_mod/mod
 		Path root = Paths.get(""); 
 		// TODO update this code chunk to be more OOP
-		if (MODPATH.toString().contains("clientmods")) {
+		if (isMod && MODPATH.toString().contains("clientmods")) {
 			clientOnlyMod = true;
 			MODPATH = Paths.get(MODPATH.toString().replaceFirst("clientmods", "mods"));
 			MODPATH = MODPATH.relativize(root);

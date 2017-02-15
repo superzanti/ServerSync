@@ -213,21 +213,33 @@ public class GUI_Client extends JFrame {
 	}
 	
 	public void updateProgress(int progress) {
-		B_sync.setText(progress + "%");
+		SwingUtilities.invokeLater(new Runnable() {
+			
+			@Override
+			public void run() {
+				B_sync.setText(progress + "%");
+			}
+		});
 	}
 	
 	public void updateFileProgress(String message, int progress) {
-		if (!PB_fileProgress.isVisible() && progress < 100) {			
-			PB_fileProgress.setVisible(true);
-		}
-		
-		PB_fileProgress.setString("<"+progress+"%> " + message);
-		PB_fileProgress.setValue(progress);
-		
-		if (message == null) {
-			PB_fileProgress.setVisible(false);
-			PB_fileProgress.setString(null);
-		}
+		SwingUtilities.invokeLater(new Runnable() {
+			
+			@Override
+			public void run() {
+				if (!PB_fileProgress.isVisible() && progress < 100) {			
+					PB_fileProgress.setVisible(true);
+				}
+				
+				PB_fileProgress.setString("<"+progress+"%> " + message);
+				PB_fileProgress.setValue(progress);
+				
+				if (message == null) {
+					PB_fileProgress.setVisible(false);
+					PB_fileProgress.setString(null);
+				}
+			}
+		});
 	}
 	
 	public void toggleButton() {

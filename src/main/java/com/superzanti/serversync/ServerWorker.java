@@ -185,19 +185,27 @@ public class ServerWorker implements Runnable {
 				
 				// Main file update message
 				if(message.equals(messages.get(EServerMessage.UPDATE))) {
-					System.out.println("Writing file to client...");
 					
 					
 					String filePathName;
 					try {
 						filePathName = (String) ois.readObject();
 						File f = new File(filePathName.replace("\\", "/"));
+						System.out.println("Writing " + f + " to client...");
 						byte[] buff = new byte[clientsocket.getSendBufferSize()];
 						int bytesRead = 0;
 						InputStream in = new FileInputStream(f);
-						while((bytesRead = in.read(buff))>0) {
-							//oos.writeObject("BLOB");
-							oos.write(buff,0,bytesRead);
+						if ((bytesRead = in.read(buff)) == -1) {
+							// End of file
+							oos.writeBoolean(false);
+						} else {
+							oos.writeBoolean(true);
+							oos.write(buff, 0, bytesRead);
+							
+							while((bytesRead = in.read(buff))>0) {
+								//oos.writeObject("BLOB");
+								oos.write(buff,0,bytesRead);
+							}
 						}
 						in.close();
 						oos.flush();

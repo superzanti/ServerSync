@@ -50,11 +50,16 @@ public class ServerSetup implements Runnable {
 	protected ServerSetup() {
 		DateFormat dateFormatter = DateFormat.getDateInstance();
 		ArrayList<Path> _list = null;
+		boolean configsInDirectoryList = false;
 		
 		/* SYNC DIRECTORIES */
 		for (String dir : Main.CONFIG.DIRECTORY_INCLUDE_LIST) {
 			// Specific config handling later
 			if (dir.equals("config") || dir.equals("clientmods")) {
+				if (dir.equals("config")) {
+					configsInDirectoryList = true;
+					directories.add(dir);
+				}
 				continue;
 			}
 			directories.add(dir);
@@ -102,11 +107,13 @@ public class ServerSetup implements Runnable {
 			}
 			
 			/* CONFIGS */
-			if (!Main.CONFIG.CONFIG_INCLUDE_LIST.isEmpty()) {
+			if (!Main.CONFIG.CONFIG_INCLUDE_LIST.isEmpty() && !configsInDirectoryList) {
 				_list = PathUtils.fileListDeep(Paths.get("config"));
+				System.out.println("Found " + _list.size() + " files in: config");
 				if (_list != null) {
 					for (Path path : _list) {
 						if (Main.CONFIG.CONFIG_INCLUDE_LIST.contains(path.getFileName().toString())) {
+							System.out.println("Including config: " + path.getFileName().toString());
 							allMods.add(new SyncFile(path,false));
 						}
 					}

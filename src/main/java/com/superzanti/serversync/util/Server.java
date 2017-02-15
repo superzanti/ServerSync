@@ -11,6 +11,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -421,8 +423,19 @@ public class Server {
 			logs.outputError(filePath);
 			return false;
 		}
+		
+		Path pFile = currentFile.toPath();
 
 		currentFile.getParentFile().mkdirs();
+		
+		if (Files.exists(pFile)) {
+			try {
+				Files.delete(pFile);
+				Files.createFile(pFile);
+			} catch (IOException e) {
+				System.out.println("Failed to delete file: " + pFile.getFileName().toString());
+			}
+		}
 		
 		try {			
 			logs.updateLogs("Attempting to write file (" + currentFile + ")", Logger.FULL_LOG);
@@ -434,18 +447,23 @@ public class Server {
 			
 			double factor = 0;
 			
-			
-			while ((bytesReceived = ois.read(outBuffer)) > 0) {
-				bytesRecievedSoFar += bytesReceived;
-				factor = (double) bytesRecievedSoFar / numberOfBytesToRecieve;
-				System.out.println(factor);
-				System.out.println(bytesRecievedSoFar + " / " + numberOfBytesToRecieve);
-				wr.write(outBuffer, 0, bytesReceived);
-				GUIUpdater.updateProgress((int)Math.ceil(factor * 100), currentFile.getName());
-				if (factor == 1) {
-					break;
+			if(ois.readBoolean()) {
+				// Not empty file
+				while ((bytesReceived = ois.read(outBuffer)) > 0) {
+					bytesRecievedSoFar += bytesReceived;
+					factor = (double) bytesRecievedSoFar / numberOfBytesToRecieve;
+					System.out.println(factor);
+					System.out.println(bytesRecievedSoFar + " / " + numberOfBytesToRecieve);
+					wr.write(outBuffer, 0, bytesReceived);
+					GUIUpdater.updateProgress((int)Math.ceil(factor * 100), currentFile.getName());
+					if (factor == 1) {
+						break;
+					}
 				}
+			} else {
+				System.out.println("Empty file: " + currentFile);
 			}
+			
 			GUIUpdater.fileFinished();
 			wr.flush();
 			wr.close();
