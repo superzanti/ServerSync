@@ -1,47 +1,35 @@
 ServerSync
 =========
-This is an open source mod that allows for easy server management. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. This method avoids a lot of complaining. As a server admin constantly changing configs/updating mods it can get to be quite a pain pushing these updates. Some users have trouble finding the minecraft folder let alone putting mods in the right place.
+This is an open source mod that allows for easy mod management. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. This method avoids a lot of complaining. As a server admin constantly changing configs/updating mods it can get to be quite a pain pushing these updates. Some users have trouble finding the minecraft folder let alone putting mods in the right place.
 
-Currently you can sync:
+Technically you could sync any game/filesystem using serversync however it does have some specific funtionality intended for use with Minecraft.
+
+Currently ServerSync has support for:
 * Client-side mods
 * Mods
 * Flans content packs
 * Configs
 * Anything, config now supports adding custom directories to sync
 
-**Currently for Minecraft 1.7.10 Forge 1614+, see MultiVersion branch for 1.8+**
-
 If you don't feel like compiling from source and simply want to download a jar file see the releases tab, I update these periodically when theres a large enough addition/change. Please read the disclaimer before downloading.
 
 
 DISCLAIMER:
 -----------
-This mod is only intended for personal use or for developers that constantly push their OWN mods. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to distribute other people's mods.
+This mod is only intended for personal use. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to mass distribute other people's mods.
 
-Depending on the copyright and/or pattent laws in your area using this mod with other developer's mods for a commercial purpose could be ILLEGAL.
+Depending on the copyright and/or pattent laws in your area using this mod with other developer's mods for a commercial purpose could be ILLEGAL, check licenses.
 
 Don't trust anyone with this mod. This mod allows ANY server running it to put ANY file in your mods folder. Any mod means any function of java, such as making a virus or a keylogger. So if you are a client please make sure you trust your server administrator.
 
 
 RECENT UPDATES:
 -----------
+Version 2.6.6
+* Decoupled ServerSync from forge
+
 Version 2.6.3
 * Added ability to define directories to sync in the config
-
-Version 2.6.1
-* Added support for multiple languages
-* Fixed javadoc's
-* Added support for mc 1.8+, 1.9.4 update by - Lordmau5
-
-Version 2.5.3
-* Changed from shadow to shade jar building
-* Depricated RefStrings in favour of gradle.properties
-
-Version 2.5.2
-* Removed unnecessary config loading on FML's client side
-* Fixed potential crash if clientmods directory did not exist
-* Fixed missing class JsonReader should work properly now
-* Fixed minor issue with file deletion
 
 
 FREQUENTLY ASKED QUESTIONS:
@@ -56,15 +44,13 @@ FREQUENTLY ASKED QUESTIONS:
   * Are you ignoring a file that is neccecary to connect to the server?
 * "This is so insecure I hate it!"
   * As per the disclaimer this is not intended to be a super secure system, it's more for personal use. Want to play with your kids/partner but you dont feel like teaching all of them exactly how to update mods.
-  * The config file allows you to put in your own hashes for the server client commands. This would take a real genious to pull files off the server.
+  * Please direct any useful security material to the issues, shall look into it
 * "Can you add feature X? Or fix bug Y?"
-  * I don't know. Go submit it to the issues and I'll check it out.
+  * Probably. Submit it to the issues and I'll check it out.
 * "You're a horrible programmer"
   * You're entitled to that opinion.
-* "Can you make this work without using a custom main menu?"
-  * Serversync is run without opening minecraft and in fact is no longer supporting the in-game feature of the previous incarnation.
 * "Why does this mod spit out so much 'junk' in my console?"
-  * It's simply to help users know that they're not being attacked. It will tell them what IP they're connected to, what mod is being downloaded and more. My hope is that people will actually see this while it's running to know for sure that they can trust their admin. Hey, not everyone reads this. Also now that serversync is it's own entity the entire console is there for debugging purposes (on the client side at least).
+  * ServerSync attempts to provide as much context as it can to track down bugs faster
 * "I have files such as optifine that I don't want the server to delete"
   * Specify this in the configs IGNORE_LIST
   * Add client only mods to the clientmods directory on the server if you are a server admin
@@ -74,18 +60,8 @@ What does it do exactly?
 -----------
 
 * The server starts up and begins listening on the port defined in the config file
-* If the server receives the recursive command the server will send a packet to the client containing all the files in the mods folder and the config folder.
-* If the server receives the checksum command it will send back a md5 checksum of the file requested by the client.
-* If the server receives the update command the server will start a file transfer of the file that the client requested.
-* If the server receives the exists command the server will will return a boolean value of weather or not the file requested exists on the server.
-* If the server receieves the exit command it will close the connection and destroy the thread. However, this will also happen automatically after X ammount of time as defined in the config file
- 
-* When the client runs serversync the update script starts
-* The client will first request the name of all the files on the server.
-* The client will then iterate through each of these files
-* If this file exists on the client it will take a checksum of it and ask the server if they are the same
-* If the files are different it will send the update command to pull a new file
-* If the client does not have the file it will send the update command to download it
+* When a connection is made to a client the server listens for messages generated for this client
+* On receiving a message the server will react appropriately or send an error back to the client
 * After iterating through all of the server files the client will then iterate through all of it's own files
 * If the client has a file that the server does not, it will delete it.
 
@@ -109,7 +85,6 @@ Simply git clone the repo, cd into the folder and run
 
 If you would like to setup a workspace to work on these files simply run
 ```
-./gradlew setupDecompWorkspace
 ./gradlew eclipse
 ```
 
