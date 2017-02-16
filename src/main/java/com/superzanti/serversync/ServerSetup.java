@@ -1,6 +1,7 @@
 package com.superzanti.serversync;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -67,18 +68,22 @@ public class ServerSetup implements Runnable {
 		
 		if (Main.CONFIG.PUSH_CLIENT_MODS) {
 			_list = PathUtils.fileListDeep(Paths.get("clientmods"));
-			System.out.println("Getting all of: clientmods");
+			System.out.println("Found " + _list.size() + " files in: clientmods");
+			
+			_list.forEach((path) -> {
+				System.out.println(path);
+			});
 			
 			if (_list != null) {
 				try {
 					clientMods.addAll(SyncFile.parseList(_list));
+					clientMods.forEach((mod) -> {
+						System.out.println(mod.MODPATH);
+					});
 				} catch (IOException e) {
 					System.out.println("Failed to access files in: " + _list);
 				}
-			} else {
-				System.out.println("Could not access: clientmods");
 			}
-			System.out.println("Finished getting: clientmods");
 		}
 		
 		//Specific mod compatability
@@ -131,8 +136,11 @@ public class ServerSetup implements Runnable {
 		System.out.println("Creating new server socket");
 		try {
 			server = new ServerSocket(Main.CONFIG.SERVER_PORT);
+		} catch (BindException e) { 
+			System.out.println("socket alredy bound at: " + Main.CONFIG.SERVER_PORT);
 		} catch (IOException e) {
 			e.printStackTrace();
+			return;
 		}
 		
 		// keep listening indefinitely until program terminates

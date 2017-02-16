@@ -49,13 +49,15 @@ public class SyncFile implements Serializable {
 	public String fileName;
 	private String md5FileContents;
 	transient public Path MODPATH;
+	transient public Path CLIENT_MODPATH;
 	public boolean clientOnlyMod = false;
 	public boolean isConfig = false;
 	private boolean isIgnored = false;
 	public static final String UNKNOWN_VERSION = "unknown_version";
 	public static final String UNKNOWN_NAME = "unknown_name";
 
-	private File serMODPATH;
+	private File serverMODPATH;
+	private File clientMODPATH;
 
 	/**
 	 * Main constructor, populates file information
@@ -69,12 +71,14 @@ public class SyncFile implements Serializable {
 		MODPATH = modPath;
 		// Where SS is located when this file was created
 		// makes (ServerSyncDir)/path_to_mod/mod
-		Path root = Paths.get(""); 
+		//Path root = Paths.get("");
+		//MODPATH = root.relativize(MODPATH);
 		// TODO update this code chunk to be more OOP
 		if (isMod && MODPATH.toString().contains("clientmods")) {
 			clientOnlyMod = true;
-			MODPATH = Paths.get(MODPATH.toString().replaceFirst("clientmods", "mods"));
-			MODPATH = MODPATH.relativize(root);
+			CLIENT_MODPATH = Paths.get(MODPATH.toString().replaceFirst("clientmods", "mods"));
+		} else {
+			CLIENT_MODPATH = MODPATH;
 		}
 		
 		fileName = MODPATH.getFileName().toString();
@@ -299,13 +303,17 @@ public class SyncFile implements Serializable {
 	/* Serialization methods */
 	private void readObject(ObjectInputStream is) throws ClassNotFoundException, IOException {
 		is.defaultReadObject();
-		if (serMODPATH != null) {
-			MODPATH = serMODPATH.toPath();
+		if (serverMODPATH != null) {
+			MODPATH = serverMODPATH.toPath();
+		}
+		if (clientMODPATH != null) {
+			CLIENT_MODPATH = clientMODPATH.toPath();
 		}
 	}
 
 	private void writeObject(ObjectOutputStream os) throws IOException {
-		serMODPATH = MODPATH.toFile();
+		serverMODPATH = MODPATH.toFile();
+		clientMODPATH = CLIENT_MODPATH.toFile();
 		os.defaultWriteObject();
 	}
 

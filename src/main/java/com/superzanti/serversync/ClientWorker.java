@@ -243,7 +243,7 @@ public class ClientWorker implements Runnable {
 				// Update status
 				currentPercent++;
 
-				Path clientPath = file.MODPATH;
+				Path clientPath = file.CLIENT_MODPATH;
 				System.out.println(clientPath);
 				// Get file at rPath location
 				boolean exists = Files.exists(clientPath);
