@@ -136,7 +136,7 @@ public class ClientWorker implements Runnable {
 		if (!clientFilePaths.isEmpty()) {
 			for (Path path : clientFilePaths) {
 				String name = path.getFileName().toString();
-				if (!Main.CONFIG.MOD_IGNORE_LIST.contains(name)) {	
+				if (!name.matches("serversync.+") && !Main.CONFIG.MOD_IGNORE_LIST.contains(name)) {	
 					SyncFile _clientFile = null;
 					try {
 						_clientFile = new SyncFile(path);
