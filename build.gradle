@@ -29,6 +29,7 @@ configurations {
 }
 	
 dependencies {
+	compile fileTree(dir: 'libs', include: '*.jar')
 	shadow 'com.google.code.gson:gson:2.8.0'
 	shadow 'commons-codec:commons-codec:1.10'
 }
