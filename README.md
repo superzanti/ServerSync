@@ -36,7 +36,7 @@ FREQUENTLY ASKED QUESTIONS:
 -----------
 * "This mod isn't doing anything!"
   * This version of serversync is run independant of minecraft (minecraft should be closed when running serversync), I did this as minecraft did not need to be running for the program to work and the previous method required you to open and close minecraft several times which if you have any more than 2-3 mods then loading time gets very taxing.
-  * Run serversync.jar from your mods folder or create a shortcut, serversync will auto populate server details from the config if present
+  * Run serversync.jar from your minecraft folder or create a shortcut, serversync will auto populate server details from the config if present
 * "I can't connect to my server"
   * Did you check that the config files ip/port details are correct on both server and client
   * Are you using your external/internal IP address apropriately?
