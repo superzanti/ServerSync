@@ -9,7 +9,7 @@ import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import runme.Main;
 
-@Mod(modid="com.superzanti.serversync", name="ServerSync", version=RefStrings.VERSION, acceptedMinecraftVersions="*")
+@Mod(modid="com.superzanti.serversync", name="ServerSync", version=RefStrings.VERSION, acceptableRemoteVersions="*")
 public class ForgeLoaderCPW {
 	@EventHandler
 	public void startServersync(FMLPreInitializationEvent _e) {
