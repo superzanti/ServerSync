@@ -143,7 +143,6 @@ public class SyncConfig {
 					comments.clear();
 
 					defaultValueList.add("mods");
-					defaultValueList.add("config");
 					comments.add("# These directories are included, by default mods and configs are included");
 					rules.add(new MCCElement(SyncConfig.CATEGORY_RULES, "S", "DIRECTORY_INCLUDE_LIST", new ArrayList<String>(defaultValueList), comments));
 					comments.clear();
