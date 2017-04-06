@@ -11,6 +11,7 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.regex.Pattern;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -70,9 +71,7 @@ public class ServerSetup implements Runnable {
 			_list = PathUtils.fileListDeep(Paths.get("clientmods"));
 			System.out.println("Found " + _list.size() + " files in: clientmods");
 			
-			_list.forEach((path) -> {
-				System.out.println(path);
-			});
+			_list.listIterator().forEachRemaining(path -> System.out.println(path));
 			
 			if (_list != null) {
 				try {
@@ -108,6 +107,15 @@ public class ServerSetup implements Runnable {
 					} else {
 						System.out.println("Failed to access: " + directory);
 					}
+				}
+			}
+			
+			Pattern pattern = Pattern.compile("serversync-.+");
+			for (int i = 0; i < allMods.size(); i++) {
+				if (pattern.matcher(allMods.get(i).fileName).matches()) {
+					allMods.remove(i);
+					System.out.println("Found serversync in the mods folder, removing from sync list");
+					break;
 				}
 			}
 			
