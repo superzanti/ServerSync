@@ -146,6 +146,7 @@ public class ServerSetup implements Runnable {
 			server = new ServerSocket(Main.CONFIG.SERVER_PORT);
 		} catch (BindException e) { 
 			System.out.println("socket alredy bound at: " + Main.CONFIG.SERVER_PORT);
+			return;
 		} catch (IOException e) {
 			e.printStackTrace();
 			return;
@@ -155,13 +156,17 @@ public class ServerSetup implements Runnable {
 		System.out.println("Now accepting clients...");
 		while (true) {
 			try {
+				// Sanity check, server should never be null here
+				if (server == null) {
+					break;
+				}
 				Socket socket = server.accept();
 				ServerWorker sc = new ServerWorker(socket, server, generateServerMessages());;
 				Thread clientThread = new Thread(sc);
 				clientThread.setName("ClientThread - " + socket.getInetAddress());
 				clientThread.start();
-			} catch (Exception e) {
-				e.printStackTrace();
+			} catch (IOException e) {
+				System.out.println("Error while accepting client connection, breaking server listener. You will need to restart serversync");
 			}
 		}
 	}
