@@ -28,6 +28,9 @@ Don't trust anyone with this mod. This mod allows ANY server running it to put A
 
 RECENT UPDATES:
 -----------
+Version 2.6.10
+* Fixed infinite null pointer when server port is alredy bound
+
 Version 2.6.6
 * Decoupled ServerSync from forge
 
