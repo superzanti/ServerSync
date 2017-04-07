@@ -13,6 +13,9 @@ Currently ServerSync has support for:
 
 If you don't feel like compiling from source and simply want to download a jar file see the releases tab, I update these periodically when theres a large enough addition/change. Please read the disclaimer before downloading.
 
+Honorable Mentions:
+- [P3rf3ctXZer0](https://github.com/P3rf3ctXZer0): Extremely useful feedback & testing
+
 
 DISCLAIMER:
 -----------
