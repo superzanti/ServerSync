@@ -31,19 +31,6 @@ final class ConfigDefaults extends HashMap<EConfigDefaults, String> {
 	}
 }
 
-// Server messages /////////////////////
-/*public static String MESSAGE_CHECK;
-	public static String MESSAGE_UPDATE_NEEDED;
-	public static String MESSAGE_GET_FILE_LIST;
-	public static String MESSAGE_COMPARE;
-	public static String MESSAGE_UPDATE;
-	public static String MESSAGE_FILE_EXISTS;
-	public static String MESSAGE_SERVER_EXIT;
-	public static final String MESSAGE_GET_SYNCABLE_DIRECTORIES = "I WANT THAT ONE";
-	public static final String MESSAGE_GET_CONFIG = "GIMME";
-	public static final String MESSAGE_SEC_HANDSHAKE = "SHAKE_THAT";*/
-////////////////////////////////////////
-
 /**
  * Handles all functionality to do with serversyncs config file and
  * other configuration properties
@@ -65,7 +52,7 @@ public class SyncConfig {
 	// COMMON //////////////////////////////
 	public String SERVER_IP;
 	public String LAST_UPDATE;
-	public List<String> MOD_IGNORE_LIST;
+	public List<String> FILE_IGNORE_LIST;
 	public List<String> CONFIG_INCLUDE_LIST;
 	public Locale LOCALE;
 	////////////////////////////////////////
@@ -148,8 +135,8 @@ public class SyncConfig {
 					comments.clear();
 					defaultValueList.clear();
 				
-					comments.add("# These mods are ignored by serversync, list auto updates with mods added to the clientmods directory");
-					rules.add(new MCCElement(SyncConfig.CATEGORY_RULES, "S", "MOD_IGNORE_LIST", new ArrayList<String>(), comments));
+					comments.add("# These files are ignored by serversync, list auto updates with mods added to the clientmods directory");
+					rules.add(new MCCElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<String>(), comments));
 					comments.clear();
 				
 				MCCCategory serverConnection = new MCCCategory(SyncConfig.CATEGORY_CONNECTION);
@@ -188,8 +175,8 @@ public class SyncConfig {
 				rules.add(new MCCElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST", new ArrayList<String>(), comments));
 				comments.clear();
 				
-				comments.add("These mods are ignored by serversync, add your client mods here to stop serversync deleting them.");
-				rules.add(new MCCElement(SyncConfig.CATEGORY_RULES, "S", "MOD_IGNORE_LIST", new ArrayList<String>(), comments));
+				comments.add("These files are ignored by serversync, add your client mods here to stop serversync deleting them.");
+				rules.add(new MCCElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<String>(), comments));
 				comments.clear();
 			
 			MCCCategory connection = new MCCCategory(SyncConfig.CATEGORY_CONNECTION);
@@ -232,20 +219,29 @@ public class SyncConfig {
 	}
 	
 	private void init() {
-		LOCALE = new Locale(config.getEntryByName("LOCALE").getString());
-
-		if (configType == EConfigType.SERVER) {				
-			PUSH_CLIENT_MODS = config.getEntryByName("PUSH_CLIENT_MODS").getBoolean();
+		try {			
+			LOCALE = new Locale(config.getEntryByName("LOCALE").getString());
+			
+			try {				
+				FILE_IGNORE_LIST = config.getEntryByName("FILE_IGNORE_LIST").getList();
+			} catch (NullPointerException e) {
+				// Specific conversion from old config files
+				FILE_IGNORE_LIST = config.getEntryByName("MOD_IGNORE_LIST").getList();
+			}
+			
 			CONFIG_INCLUDE_LIST = config.getEntryByName("CONFIG_INCLUDE_LIST").getList();
-			DIRECTORY_INCLUDE_LIST = config.getEntryByName("DIRECTORY_INCLUDE_LIST").getList();
-			MOD_IGNORE_LIST = config.getEntryByName("MOD_IGNORE_LIST").getList();
-			SERVER_PORT = config.getEntryByName("SERVER_PORT").getInt();
-		} else if (configType == EConfigType.CLIENT) {				
-			SERVER_IP = config.getEntryByName("SERVER_IP").getString();
-			SERVER_PORT = config.getEntryByName("SERVER_PORT").getInt();
-			REFUSE_CLIENT_MODS = config.getEntryByName("REFUSE_CLIENT_MODS").getBoolean();
-			MOD_IGNORE_LIST = config.getEntryByName("MOD_IGNORE_LIST").getList();
-			CONFIG_INCLUDE_LIST = config.getEntryByName("CONFIG_INCLUDE_LIST").getList();
+			
+			if (configType == EConfigType.SERVER) {				
+				PUSH_CLIENT_MODS = config.getEntryByName("PUSH_CLIENT_MODS").getBoolean();
+				DIRECTORY_INCLUDE_LIST = config.getEntryByName("DIRECTORY_INCLUDE_LIST").getList();
+				SERVER_PORT = config.getEntryByName("SERVER_PORT").getInt();
+			} else if (configType == EConfigType.CLIENT) {				
+				SERVER_IP = config.getEntryByName("SERVER_IP").getString();
+				SERVER_PORT = config.getEntryByName("SERVER_PORT").getInt();
+				REFUSE_CLIENT_MODS = config.getEntryByName("REFUSE_CLIENT_MODS").getBoolean();
+			}
+		} catch(NullPointerException e) {
+			System.out.println("could not retrieve an entry from the config file, have you altered the entry names?");
 		}
 
 		System.out.println("finished loading config");

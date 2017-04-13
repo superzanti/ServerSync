@@ -121,7 +121,7 @@ public class SyncFile implements Serializable {
 	 * @return true if ignored, false otherwise
 	 */
 	public boolean isSetToIgnore() {
-		if (Main.CONFIG.MOD_IGNORE_LIST.contains(fileName)) {
+		if (Main.CONFIG.FILE_IGNORE_LIST.contains(fileName)) {
 			isIgnored = true;
 		}
 		return isIgnored;

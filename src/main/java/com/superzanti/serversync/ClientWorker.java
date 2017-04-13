@@ -38,18 +38,6 @@ public class ClientWorker implements Runnable {
 		errorInUpdates = false;
 		updateHappened = false;
 		finished = false;
-
-		final class Shutdown extends Thread {
-
-			@Override
-			public void run() {
-				logs.save();
-			}
-
-		}
-		// Save full log on shutdown
-		Runtime.getRuntime().addShutdownHook(new Shutdown());
-
 	}
 
 	public Logger getLogger() {
@@ -89,11 +77,12 @@ public class ClientWorker implements Runnable {
 			logs.updateLogs(Main.strings.getString("update_error"));
 		}
 		
-		Main.clientGUI.toggleButton();
+		Main.clientGUI.enableSyncButton();
 	}
 
 	@Override
 	public void run() {
+		Main.clientGUI.disableSyncButton();
 		List<Path> clientConfigPaths = PathUtils.fileListDeep(Paths.get("config/"));
 		List<Path> clientFilePaths = new ArrayList<>();
 		
@@ -103,6 +92,7 @@ public class ClientWorker implements Runnable {
 
 		if (!server.connect()) {
 			errorInUpdates = true;
+			Main.clientGUI.enableSyncButton();
 			return;
 		}
 
@@ -136,7 +126,7 @@ public class ClientWorker implements Runnable {
 		if (!clientFilePaths.isEmpty()) {
 			for (Path path : clientFilePaths) {
 				String name = path.getFileName().toString();
-				if (!name.matches("serversync.+") && !Main.CONFIG.MOD_IGNORE_LIST.contains(name)) {	
+				if (!name.matches("serversync.+") && !Main.CONFIG.FILE_IGNORE_LIST.contains(name)) {	
 					SyncFile _clientFile = null;
 					try {
 						_clientFile = new SyncFile(path);
@@ -228,7 +218,7 @@ public class ClientWorker implements Runnable {
 				logs.updateLogs(Main.strings.getString("mods_refusing_clientmods"));
 			}
 
-			logs.updateLogs(Main.strings.getString("ignoring") + " " + Main.CONFIG.MOD_IGNORE_LIST, Logger.FULL_LOG);
+			logs.updateLogs(Main.strings.getString("ignoring") + " " + Main.CONFIG.FILE_IGNORE_LIST, Logger.FULL_LOG);
 			
 			// run calculations to figure out how big the progress bar is
 			float numberOfFiles = clientFiles.size() + serverFiles.size();

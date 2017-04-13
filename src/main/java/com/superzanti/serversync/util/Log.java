@@ -13,6 +13,13 @@ public class Log {
 	
 	public Log(String fileName) {
 		this.fileName = fileName;
+		
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+			@Override
+			public void run() {
+				saveLog();
+			}
+		}));
 	}
 	
 	public StringBuilder getLogBuilder() {
@@ -36,6 +43,14 @@ public class Log {
 	public Log add(int i) {
 		this.logContent.append(i);
 		this.logContent.append("\r\n");
+		return this;
+	}
+	
+	public Log addToConsole(String s) {
+		//TODO add levels later
+		this.logContent.append(s);
+		this.logContent.append("\r\n");
+		System.out.println(s);
 		return this;
 	}
 	

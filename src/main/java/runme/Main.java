@@ -9,7 +9,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import com.superzanti.serversync.ClientWorker;
-import com.superzanti.serversync.ServerSync;
+import com.superzanti.serversync.ServerSetup;
 import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.gui.GUI_Client;
 import com.superzanti.serversync.gui.GUI_Client.SyncPressedListener;
@@ -63,7 +63,9 @@ public class Main {
 	
 	private static void runInServerMode() {
 		CONFIG = new SyncConfig(EConfigType.SERVER);
-		ServerSync.PreLoad();
+		ServerSetup setup = new ServerSetup();
+		Thread serverThread = new Thread(setup);
+		serverThread.start();
 	}
 	
 	private static void runInClientMode() {
@@ -104,7 +106,6 @@ public class Main {
 					CONFIG.SERVER_IP = ip;
 					CONFIG.SERVER_PORT = port;
 					clientGUI.updateText("Starting update process...");
-					clientGUI.toggleButton();
 					new Thread(new ClientWorker()).start();
 				}
 			}

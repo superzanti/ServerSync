@@ -220,7 +220,7 @@ public class Server {
 			System.out.println("finished reading clientmod names: " + clientModNames);
 			
 			// Remove client only mods and other user ignored files from comparison list
-			clientModNames.removeAll(new ArrayList<String>(Main.CONFIG.MOD_IGNORE_LIST));
+			clientModNames.removeAll(new ArrayList<String>(Main.CONFIG.FILE_IGNORE_LIST));
 
 			logs.updateLogs(Main.strings.getString("info_syncable_client") + ": " + clientModNames.toString(), Logger.FULL_LOG);
 			logs.updateLogs(Main.strings.getString("info_syncable_server") + ": " + serverModNames.toString(), Logger.FULL_LOG);
@@ -317,7 +317,7 @@ public class Server {
 			ArrayList<String> ignored = new ArrayList<String>(rules.get("ignore"));
 			ArrayList<String> included = new ArrayList<String>(rules.get("include"));
 			
-			ArrayList<String> myIgnored = new ArrayList<String>(Main.CONFIG.MOD_IGNORE_LIST);
+			ArrayList<String> myIgnored = new ArrayList<String>(Main.CONFIG.FILE_IGNORE_LIST);
 			ArrayList<String> myIncluded = new ArrayList<String>(Main.CONFIG.CONFIG_INCLUDE_LIST);
 			
 			ignored.removeAll(myIgnored);
@@ -325,7 +325,7 @@ public class Server {
 			
 			if (!ignored.isEmpty() || !included.isEmpty()) {
 				logs.updateLogs(Main.strings.getString("info_config_desync"));
-				Main.CONFIG.MOD_IGNORE_LIST.addAll(ignored);
+				Main.CONFIG.FILE_IGNORE_LIST.addAll(ignored);
 				Main.CONFIG.CONFIG_INCLUDE_LIST.addAll(included);
 				Main.CONFIG.writeConfigUpdates();
 			}
