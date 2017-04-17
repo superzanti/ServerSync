@@ -1,3 +1,10 @@
+# =========================
+# Github stuff
+# =========================
+issue_template.md
+.github/
+# =========================
+
 *.class
 
 # Mobile Tools for Java (J2ME)
@@ -51,14 +58,16 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 
-######################
-# Eclipse
-######################
+# =========================
+# Working Dir
+# =========================
 *.pydevproject
 .project
 .metadata
 .gradle/
 publish/
+mods/
+config/
 bin/
 build/
 *.tmp
