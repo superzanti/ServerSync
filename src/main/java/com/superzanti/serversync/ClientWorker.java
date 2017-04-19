@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.superzanti.serversync.util.GlobPathMatcher;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.Server;
@@ -124,17 +125,30 @@ public class ClientWorker implements Runnable {
 
 		// Populate Clients SyncFiles ////////////////////////////////
 		if (!clientFilePaths.isEmpty()) {
-			for (Path path : clientFilePaths) {
-				String name = path.getFileName().toString();
-				if (!name.matches("serversync.+") && !Main.CONFIG.FILE_IGNORE_LIST.contains(name)) {	
-					SyncFile _clientFile = null;
+			GlobPathMatcher globber = new GlobPathMatcher();
+			
+			
+			
+			for (Path file : clientFilePaths) {
+				//TODO duplication here?
+				boolean matchedIgnoreGlob = false;
+				for (String glob : Main.CONFIG.FILE_IGNORE_LIST) {
+					globber.setPattern(glob);
+					if (globber.matches(file)) {
+						matchedIgnoreGlob = true;
+						logs.updateLogs(Main.strings.getString("ignoring") + " " + file.toString());
+						break;
+					}
+				}
+				
+				if (!matchedIgnoreGlob) {
 					try {
-						_clientFile = new SyncFile(path);
+						SyncFile _clientFile = new SyncFile(file);
 						clientFiles.add(_clientFile);
 					} catch (IOException e) {
-						logs.updateLogs("Failed to create SyncFile for: (" + name + ")", Logger.FULL_LOG);
+						logs.updateLogs("Failed to create SyncFile for: (" + file.getFileName() + ")", Logger.FULL_LOG);
 						errorInUpdates = true;
-					}					
+					}
 				}
 			}
 		}
