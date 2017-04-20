@@ -5,15 +5,14 @@ import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import com.superzanti.serversync.ClientWorker;
 import com.superzanti.serversync.ServerSetup;
 import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.gui.GUI_Client;
-import com.superzanti.serversync.gui.GUI_Client.SyncPressedListener;
 import com.superzanti.serversync.gui.GUI_Server;
+import com.superzanti.serversync.util.ProgramArguments;
 import com.superzanti.serversync.util.enums.EConfigType;
 
 
@@ -31,9 +30,13 @@ public class Main {
 	
 	public static SyncConfig CONFIG;
 	
+	public static ProgramArguments arguments;
+	
 	
 	public static void main(String[] args) throws InterruptedException, IOException {
+		arguments = new ProgramArguments(args);
 		CONFIG = new SyncConfig(EConfigType.COMMON);
+		
 		try {
 			// TODO left off here, fix locale use and other main references
 			System.out.println("Loading language file: " + CONFIG.LOCALE);
@@ -48,16 +51,10 @@ public class Main {
 			strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", new Locale("en", "US"));
 		}
 		
-		if (args == null || args.length == 0) {
+		if (arguments.isServer) {
+			runInServerMode();
+		} else {
 			runInClientMode();
-			return;
-		}
-		
-		for (String string : args) {
-			switch(string) {
-				case "server":
-					runInServerMode();
-			}
 		}
 	}
 	
@@ -70,49 +67,31 @@ public class Main {
 	
 	private static void runInClientMode() {
 		CONFIG = new SyncConfig(EConfigType.CLIENT);
-		
-		clientGUI = new GUI_Client();
-		
-		clientGUI.setSyncPressedListener(new SyncPressedListener() {
+		Thread clientThread;
+		if (arguments.syncSilent) {			
+			new Thread(new ClientWorker()).start();
+		} else if (arguments.syncProgressOnly) {
+			//TODO setup a progress only version of the GUI
+			clientGUI = new GUI_Client();
+			clientGUI.setIPAddress(CONFIG.SERVER_IP);
+			clientGUI.setPort(CONFIG.SERVER_PORT);
+			clientGUI.build(CONFIG.LOCALE);
 			
-			@Override
-			public void onSyncPressed() {
-				int port = clientGUI.getPort();
-				String ip = clientGUI.getIPAddress();
-				boolean error = false;
-				
-				if (ip.equals("") || port == 90000) {
-					clientGUI.updateText("No config found, requesting details");
-					
-					if (ip.equals("")) {
-						String serverIP = (String) JOptionPane.showInputDialog("Server IP address");
-						ip = serverIP;
-						clientGUI.setIPAddress(ip);
-					}
-					
-					if (port == 90000) {
-						String serverPort = (String) JOptionPane.showInputDialog("Server Port (numbers only)");
-						port = Integer.parseInt(serverPort);
-						
-						if(clientGUI.setPort(port)) {
-							error = true;
-						}
-					}
-					
-					SyncConfig.pullServerConfig = true;
-				}
-				
-				if (!error) {
-					CONFIG.SERVER_IP = ip;
-					CONFIG.SERVER_PORT = port;
-					clientGUI.updateText("Starting update process...");
-					new Thread(new ClientWorker()).start();
-				}
+			clientThread = new Thread(new ClientWorker());
+			clientThread.start();
+			try {
+				clientThread.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.exit(1);
 			}
-		});
-		System.out.println(CONFIG.SERVER_PORT);
-		clientGUI.setIPAddress(CONFIG.SERVER_IP);
-		clientGUI.setPort(CONFIG.SERVER_PORT);
-		clientGUI.build(CONFIG.LOCALE);
+			System.exit(0);
+		} else {			
+			clientGUI = new GUI_Client();
+			clientGUI.setIPAddress(CONFIG.SERVER_IP);
+			clientGUI.setPort(CONFIG.SERVER_PORT);
+			clientGUI.build(CONFIG.LOCALE);
+		}
 	}
 }

@@ -16,6 +16,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
@@ -31,6 +32,8 @@ import javax.swing.border.SoftBevelBorder;
 import javax.swing.border.TitledBorder;
 
 import com.superzanti.lib.RefStrings;
+import com.superzanti.serversync.ClientWorker;
+import com.superzanti.serversync.SyncConfig;
 
 import runme.Main;
 
@@ -180,6 +183,44 @@ public class GUI_Client extends JFrame {
 			@Override
 			public void keyPressed(java.awt.event.KeyEvent e) {
 				return;
+			}
+		});
+		
+		B_sync.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int port = getPort();
+				String ip = getIPAddress();
+				boolean error = false;
+				
+				if (ip.equals("") || port == 90000) {
+					updateText("No config found, requesting details");
+					
+					if (ip.equals("")) {
+						String serverIP = (String) JOptionPane.showInputDialog("Server IP address");
+						ip = serverIP;
+						setIPAddress(ip);
+					}
+					
+					if (port == 90000) {
+						String serverPort = (String) JOptionPane.showInputDialog("Server Port (numbers only)");
+						port = Integer.parseInt(serverPort);
+						
+						if(setPort(port)) {
+							error = true;
+						}
+					}
+					
+					SyncConfig.pullServerConfig = true;
+				}
+				
+				if (!error) {
+					Main.CONFIG.SERVER_IP = ip;
+					Main.CONFIG.SERVER_PORT = port;
+					updateText("Starting update process...");
+					new Thread(new ClientWorker()).start();
+				}
 			}
 		});
 	}
