@@ -11,7 +11,6 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
-import java.util.Scanner;
 import java.util.regex.Pattern;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -184,21 +183,22 @@ public class ServerSetup implements Runnable {
 
 		// keep listening indefinitely until program terminates
 		serverLog.addToConsole("Now accepting clients...");
-		new Thread(new Runnable() {
-			
-			@Override
-			public void run() {
-				Scanner input = new Scanner(System.in);
-				while(input.hasNext()) {
-					if ("exit".equals(input.next())) {
-						ServerSetup.serverLog.addToConsole("Exiting serversync");
-						break;
-					}
-				}
-				input.close();
-				System.exit(0);
-			}
-		}).start();
+		//TODO seems to cause issues with forges scanner
+//		new Thread(new Runnable() {
+//			
+//			@Override
+//			public void run() {
+//				Scanner input = new Scanner(System.in);
+//				while(input.hasNext()) {
+//					if ("exit".equals(input.next())) {
+//						ServerSetup.serverLog.addToConsole("Exiting serversync");
+//						break;
+//					}
+//				}
+//				input.close();
+//				System.exit(0);
+//			}
+//		}).start();
 		
 		while (true) {
 			try {

@@ -11,6 +11,7 @@ import com.superzanti.serversync.ClientWorker;
 import com.superzanti.serversync.ServerSetup;
 import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.gui.GUI_Client;
+import com.superzanti.serversync.gui.GUI_Client_Mock;
 import com.superzanti.serversync.gui.GUI_Server;
 import com.superzanti.serversync.util.ProgramArguments;
 import com.superzanti.serversync.util.enums.EConfigType;
@@ -68,7 +69,8 @@ public class Main {
 	private static void runInClientMode() {
 		CONFIG = new SyncConfig(EConfigType.CLIENT);
 		Thread clientThread;
-		if (arguments.syncSilent) {			
+		if (arguments.syncSilent) {		
+			clientGUI = new GUI_Client_Mock();
 			new Thread(new ClientWorker()).start();
 		} else if (arguments.syncProgressOnly) {
 			//TODO setup a progress only version of the GUI
@@ -87,7 +89,7 @@ public class Main {
 				System.exit(1);
 			}
 			System.exit(0);
-		} else {			
+		} else {		
 			clientGUI = new GUI_Client();
 			clientGUI.setIPAddress(CONFIG.SERVER_IP);
 			clientGUI.setPort(CONFIG.SERVER_PORT);
