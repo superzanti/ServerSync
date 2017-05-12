@@ -183,22 +183,6 @@ public class ServerSetup implements Runnable {
 
 		// keep listening indefinitely until program terminates
 		serverLog.addToConsole("Now accepting clients...");
-		//TODO seems to cause issues with forges scanner
-//		new Thread(new Runnable() {
-//			
-//			@Override
-//			public void run() {
-//				Scanner input = new Scanner(System.in);
-//				while(input.hasNext()) {
-//					if ("exit".equals(input.next())) {
-//						ServerSetup.serverLog.addToConsole("Exiting serversync");
-//						break;
-//					}
-//				}
-//				input.close();
-//				System.exit(0);
-//			}
-//		}).start();
 		
 		while (true) {
 			try {
