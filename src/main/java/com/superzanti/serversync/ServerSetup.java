@@ -11,11 +11,11 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
-import java.util.regex.Pattern;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import com.superzanti.serversync.util.GlobPathMatcher;
+import com.superzanti.serversync.util.FileIgnoreMatcher;
+import com.superzanti.serversync.util.FileIncludeMatcher;
 import com.superzanti.serversync.util.Log;
 import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.SyncFile;
@@ -30,7 +30,7 @@ import runme.Main;
  * @author Rheimus
  */
 public class ServerSetup implements Runnable {
-	
+
 	public static Log serverLog = new Log("serversync-server");
 
 	// static ServerSocket variable
@@ -40,6 +40,8 @@ public class ServerSetup implements Runnable {
 	public static ArrayList<SyncFile> allFiles = new ArrayList<SyncFile>();
 	public static ArrayList<SyncFile> clientOnlyFiles = new ArrayList<SyncFile>();
 	public static ArrayList<String> directories = new ArrayList<String>();
+	private FileIgnoreMatcher ignoredFiles = new FileIgnoreMatcher();
+	private FileIncludeMatcher includedFiles = new FileIncludeMatcher();
 
 	public static EnumMap<EServerMessage, String> generateServerMessages() {
 		EnumMap<EServerMessage, String> SERVER_MESSAGES = new EnumMap<EServerMessage, String>(EServerMessage.class);
@@ -58,7 +60,7 @@ public class ServerSetup implements Runnable {
 		DateFormat dateFormatter = DateFormat.getDateInstance();
 		ArrayList<Path> _list = null;
 		boolean configsInDirectoryList = false;
-		
+
 		// Create clientmods directory if it does not exist
 		Path clientOnlyMods = Paths.get("clientmods/");
 		if (!Files.exists(clientOnlyMods)) {				
@@ -86,85 +88,53 @@ public class ServerSetup implements Runnable {
 		if (Main.CONFIG.PUSH_CLIENT_MODS) {
 			_list = PathUtils.fileListDeep(Paths.get("clientmods"));
 			serverLog.addToConsole("Found " + _list.size() + " files in: clientmods");
-			
+
 			if (_list != null) {
-				try {
-					clientOnlyFiles.addAll(SyncFile.parseList(_list));
-					clientOnlyFiles.forEach((mod) -> {
-						serverLog.addToConsole(mod.MODPATH.toString());
+				_list.forEach((path) -> {
+					clientOnlyFiles.add(SyncFile.ClientOnlySyncFile(path));
+					serverLog.addToConsole(path.getFileName().toString());					
+				});
+			}
+		}
+
+		// Main directory scan for mods
+		serverLog.addToConsole("Starting scan for sync files: " + dateFormatter.format(new Date()));
+		for (String directory : directories) {
+			serverLog.addToConsole("Scanning " + directory);
+			Path _d = Paths.get(directory);
+			if (Files.isDirectory(_d)) {
+				_list = PathUtils.fileListDeep(Paths.get(directory));
+
+				if (_list != null) {
+					serverLog.addToConsole("Found " + _list.size() + " files in: " + directory);
+
+					_list.forEach((path) -> {
+						if (!ignoredFiles.matches(path)) {
+							allFiles.add(SyncFile.StandardSyncFile(path));
+						} else {								
+							serverLog.addToConsole(Main.strings.getString("ignoring") + " " + path.toString());
+						}
 					});
-				} catch (IOException e) {
-					serverLog.addToConsole("Failed to access files in: " + _list);
+				} else {
+					serverLog.addToConsole("Failed to access: " + directory);
 				}
 			}
 		}
 
-		try {
-			GlobPathMatcher globber = new GlobPathMatcher();
+		/* CONFIGS */
+		if (!Main.CONFIG.CONFIG_INCLUDE_LIST.isEmpty() && !configsInDirectoryList) {
+			//TODO double up? dont we alredy have configs from earlier
+			_list = PathUtils.fileListDeep(Paths.get("config"));
+			serverLog.addToConsole("Found " + _list.size() + " files in: config");
 
-			// Main directory scan for mods
-			serverLog.addToConsole("Starting scan for sync files: " + dateFormatter.format(new Date()));
-			for (String directory : directories) {
-				serverLog.addToConsole("Scanning " + directory);
-				Path _d = Paths.get(directory);
-				if (Files.isDirectory(_d)) {
-					_list = PathUtils.fileListDeep(Paths.get(directory));
-
-					if (_list != null) {
-						serverLog.addToConsole("Found " + _list.size() + " files in: " + directory);
-
-						for (Path file : _list) {
-							boolean matchedIgnoreGlob = false;
-							for (String glob : Main.CONFIG.FILE_IGNORE_LIST) {
-								globber.setPattern(glob);
-								if (globber.matches(file)) {
-									matchedIgnoreGlob = true;
-									serverLog.addToConsole(Main.strings.getString("ignoring") + " " + file.toString());
-									break;
-								}
-							}
-
-							if (!matchedIgnoreGlob) {
-								allFiles.add(new SyncFile(file));
-							}
-						}
-					} else {
-						serverLog.addToConsole("Failed to access: " + directory);
+			if (_list != null) {
+				_list.forEach((path) -> {
+					if (includedFiles.matches(path)) {							
+						serverLog.addToConsole("Including config: " + path.getFileName().toString());
+						allFiles.add(SyncFile.ConfigSyncFile(path));
 					}
-				}
+				});
 			}
-
-			Pattern pattern = Pattern.compile("serversync-.+");
-			for (int i = 0; i < allFiles.size(); i++) {
-				if (pattern.matcher(allFiles.get(i).fileName).matches()) {
-					allFiles.remove(i);
-					serverLog.addToConsole("Found serversync in the mods folder, removing from sync list");
-					break;
-				}
-			}
-
-			/* CONFIGS */
-			if (!Main.CONFIG.CONFIG_INCLUDE_LIST.isEmpty() && !configsInDirectoryList) {
-				_list = PathUtils.fileListDeep(Paths.get("config"));
-				serverLog.addToConsole("Found " + _list.size() + " files in: config");
-				if (_list != null) {
-					for (Path path : _list) {
-						for (String glob : Main.CONFIG.CONFIG_INCLUDE_LIST) {
-							globber.setPattern("config\\" + glob);
-
-							if (globber.matches(path)) {
-								serverLog.addToConsole("Including config: " + path.getFileName().toString());
-								allFiles.add(new SyncFile(path, false));
-								break;
-							}
-						}
-					}
-				}
-			}
-
-		} catch (IOException e) {
-			// TODO Narrow this error handling
-			e.printStackTrace();
 		}
 	}
 
@@ -183,7 +153,7 @@ public class ServerSetup implements Runnable {
 
 		// keep listening indefinitely until program terminates
 		serverLog.addToConsole("Now accepting clients...");
-		
+
 		while (true) {
 			try {
 				// Sanity check, server should never be null here

@@ -1,6 +1,5 @@
 package com.superzanti.serversync.util;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -163,44 +162,6 @@ public class Server {
 		return true;
 	}
 
-//	public boolean reinitConnection() {
-//		logs.updateLogs(Main.strings.getString("debug_server_reconnect"), Logger.FULL_LOG);
-//		try {
-//			oos.flush();
-//			// close our resources and set values to null
-//			if (oos != null)
-//				oos.close();
-//			if (ois != null)
-//				ois.close();
-//			if (clientSocket != null && !clientSocket.isClosed())
-//				clientSocket.close();
-//			clientSocket = null;
-//			oos = null;
-//			ois = null;
-//		} catch (IOException e) {
-//			logs.updateLogs(Main.strings.getString("debug_server_reconnect_failed") + ": " + e.getMessage(), Logger.FULL_LOG);
-//			return false;
-//		}
-//
-//		clientSocket = new Socket();
-//		try {
-//			clientSocket.connect(new InetSocketAddress(host.getHostName(), Main.CONFIG.SERVER_PORT), 5000);
-//		} catch (IOException e) {
-//			logs.updateLogs(Main.strings.getString("connection_failed_server") + ": " + IP_ADDRESS + ":" + PORT);
-//			return false;
-//		}
-//
-//		logs.updateLogs(Main.strings.getString("debug_IO_streams"), Logger.FULL_LOG);
-//		try {
-//			oos = new ObjectOutputStream(clientSocket.getOutputStream());
-//			ois = new ObjectInputStream(clientSocket.getInputStream());
-//		} catch (IOException e) {
-//			logs.updateLogs(Main.strings.getString("debug_IO_streams_failed") + ": " + e.getMessage(), Logger.FULL_LOG);
-//			return false;
-//		}
-//		return true;
-//	}
-
 	@SuppressWarnings("unchecked")
 	public boolean isUpdateNeeded(List<SyncFile> clientMods) {
 		String message = SCOMS.get(EServerMessage.UPDATE_NEEDED);
@@ -351,10 +312,10 @@ public class Server {
 		}
 		
 		try {			
-			oos.writeObject(mod.fileName);
+			oos.writeObject(mod.getFileName());
 			oos.flush();
 		} catch(IOException e) {
-			logs.outputError(mod.fileName);
+			logs.outputError(mod.getFileName());
 			return false;
 		}
 
@@ -375,7 +336,7 @@ public class Server {
 	 * @param currentFile
 	 *            the current file being worked on
 	 */
-	public boolean updateFile(String filePath, File currentFile) {
+	public boolean updateFile(SyncFile filePath, SyncFile currentFile) {
 		String message = SCOMS.get(EServerMessage.INFO_GET_FILESIZE);
 		try {
 			logs.updateLogs("Fetching file size from server", Logger.FULL_LOG);
@@ -424,9 +385,12 @@ public class Server {
 			return false;
 		}
 		
-		Path pFile = currentFile.toPath();
-
-		currentFile.getParentFile().mkdirs();
+		Path pFile = currentFile.getFileAsPath();
+		try {			
+			Files.createDirectories(pFile.getParent());
+		} catch (IOException e) {
+			logs.updateLogs("Could not create parent directories for: " + currentFile.getFileName(), Logger.FULL_LOG);
+		}
 		
 		if (Files.exists(pFile)) {
 			try {
@@ -438,8 +402,9 @@ public class Server {
 		}
 		
 		try {			
+			//TODO NIO this
 			logs.updateLogs("Attempting to write file (" + currentFile + ")", Logger.FULL_LOG);
-			FileOutputStream wr = new FileOutputStream(currentFile);
+			FileOutputStream wr = new FileOutputStream(currentFile.getFile());
 			
 			byte[] outBuffer = new byte[clientSocket.getReceiveBufferSize()];
 			int bytesReceived = 0;
@@ -455,13 +420,13 @@ public class Server {
 					System.out.println(factor);
 					System.out.println(bytesRecievedSoFar + " / " + numberOfBytesToRecieve);
 					wr.write(outBuffer, 0, bytesReceived);
-					GUIUpdater.updateProgress((int)Math.ceil(factor * 100), currentFile.getName());
+					GUIUpdater.updateProgress((int)Math.ceil(factor * 100), currentFile.getFileName());
 					if (factor == 1) {
 						break;
 					}
 				}
 			} else {
-				System.out.println("Empty file: " + currentFile);
+				System.out.println("Empty file: " + currentFile.getFileName());
 			}
 			
 			GUIUpdater.fileFinished();
@@ -479,7 +444,7 @@ public class Server {
 			return false;
 		}
 		
-		logs.updateLogs(Main.strings.getString("update_success") + ": " + currentFile.getName());
+		logs.updateLogs(Main.strings.getString("update_success") + ": " + currentFile.getFileName());
 		return true;
 	}
 }

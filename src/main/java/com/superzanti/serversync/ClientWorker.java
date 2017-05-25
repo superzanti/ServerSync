@@ -1,13 +1,13 @@
 package com.superzanti.serversync;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.superzanti.serversync.util.GlobPathMatcher;
+import com.superzanti.serversync.util.FileIgnoreMatcher;
+import com.superzanti.serversync.util.FileIncludeMatcher;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.Server;
@@ -93,7 +93,7 @@ public class ClientWorker implements Runnable {
 
 		if (!server.connect()) {
 			errorInUpdates = true;
-			Main.clientGUI.enableSyncButton();
+			this.closeWorker();
 			return;
 		}
 
@@ -125,68 +125,39 @@ public class ClientWorker implements Runnable {
 
 		// Populate Clients SyncFiles ////////////////////////////////
 		if (!clientFilePaths.isEmpty()) {
-			GlobPathMatcher globber = new GlobPathMatcher();
+			FileIgnoreMatcher ignoredFiles = new FileIgnoreMatcher();
 			
 			
 			
-			for (Path file : clientFilePaths) {
-				//TODO duplication here?
-				boolean matchedIgnoreGlob = false;
-				for (String glob : Main.CONFIG.FILE_IGNORE_LIST) {
-					globber.setPattern(glob);
-					if (globber.matches(file)) {
-						matchedIgnoreGlob = true;
-						logs.updateLogs(Main.strings.getString("ignoring") + " " + file.toString());
-						break;
-					}
-				}
-				
-				if (!matchedIgnoreGlob) {
-					try {
-						SyncFile _clientFile = new SyncFile(file);
-						clientFiles.add(_clientFile);
-					} catch (IOException e) {
-						logs.updateLogs("Failed to create SyncFile for: (" + file.getFileName() + ")", Logger.FULL_LOG);
-						errorInUpdates = true;
-					}
+			for (Path path : clientFilePaths) {
+				if (ignoredFiles.matches(path)) {
+					logs.updateLogs(Main.strings.getString("ignoring") + " " + path.toString());
+				} else {
+					clientFiles.add(SyncFile.StandardSyncFile(path));
 				}
 			}
 		}
 		//////////////////////////////////////////////////////////////
 		
 		if (clientConfigPaths != null) {
+			FileIncludeMatcher includedFiles = new FileIncludeMatcher();
+			
 			for (Path path : clientConfigPaths) {
-				String configFileName = path.getFileName().toString();
-				if (Main.CONFIG.CONFIG_INCLUDE_LIST.contains(configFileName) && !configFileName.equals("serversync.cfg")) {
-					SyncFile _clientConfig = null;
-					try {
-						_clientConfig = new SyncFile(path, false);
-						clientFiles.add(_clientConfig);
-					} catch (IOException e) {
-						logs.updateLogs("Failed to create SyncFile for: (" + configFileName + ")", Logger.FULL_LOG);
-						errorInUpdates = true;
-					}
+				if (includedFiles.matches(path)) {
+					clientFiles.add(SyncFile.ConfigSyncFile(path));
 				}
 			}
 		}
 
 		logs.updateLogs(Main.strings.getString("config_check"));
 		
+		//TODO is this needed now? check against last updated perhaps
 		if (!server.getConfig()) {				
 			logs.updateLogs("Failed to obtain config from server");
 			errorInUpdates = true;
-			closeWorker();
+			this.closeWorker();
 			return;
 		}
-		
-		// Get keys from the server /////////////////////////////////
-//		if (!server.getSecurityDetails()) {
-//			logs.updateLogs(Main.strings.getString("failed_handshake"));
-//			errorInUpdates = true;
-//			closeWorker();
-//			return;
-//		}
-		/////////////////////////////////////////////////////////////
 
 		logs.updateLogs("Checking if update is needed", Logger.FULL_LOG);
 		updateNeeded = server.isUpdateNeeded(clientFiles);
@@ -235,6 +206,7 @@ public class ClientWorker implements Runnable {
 			logs.updateLogs(Main.strings.getString("ignoring") + " " + Main.CONFIG.FILE_IGNORE_LIST, Logger.FULL_LOG);
 			
 			// run calculations to figure out how big the progress bar is
+			//TODO check this logic
 			float numberOfFiles = clientFiles.size() + serverFiles.size();
 			float percentScale = numberOfFiles / 100;
 			float currentPercent = 0;
@@ -243,44 +215,27 @@ public class ClientWorker implements Runnable {
 			logs.updateLogs("<------> "+ Main.strings.getString("update_start") +" <------>");
 
 			/* COMMON MODS */
-			for (SyncFile file : serverFiles) {
-				// Update status
+			for (SyncFile serverFile : serverFiles) {
 				currentPercent++;
+				SyncFile clientFile = SyncFile.StandardSyncFile(serverFile.getFileAsPath());
 
-				Path clientPath = file.CLIENT_MODPATH;
-				System.out.println(clientPath);
-				// Get file at rPath location
-				boolean exists = Files.exists(clientPath);
-				System.out.println(exists);
+				boolean exists = Files.exists(clientFile.getFileAsPath());
 
-				// Exists
 				if (exists) {
-					
-					SyncFile clientFile = null;
-					try {
-						clientFile = new SyncFile(clientPath);
-					} catch (IOException e) {
-						logs.updateLogs("Failed to create SyncFile for (" + clientPath + ")", Logger.FULL_LOG);
-						errorInUpdates = true;
-					}
-					
-					if (clientFile != null) {		
-						System.out.println("Comparing: " + clientFile.fileName);
-						if (!clientFile.compare(file)) {
-							server.updateFile(file.MODPATH.toString(), clientPath.toFile());
-						} else {
-							logs.updateLogs(file.fileName + " " + Main.strings.getString("up_to_date"), Logger.FULL_LOG);
-						}
+					System.out.println("Comparing: " + clientFile.getFileName());
+					if (!clientFile.equals(serverFile)) {
+						server.updateFile(serverFile, clientFile);
+					} else {
+						logs.updateLogs(clientFile.getFileName() + " " + Main.strings.getString("up_to_date"), Logger.FULL_LOG);
 					}
 				} else {
 					// only need to check for ignore here as we are working
 					// on the servers file tree
-					if (file.isSetToIgnore() && !file.clientOnlyMod) {
-						logs.updateLogs("<>"+ Main.strings.getString("ignoring") + " " + file.fileName);
+					if (serverFile.matchesIgnoreListPattern() && !serverFile.isClientSideOnlyFile) {
+						logs.updateLogs("<>"+ Main.strings.getString("ignoring") + " " + serverFile.getFileName());
 					} else {
-						logs.updateLogs(file.fileName + " " + Main.strings.getString("does_not_exist"), Logger.FULL_LOG);
-						server.updateFile(file.MODPATH.toString(), clientPath.toFile());
-						System.out.println("updated file: " + file.MODPATH.toString());
+						logs.updateLogs(serverFile.getFileName() + " " + Main.strings.getString("does_not_exist"), Logger.FULL_LOG);
+						server.updateFile(serverFile, clientFile);
 					}
 				}
 				
@@ -289,33 +244,30 @@ public class ClientWorker implements Runnable {
 
 			/* DELETION */
 			logs.updateLogs("<------> "+ Main.strings.getString("delete_start") +" <------>");
-			// Parse clients file tree
-			for (SyncFile file : clientFiles) {
+			for (SyncFile clientFile : clientFiles) {
 				currentPercent++;
-
-				// check for files that need to be deleted
-				if (file.isSetToIgnore()) {
-					logs.updateLogs(Main.strings.getString("ignoring") + " " + file.fileName, Logger.FULL_LOG);
+				
+				if (clientFile.matchesIgnoreListPattern()) {
+					logs.updateLogs(Main.strings.getString("ignoring") + " " + clientFile.getFileName(), Logger.FULL_LOG);
 				} else {
 					// Not present in server list
-					logs.updateLogs(Main.strings.getString("client_check") + " " + file.fileName, Logger.FULL_LOG);
+					logs.updateLogs(Main.strings.getString("client_check") + " " + clientFile.getFileName(), Logger.FULL_LOG);
 					
-					boolean exists = server.modExists(file);
+					boolean exists = server.modExists(clientFile);
+					
+					logs.updateLogs("server says" + exists);
+					
 					
 					if (!exists) {
-						logs.updateLogs(file.fileName + " " + Main.strings.getString("does_not_match") +  Main.strings.getString("delete_attempt"),
+						logs.updateLogs("server says " + clientFile.getFileName() + " does not exist");
+						logs.updateLogs(clientFile.getFileName() + " " + Main.strings.getString("does_not_match") +  Main.strings.getString("delete_attempt"),
 								Logger.FULL_LOG);
 
-						// File fails to delete
-						try {
-							file.delete();
-							logs.updateLogs("<>" + file.fileName + " " + Main.strings.getString("delete_success"));
-						} catch (IOException e) {
-							logs.updateLogs(file.fileName + " " + Main.strings.getString("delete_fail"),
-									Logger.FULL_LOG);
-							file.deleteOnExit();
+						if (clientFile.delete()) {							
+							logs.updateLogs("<>" + clientFile.getFileName() + " " + Main.strings.getString("delete_success"));
+						} else {
+							logs.updateLogs("delete returned false");
 						}
-
 						updateHappened = true;
 					}
 					Main.clientGUI.updateProgress((int) (currentPercent / percentScale));

@@ -12,7 +12,7 @@ import java.nio.file.PathMatcher;
  */
 public class GlobPathMatcher implements PathMatcher {
 	
-	private String mPattern;
+	protected String mPattern;
 	
 	public void setPattern(String pattern) {
 		if (File.separator.equals("\\")) {			

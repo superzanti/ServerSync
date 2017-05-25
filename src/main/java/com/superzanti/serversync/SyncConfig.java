@@ -52,7 +52,7 @@ public class SyncConfig {
 	// COMMON //////////////////////////////
 	public String SERVER_IP;
 	public String LAST_UPDATE;
-	public List<String> FILE_IGNORE_LIST;
+	public List<String> FILE_IGNORE_LIST = new ArrayList<String>();
 	public List<String> CONFIG_INCLUDE_LIST;
 	public Locale LOCALE;
 	////////////////////////////////////////
@@ -70,6 +70,7 @@ public class SyncConfig {
 	public static boolean pullServerConfig = true;
 	
 	public SyncConfig(EConfigType type) {
+		this.FILE_IGNORE_LIST.add("serversync-*.jar");
 		configType = type;
 		config = new MCCConfig();
 		if (configType == EConfigType.SERVER) {			
@@ -223,10 +224,10 @@ public class SyncConfig {
 			LOCALE = new Locale(config.getEntryByName("LOCALE").getString());
 			
 			try {				
-				FILE_IGNORE_LIST = config.getEntryByName("FILE_IGNORE_LIST").getList();
+				FILE_IGNORE_LIST.addAll(config.getEntryByName("FILE_IGNORE_LIST").getList());
 			} catch (NullPointerException e) {
 				// Specific conversion from old config files
-				FILE_IGNORE_LIST = config.getEntryByName("MOD_IGNORE_LIST").getList();
+				FILE_IGNORE_LIST.addAll(config.getEntryByName("MOD_IGNORE_LIST").getList());
 			}
 			
 			CONFIG_INCLUDE_LIST = config.getEntryByName("CONFIG_INCLUDE_LIST").getList();

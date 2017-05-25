@@ -11,8 +11,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -188,10 +186,11 @@ public class ServerWorker implements Runnable {
 				// Main file update message
 				if (message.equals(messages.get(EServerMessage.UPDATE))) {
 
-					String filePathName;
+					SyncFile file;
 					try {
-						filePathName = (String) ois.readObject();
-						File f = new File(filePathName.replace("\\", "/"));
+						//TODO update this to NIO
+						file = (SyncFile) ois.readObject();
+						File f = file.getFile();
 						ServerSetup.serverLog.addToConsole("Writing " + f + " to client " + clientsocket + "...");
 						byte[] buff = new byte[clientsocket.getSendBufferSize()];
 						int bytesRead = 0;
@@ -237,11 +236,10 @@ public class ServerWorker implements Runnable {
 				if (message.equals(messages.get(EServerMessage.INFO_GET_FILESIZE))) {
 					ServerSetup.serverLog.addToConsole("Writing filesize to client " + clientsocket + "...");
 
-					String theFile;
+					SyncFile theFile;
 					try {
-						theFile = (String) ois.readObject();
-						Path p = Paths.get(theFile.replace("\\", "/"));
-						oos.writeLong(Files.size(p));
+						theFile = (SyncFile) ois.readObject();
+						oos.writeLong(Files.size(theFile.getFileAsPath()));
 						oos.flush();
 					} catch (ClassNotFoundException e) {
 						ServerSetup.serverLog.addToConsole("Failed to read object from client " + clientsocket);
@@ -255,26 +253,29 @@ public class ServerWorker implements Runnable {
 				if (message.equals(messages.get(EServerMessage.FILE_EXISTS))) {
 					String theMod;
 					try {
+						//TODO check the logic here
 						theMod = (String) ois.readObject();
 						boolean exists = false;
 						for (SyncFile m : ServerSetup.allFiles) {
-							if (m.fileName.equals(theMod)) {
+							if (m.getFileName().equals(theMod)) {
 								exists = true;
 								break;
 							}
 						}
 						if (!exists) {
 							for (SyncFile m : ServerSetup.clientOnlyFiles) {
-								if (m.fileName.equals(theMod)) {
+								if (m.getFileName().equals(theMod)) {
 									exists = true;
 									break;
 								}
 							}
 						}
 						if (exists) {
+							System.out.println(theMod + " exists");
 							oos.writeBoolean(true);
 							oos.flush();
 						} else {
+							System.out.println(theMod + " does not exist");
 							oos.writeBoolean(false);
 							oos.flush();
 						}

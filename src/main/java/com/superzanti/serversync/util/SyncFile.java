@@ -7,10 +7,8 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -19,129 +17,89 @@ import java.util.jar.JarFile;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonStreamParser;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.stream.MalformedJsonException;
-
-import runme.Main;
 
 /**
- * Holds relevant information about mods obtianed through mcmod.info.<br>
- * <br>
- * Use CLIENT_MODPATH for any interactions on the client side, this will cause
- * <br>
- * the mod to look in the clients mods/ directory regardless of where the file
- * <br>
- * is on the server<br>
- * <br>
- * 
- * Useful for instance when the server sends client-side mods from the
- * clientmods<br>
- * directory
+ * Holds all relevant information about a synchronizable file, also handles client only files
  * 
  * @author Rheimus
  *
  */
 public class SyncFile implements Serializable {
 	private static final long serialVersionUID = -3869215783959173682L;
-	public String version;
-	public String name;
-	public String fileName;
-	private String md5FileContents;
-	transient public Path MODPATH;
-	transient public Path CLIENT_MODPATH;
-	public boolean clientOnlyMod = false;
-	public boolean isConfig = false;
-	private boolean isIgnored = false;
-	public static final String UNKNOWN_VERSION = "unknown_version";
-	public static final String UNKNOWN_NAME = "unknown_name";
-
-	private File serverMODPATH;
-	private File clientMODPATH;
-
+	
+	public final boolean isConfigurationFile;
+	public final boolean isClientSideOnlyFile;
+	private MinecraftModInformation minecraftInformation;
+	
+	private final File synchronizableFile;
+	public String getFileName() {
+		return this.synchronizableFile.getName();
+	}
+	public File getFile() {
+		return this.synchronizableFile;
+	}
+	public Path getFileAsPath() {
+		return this.synchronizableFile.toPath();
+	}
+	
+	
 	/**
-	 * Main constructor, populates file information
-	 * 
-	 * @param modPath
-	 * @param isMod
-	 *            false to skip populating mod information from mcmod.info
-	 * @throws IOException
+	 * Factory for creating a config sync file
+	 * @param fileToSync
+	 * @return SyncFile file set up as a config
 	 */
-	public SyncFile(Path modPath, boolean isMod) throws IOException {
-		MODPATH = modPath;
-		// Where SS is located when this file was created
-		// makes (ServerSyncDir)/path_to_mod/mod
-		//Path root = Paths.get("");
-		//MODPATH = root.relativize(MODPATH);
-		// TODO update this code chunk to be more OOP
-		if (isMod && MODPATH.toString().contains("clientmods")) {
-			clientOnlyMod = true;
-			CLIENT_MODPATH = Paths.get(MODPATH.toString().replaceFirst("clientmods", "mods"));
-		} else {
-			CLIENT_MODPATH = MODPATH;
-		}
+	public static SyncFile ConfigSyncFile(Path fileToSync) {
+		return new SyncFile(fileToSync, true, false);
+	}
+	
+	/**
+	 * Factory for creating a standard sync file
+	 * @param fileToSync
+	 * @return SyncFile set up as a standard file (normal mods)
+	 */
+	public static SyncFile StandardSyncFile(Path fileToSync) {
+		return new SyncFile(fileToSync, false, false);
+	}
+	
+	/**
+	 * Factory for creating a client side only sync file
+	 * @param fileToSync
+	 * @return SyncFile set up to be a client only file <br>(stuff the client might need but the server doesn't)
+	 */
+	public static SyncFile ClientOnlySyncFile(Path fileToSync) {
+		return new SyncFile(fileToSync, false, true);
+	}
+	
+	private SyncFile(Path fileToSync, boolean isConfig, boolean isClientSideOnly) {
+		this.synchronizableFile = fileToSync.toFile();
+		this.isConfigurationFile = isConfig;
+		this.isClientSideOnlyFile = isClientSideOnly;
 		
-		fileName = MODPATH.getFileName().toString();
-
-		if (fileName.contains(".cfg")) {
-			isConfig = true;
-			isMod = false;
-		}
-
-		if (isMod && isZipJar(fileName)) {
-			populateModInformation();
-		}
-
-		if (version == null) {
-			version = SyncFile.UNKNOWN_VERSION;
-			// Get hashed file contents if version could not be obtained used in
-			// compare functionality
-			md5FileContents = Md5.md5String(MODPATH.toFile());
-		}
-		if (name == null) {
-			name = SyncFile.UNKNOWN_NAME;
+		if (!isConfig) {
+			this.populateModInformation();
 		}
 	}
 
-	/**
-	 * Shortcut constructor that assumes the created file is a mod
-	 * 
-	 * @param modPath
-	 *            - Path to the mod
-	 * @throws IOException
-	 */
-	public SyncFile(Path modPath) throws IOException {
-		this(modPath, true);
+	public boolean matchesIgnoreListPattern() {
+		FileIgnoreMatcher ignoredFiles = new FileIgnoreMatcher();
+		return ignoredFiles.matches(this.getFileAsPath());
 	}
 
 	/**
-	 * Returns true if the configs ignore list contains the file name of this
-	 * SyncFile
+	 * Only relevant for config files, should not be used in logic for normal files
 	 * 
-	 * @return true if ignored, false otherwise
+	 * @return the inclusion state of the SyncFile if it is a config <br>
+	 *         or true if the SyncFile is not a config
 	 */
-	public boolean isSetToIgnore() {
-		if (Main.CONFIG.FILE_IGNORE_LIST.contains(fileName)) {
-			isIgnored = true;
-		}
-		return isIgnored;
-	}
-
-	/**
-	 * Only used for config files, set based on serversyncs rule list
-	 * INCLUDE_LIST
-	 * 
-	 * @return true if the configs include list contains this SyncFiles file
-	 *         name
-	 */
-	public boolean isIncluded() {
-		List<String> includes = Main.CONFIG.CONFIG_INCLUDE_LIST;
-		// Strip witespace
-		String cleanedName = fileName.replaceAll(" ", "");
-		if (includes.contains(cleanedName)) {
+	public boolean matchesIncludeListPattern() {
+		FileIncludeMatcher includedFiles = new FileIncludeMatcher();
+		if (this.isConfigurationFile) {			
+			return includedFiles.matches(this.getFileAsPath());
+		} else {
 			return true;
 		}
-		return false;
 	}
 
 	/**
@@ -162,10 +120,10 @@ public class SyncFile implements Serializable {
 	}
 
 	private void populateModInformation() {
-		if (Files.exists(MODPATH)) {
+		if (Files.exists(this.getFileAsPath()) && this.isZipJar(this.synchronizableFile.getName())) {
 			try {
 
-				JarFile packagedMod = new JarFile(MODPATH.toFile());
+				JarFile packagedMod = new JarFile(this.synchronizableFile);
 				JarEntry modInfo = packagedMod.getJarEntry("mcmod.info");
 				if (modInfo != null) {
 					InputStream is = packagedMod.getInputStream(modInfo);
@@ -194,8 +152,10 @@ public class SyncFile implements Serializable {
 								}
 								////////////////////////////////////////////////
 
-								version = info.get("version").getAsString();
-								name = info.get("name").getAsString();
+								this.minecraftInformation = new MinecraftModInformation(
+																	info.get("version").getAsString(), 
+																	info.get("name").getAsString()
+																);
 							}
 						}
 					}
@@ -206,15 +166,14 @@ public class SyncFile implements Serializable {
 				}
 
 			} 
-			catch (MalformedJsonException e) {
-				System.out.println("File: " + fileName + " failed to parse as JSON");
-			} 
-			catch (JsonSyntaxException e) {
-				System.out.println("File: " + fileName + " failed to parse as JSON");				
+			catch (JsonParseException e) {
+				System.out.println("File: " + this.synchronizableFile.getName() + " failed to parse mcmod.info as JSON");
 			}
 			catch (IOException e) {
 				e.printStackTrace();
 			}
+		} else {
+			System.out.println("File: " + this.synchronizableFile.getName() + " not recognized as a minecraft mod (not a problem)");
 		}
 	}
 
@@ -228,43 +187,36 @@ public class SyncFile implements Serializable {
 	 *         False if versions are different or if version is unknown and
 	 *         contents could not be read
 	 */
-	public boolean compare(SyncFile serversMod) {
-		if (!serversMod.version.equals(SyncFile.UNKNOWN_VERSION)) {
-			return this.version.equals(serversMod.version);
-		} else if (md5FileContents != null && serversMod.md5FileContents != null) {
-			return this.md5FileContents.equals(serversMod.md5FileContents);
+	public boolean equals(SyncFile otherSyncFile) {
+		if (otherSyncFile.minecraftInformation != null) {
+			return this.minecraftInformation.version.equals(otherSyncFile.minecraftInformation.version)
+					&& this.minecraftInformation.name.equals(otherSyncFile.minecraftInformation.name);
+		} else {
+			return Md5.md5String(synchronizableFile).equals(Md5.md5String(otherSyncFile.synchronizableFile));
 		}
-		return false;
 	}
 
 	/**
 	 * Deletes the file this SyncFile refers to
 	 * 
 	 * @return true if file deleted successfully
-	 * @throws IOException
 	 */
-	public boolean delete() throws IOException {
+	public boolean delete() {
 		boolean success = false;
+		System.out.println("called delete");
 		try {
-			success = Files.deleteIfExists(MODPATH);
-		} catch (DirectoryNotEmptyException e) {
-			System.out.println("Trying to delete a directory, are you sure this is what you want to do?");
+			System.out.println("deleting" + this.getFileName());
+			// File holds resources, cant delete while it exists without using File methods
+			this.synchronizableFile.delete();
+			success = true;
+		} catch (SecurityException e) {
+			System.out.println("Could not access file: " + this.synchronizableFile.getName() + " security violation check permissions");
 			System.out.println(e.getMessage());
 		}
+		if (!success) {
+			synchronizableFile.deleteOnExit();
+		}
 		return success;
-	}
-
-	public void deleteOnExit() {
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			@Override
-			public void run() {
-				try {
-					Files.delete(MODPATH);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		});
 	}
 	
 	@SafeVarargs
@@ -274,8 +226,8 @@ public class SyncFile implements Serializable {
 			int len = modLists.length;
 			for (int i = 0; i < len; i++) {
 				for (SyncFile mod : modLists[i]) {
-					System.out.println(mod.fileName);
-					names.add(mod.fileName);
+					System.out.println(mod.synchronizableFile.getName());
+					names.add(mod.synchronizableFile.getName());
 				}
 			}
 			return names;
@@ -283,37 +235,12 @@ public class SyncFile implements Serializable {
 		return null;
 	}
 
-	/**
-	 * This is intended to be a shortcut for creating a bunch of SyncFiles from
-	 * the output of PathUtils fileListDeep
-	 * 
-	 * @param paths
-	 *            a list of paths to convert to SyncFiles
-	 * @return A list of SyncFiles
-	 * @throws IOException
-	 */
-	public static ArrayList<SyncFile> parseList(List<Path> paths) throws IOException {
-		ArrayList<SyncFile> mods = new ArrayList<SyncFile>();
-		for (Path path : paths) {
-			mods.add(new SyncFile(path));
-		}
-		return mods;
-	}
-
 	/* Serialization methods */
 	private void readObject(ObjectInputStream is) throws ClassNotFoundException, IOException {
 		is.defaultReadObject();
-		if (serverMODPATH != null) {
-			MODPATH = serverMODPATH.toPath();
-		}
-		if (clientMODPATH != null) {
-			CLIENT_MODPATH = clientMODPATH.toPath();
-		}
 	}
 
 	private void writeObject(ObjectOutputStream os) throws IOException {
-		serverMODPATH = MODPATH.toFile();
-		clientMODPATH = CLIENT_MODPATH.toFile();
 		os.defaultWriteObject();
 	}
 
