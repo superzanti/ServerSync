@@ -131,22 +131,29 @@ public class ServerWorker implements Runnable {
 				}
 
 				if (message.equals(messages.get(EServerMessage.UPDATE_NEEDED))) {
+					int checkLevel = ois.readInt();
+					ArrayList<String> serverFileNames = new ArrayList<String>(200);
+					if (checkLevel == 3) {
+						ServerSetup.serverLog.addToConsole("Client Requested a list of all files");
+						serverFileNames.addAll(SyncFile.listModNames(ServerSetup.allFiles));
+					} else {
+						ServerSetup.serverLog.addToConsole("Client is refusing client only files, sending standard file list");
+						serverFileNames.addAll(SyncFile.listModNames(ServerSetup.standardSyncableFiles));
+					}
 					ServerSetup.serverLog.addToConsole("Sending list of syncable mods");
-					ArrayList<String> serverModList = SyncFile.listModNames(ServerSetup.allFiles);
 
-					// Remove client only mods and server only mods from
-					// comparison
-					serverModList.removeAll(new ArrayList<String>(Main.CONFIG.FILE_IGNORE_LIST));
+					serverFileNames.removeAll(new ArrayList<String>(Main.CONFIG.FILE_IGNORE_LIST));
 
-					ServerSetup.serverLog.addToConsole("Syncable mods are: " + serverModList.toString());
-					oos.writeObject(serverModList);
+					ServerSetup.serverLog.addToConsole("Syncable mods are: " + serverFileNames.toString());
+					oos.writeObject(serverFileNames);
 					oos.flush();
 					continue;
 				}
 
 				if (message.equals(messages.get(EServerMessage.FILE_GET_LIST))) {
 					ServerSetup.serverLog.addToConsole("Sending servers file list to " + clientsocket);
-					oos.writeObject(ServerSetup.allFiles);
+					
+					oos.writeObject(ServerSetup.standardSyncableFiles);
 					oos.flush();
 					continue;
 				}
@@ -251,31 +258,31 @@ public class ServerWorker implements Runnable {
 				}
 
 				if (message.equals(messages.get(EServerMessage.FILE_EXISTS))) {
-					String theMod;
 					try {
-						//TODO check the logic here
-						theMod = (String) ois.readObject();
+						int checkLevel = ois.readInt();
+						SyncFile clientFile = (SyncFile) ois.readObject();
 						boolean exists = false;
-						for (SyncFile m : ServerSetup.allFiles) {
-							if (m.getFileName().equals(theMod)) {
-								exists = true;
-								break;
-							}
-						}
-						if (!exists) {
-							for (SyncFile m : ServerSetup.clientOnlyFiles) {
-								if (m.getFileName().equals(theMod)) {
+						
+						if (checkLevel == 3) {
+							for (SyncFile serverFile : ServerSetup.allFiles) {
+								if (serverFile.equals(clientFile)) {
 									exists = true;
-									break;
+								}
+							}
+						} else {
+							for (SyncFile serverFile : ServerSetup.standardSyncableFiles) {
+								if (serverFile.equals(clientFile)) {
+									exists = true;
 								}
 							}
 						}
+						
 						if (exists) {
-							System.out.println(theMod + " exists");
+							System.out.println(clientFile.getFileName() + " exists");
 							oos.writeBoolean(true);
 							oos.flush();
 						} else {
-							System.out.println(theMod + " does not exist");
+							System.out.println(clientFile.getFileName() + " does not exist");
 							oos.writeBoolean(false);
 							oos.flush();
 						}

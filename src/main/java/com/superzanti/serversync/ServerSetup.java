@@ -37,9 +37,13 @@ public class ServerSetup implements Runnable {
 	private static ServerSocket server;
 
 	// This is what's in our folders
-	public static ArrayList<SyncFile> allFiles = new ArrayList<SyncFile>();
-	public static ArrayList<SyncFile> clientOnlyFiles = new ArrayList<SyncFile>();
-	public static ArrayList<String> directories = new ArrayList<String>();
+	public static ArrayList<SyncFile> allFiles = new ArrayList<SyncFile>(700);
+	public static ArrayList<SyncFile> standardSyncableFiles = new ArrayList<SyncFile>(700);
+	public static ArrayList<SyncFile> standardFiles = new ArrayList<SyncFile>(200);
+	public static ArrayList<SyncFile> configFiles = new ArrayList<SyncFile>(500);
+	public static ArrayList<SyncFile> clientOnlyFiles = new ArrayList<SyncFile>(20);
+	public static ArrayList<String> directories = new ArrayList<String>(20);
+	
 	private FileIgnoreMatcher ignoredFiles = new FileIgnoreMatcher();
 	private FileIncludeMatcher includedFiles = new FileIncludeMatcher();
 
@@ -61,17 +65,6 @@ public class ServerSetup implements Runnable {
 		ArrayList<Path> _list = null;
 		boolean configsInDirectoryList = false;
 
-		// Create clientmods directory if it does not exist
-		Path clientOnlyMods = Paths.get("clientmods/");
-		if (!Files.exists(clientOnlyMods)) {				
-			try {
-				Files.createDirectories(clientOnlyMods);
-				serverLog.addToConsole("clientmods directory did not exist, creating");
-			} catch (IOException e) {
-				serverLog.addToConsole("Could not create clientmods directory");
-			}
-		}
-
 		/* SYNC DIRECTORIES */
 		for (String dir : Main.CONFIG.DIRECTORY_INCLUDE_LIST) {
 			// Specific config handling later
@@ -86,6 +79,17 @@ public class ServerSetup implements Runnable {
 		}
 
 		if (Main.CONFIG.PUSH_CLIENT_MODS) {
+			// Create clientmods directory if it does not exist
+			Path clientOnlyMods = Paths.get("clientmods/");
+			if (!Files.exists(clientOnlyMods)) {				
+				try {
+					Files.createDirectories(clientOnlyMods);
+					serverLog.addToConsole("clientmods directory did not exist, creating");
+				} catch (IOException e) {
+					serverLog.addToConsole("Could not create clientmods directory");
+				}
+			}
+			
 			_list = PathUtils.fileListDeep(Paths.get("clientmods"));
 			serverLog.addToConsole("Found " + _list.size() + " files in: clientmods");
 
@@ -110,7 +114,7 @@ public class ServerSetup implements Runnable {
 
 					_list.forEach((path) -> {
 						if (!ignoredFiles.matches(path)) {
-							allFiles.add(SyncFile.StandardSyncFile(path));
+							standardFiles.add(SyncFile.StandardSyncFile(path));
 						} else {								
 							serverLog.addToConsole(Main.strings.getString("ignoring") + " " + path.toString());
 						}
@@ -131,11 +135,18 @@ public class ServerSetup implements Runnable {
 				_list.forEach((path) -> {
 					if (includedFiles.matches(path)) {							
 						serverLog.addToConsole("Including config: " + path.getFileName().toString());
-						allFiles.add(SyncFile.ConfigSyncFile(path));
+						configFiles.add(SyncFile.ConfigSyncFile(path));
 					}
 				});
 			}
 		}
+		
+		ServerSetup.allFiles.addAll(ServerSetup.clientOnlyFiles);
+		ServerSetup.allFiles.addAll(ServerSetup.standardFiles);
+		ServerSetup.allFiles.addAll(ServerSetup.configFiles);
+		
+		ServerSetup.standardSyncableFiles.addAll(ServerSetup.standardFiles);
+		ServerSetup.standardSyncableFiles.addAll(ServerSetup.configFiles);
 	}
 
 	@Override

@@ -167,21 +167,19 @@ public class Server {
 		String message = SCOMS.get(EServerMessage.UPDATE_NEEDED);
 		try {
 			// TODO check last updated information, maybe
-			
 			System.out.println("Sending update check to server");
 			oos.writeObject(message);
 			oos.flush();
+			if (Main.CONFIG.REFUSE_CLIENT_MODS) {				
+				oos.writeInt(2);
+			} else {
+				oos.writeInt(3);
+			}
+			oos.flush();
 			
 			// List of mod names
-			System.out.println("Reading data from server");
 			ArrayList<String> serverModNames = (ArrayList<String>) ois.readObject();
-			System.out.println("finished reading mod names: " + serverModNames);
-			System.out.println("reading names from clientMods");
 			ArrayList<String> clientModNames = SyncFile.listModNames(clientMods);
-			System.out.println("finished reading clientmod names: " + clientModNames);
-			
-			// Remove client only mods and other user ignored files from comparison list
-			clientModNames.removeAll(new ArrayList<String>(Main.CONFIG.FILE_IGNORE_LIST));
 
 			logs.updateLogs(Main.strings.getString("info_syncable_client") + ": " + clientModNames.toString(), Logger.FULL_LOG);
 			logs.updateLogs(Main.strings.getString("info_syncable_server") + ": " + serverModNames.toString(), Logger.FULL_LOG);
@@ -191,7 +189,7 @@ public class Server {
 			
 			_SMNC.removeAll(clientModNames);
 			_CMNC.removeAll(serverModNames);
-			System.out.println(_SMNC + " | " +_CMNC);
+			System.out.println("Server: " + _SMNC + " | Client: " +_CMNC);
 
 			if (_SMNC.size() == 0 && _CMNC.size() == 0) {
 				return false;
@@ -306,13 +304,19 @@ public class Server {
 		try {
 			oos.writeObject(message);
 			oos.flush();
+			if (Main.CONFIG.REFUSE_CLIENT_MODS) {				
+				oos.writeInt(2);
+			} else {
+				oos.writeInt(3);
+			}
+			oos.flush();
 		} catch(IOException e) {
 			logs.outputError(message);
 			return false;
 		}
 		
 		try {			
-			oos.writeObject(mod.getFileName());
+			oos.writeObject(mod);
 			oos.flush();
 		} catch(IOException e) {
 			logs.outputError(mod.getFileName());
@@ -331,12 +335,8 @@ public class Server {
 	 * Sends request to server for the file stored at filePath and updates the
 	 * current file with the returned data
 	 * 
-	 * @param filePath
-	 *            the location of the file on the server
-	 * @param currentFile
-	 *            the current file being worked on
 	 */
-	public boolean updateFile(SyncFile filePath, SyncFile currentFile) {
+	public boolean updateFile(SyncFile serverFile, SyncFile clientFile) {
 		String message = SCOMS.get(EServerMessage.INFO_GET_FILESIZE);
 		try {
 			logs.updateLogs("Fetching file size from server", Logger.FULL_LOG);
@@ -349,10 +349,10 @@ public class Server {
 		
 		try {			
 			logs.updateLogs("Sending file path to server", Logger.FULL_LOG);
-			oos.writeObject(filePath);
+			oos.writeObject(serverFile);
 			oos.flush();
 		} catch(IOException e) {
-			logs.outputError(filePath);
+			logs.outputError(serverFile);
 			return false;
 		}
 		
@@ -378,18 +378,18 @@ public class Server {
 		}
 		
 		try {			
-			oos.writeObject(filePath);
+			oos.writeObject(serverFile);
 			oos.flush();
 		} catch(IOException e) {
-			logs.outputError(filePath);
+			logs.outputError(serverFile);
 			return false;
 		}
 		
-		Path pFile = currentFile.getFileAsPath();
+		Path pFile = clientFile.getFileAsPath();
 		try {			
 			Files.createDirectories(pFile.getParent());
 		} catch (IOException e) {
-			logs.updateLogs("Could not create parent directories for: " + currentFile.getFileName(), Logger.FULL_LOG);
+			logs.updateLogs("Could not create parent directories for: " + clientFile.getFileName(), Logger.FULL_LOG);
 		}
 		
 		if (Files.exists(pFile)) {
@@ -403,8 +403,8 @@ public class Server {
 		
 		try {			
 			//TODO NIO this
-			logs.updateLogs("Attempting to write file (" + currentFile + ")", Logger.FULL_LOG);
-			FileOutputStream wr = new FileOutputStream(currentFile.getFile());
+			logs.updateLogs("Attempting to write file (" + clientFile + ")", Logger.FULL_LOG);
+			FileOutputStream wr = new FileOutputStream(clientFile.getFile());
 			
 			byte[] outBuffer = new byte[clientSocket.getReceiveBufferSize()];
 			int bytesReceived = 0;
@@ -420,13 +420,13 @@ public class Server {
 					System.out.println(factor);
 					System.out.println(bytesRecievedSoFar + " / " + numberOfBytesToRecieve);
 					wr.write(outBuffer, 0, bytesReceived);
-					GUIUpdater.updateProgress((int)Math.ceil(factor * 100), currentFile.getFileName());
+					GUIUpdater.updateProgress((int)Math.ceil(factor * 100), clientFile.getFileName());
 					if (factor == 1) {
 						break;
 					}
 				}
 			} else {
-				System.out.println("Empty file: " + currentFile.getFileName());
+				System.out.println("Empty file: " + clientFile.getFileName());
 			}
 			
 			GUIUpdater.fileFinished();
@@ -434,7 +434,7 @@ public class Server {
 			wr.close();
 			System.out.println("Finished writing file");
 		} catch(FileNotFoundException e) {
-			logs.updateLogs("Failed to create file (" + currentFile + "): " + e.getMessage(), Logger.FULL_LOG);
+			logs.updateLogs("Failed to create file (" + clientFile + "): " + e.getMessage(), Logger.FULL_LOG);
 			return false;
 		} catch (SocketException e) {
 			logs.updateLogs(e.getMessage());
@@ -444,7 +444,7 @@ public class Server {
 			return false;
 		}
 		
-		logs.updateLogs(Main.strings.getString("update_success") + ": " + currentFile.getFileName());
+		logs.updateLogs(Main.strings.getString("update_success") + ": " + clientFile.getFileName());
 		return true;
 	}
 }
