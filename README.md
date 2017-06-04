@@ -5,11 +5,9 @@ This is an open source mod that allows for easy mod management. The client will 
 Technically you could sync any game/filesystem using serversync however it does have some specific funtionality intended for use with Minecraft.
 
 Currently ServerSync has support for:
-* Client-side mods
-* Mods
-* Flans content packs
+* Client only mods
 * Configs
-* Anything, config now supports adding custom directories to sync
+* Anything else, config supports adding custom directories to sync
 
 If you don't feel like compiling from source and simply want to download a jar file see the releases tab, I update these periodically when theres a large enough addition/change. Please read the disclaimer before downloading.
 
@@ -26,25 +24,13 @@ Depending on the copyright and/or pattent laws in your area using this mod with 
 Don't trust anyone with this mod. This mod allows ANY server running it to put ANY file in your mods folder. Any mod means any function of java, such as making a virus or a keylogger. So if you are a client please make sure you trust your server administrator.
 
 
-RECENT UPDATES:
------------
-Version 2.6.10
-* Fixed infinite null pointer when server port is alredy bound
-
-Version 2.6.6
-* Decoupled ServerSync from forge
-
-Version 2.6.3
-* Added ability to define directories to sync in the config
-
-
 FREQUENTLY ASKED QUESTIONS:
 -----------
 * "This mod isn't doing anything!"
   * This version of serversync is run independant of minecraft (minecraft should be closed when running serversync), I did this as minecraft did not need to be running for the program to work and the previous method required you to open and close minecraft several times which if you have any more than 2-3 mods then loading time gets very taxing.
   * Run serversync.jar from your minecraft folder or create a shortcut, serversync will auto populate server details from the config if present
 * "I can't connect to my server"
-  * Did you check that the config files ip/port details are correct on both server and client
+  * Check that the ip/port details are correct on both server and client
   * Are you using your external/internal IP address apropriately?
   * Are you trying to transfer a file larger than your max file size?
   * Are you ignoring a file that is neccecary to connect to the server?
@@ -53,14 +39,10 @@ FREQUENTLY ASKED QUESTIONS:
   * Please direct any useful security material to the issues, shall look into it
 * "Can you add feature X? Or fix bug Y?"
   * Probably. Submit it to the issues and I'll check it out.
-* "You're a horrible programmer"
-  * You're entitled to that opinion.
-* "Why does this mod spit out so much 'junk' in my console?"
-  * ServerSync attempts to provide as much context as it can to track down bugs faster
 * "I have files such as optifine that I don't want the server to delete"
   * Specify this in the configs IGNORE_LIST
-  * Add client only mods to the clientmods directory on the server if you are a server admin
-  * Mods in the clientmods folder are automatically added to the ignore list if pushClientMods = true in the config
+  * Add client only mods to the clientmods directory on the server if you are a server admin, note that clients can refuse these
+  * Mods in the clientmods folder are automatically ignored in the deletion phase
 
 What does it do exactly?
 -----------
@@ -69,7 +51,7 @@ What does it do exactly?
 * When a connection is made to a client the server listens for messages generated for this client
 * On receiving a message the server will react appropriately or send an error back to the client
 * After iterating through all of the server files the client will then iterate through all of it's own files
-* If the client has a file that the server does not, it will delete it.
+* If the client has a file that the server does not barring ignore rules, it will delete it.
 
 What you should expect to see
 --------------
