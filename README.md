@@ -2,6 +2,8 @@ ServerSync
 =========
 This is an open source mod that allows for easy mod management. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. This method avoids a lot of complaining. As a server admin constantly changing configs/updating mods it can get to be quite a pain pushing these updates. Some users have trouble finding the minecraft folder let alone putting mods in the right place.
 
+Clients will need to run serversync.jar before starting Minecraft to sync with their desired server, sync on connect from within Minecraft is desirable but is currently outside the scope of this project.
+
 Technically you could sync any game/filesystem using serversync however it does have some specific funtionality intended for use with Minecraft.
 
 Currently ServerSync has support for:
