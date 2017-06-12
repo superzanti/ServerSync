@@ -4,6 +4,9 @@
 
 #### Issue: 
 
-<details><summary>Logs (serverysync & minecraft)</summary><p>
+<details>
+<summary>Logs (serverysync & minecraft)</summary>
+<pre>
 <!-- Logs Here, if not relevant delete this section -->
-</p></details>
+</pre>
+</details>
