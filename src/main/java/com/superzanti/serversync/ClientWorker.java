@@ -279,6 +279,7 @@ public class ClientWorker implements Runnable {
 						try {							
 							if (clientFile.equals(ignoredClientFile)) {
 								servedByServer = true;
+								break;
 							}
 						} catch (InvalidSyncFileException e) {
 							//TODO stub invalid sync file handling
