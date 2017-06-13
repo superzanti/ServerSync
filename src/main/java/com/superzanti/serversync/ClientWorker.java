@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.superzanti.serversync.util.FileIgnoreMatcher;
@@ -12,6 +13,7 @@ import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.Server;
 import com.superzanti.serversync.util.SyncFile;
+import com.superzanti.serversync.util.errors.InvalidSyncFileException;
 
 import runme.Main;
 
@@ -32,11 +34,11 @@ public class ClientWorker implements Runnable {
 	private Server server;
 
 	private List<SyncFile> clientFiles;
-	private List<SyncFile> ignoredClientSideFiles = new ArrayList<SyncFile>(20);
+	private List<SyncFile> ignoredClientSideFiles;
 
 	public ClientWorker() {
 		logs = new Logger();
-		clientFiles = new ArrayList<SyncFile>();
+		ignoredClientSideFiles = new ArrayList<SyncFile>(20);
 		errorInUpdates = false;
 		updateHappened = false;
 		finished = false;
@@ -81,13 +83,50 @@ public class ClientWorker implements Runnable {
 
 		Main.clientGUI.enableSyncButton();
 	}
+	
+	private void populateClientFiles(ArrayList<String> directories) {
+		List<Path> clientFilePaths = new ArrayList<>();
+		List<Path> clientConfigPaths = PathUtils.fileListDeep(Paths.get("config/"));
+		clientFiles = new ArrayList<SyncFile>(200);
+		
+		for (String directory : directories) {
+			if (directory.equals("config")) {
+				continue;
+			}
+
+			List<Path> _files = PathUtils.fileListDeep(Paths.get(directory + "/"));
+			if (_files != null) {
+				clientFilePaths.addAll(_files);
+			}
+		}
+
+		if (!clientFilePaths.isEmpty()) {
+			FileIgnoreMatcher ignoredFiles = new FileIgnoreMatcher();
+
+			for (Path path : clientFilePaths) {
+				if (ignoredFiles.matches(path)) {
+					logs.updateLogs(Main.strings.getString("ignoring") + " " + path.toString());
+				} else {
+					clientFiles.add(SyncFile.StandardSyncFile(path));
+				}
+			}
+		}
+
+		if (clientConfigPaths != null) {
+			FileIncludeMatcher includedFiles = new FileIncludeMatcher();
+
+			for (Path path : clientConfigPaths) {
+				if (includedFiles.matches(path)) {
+					clientFiles.add(SyncFile.ConfigSyncFile(path));
+				}
+			}
+		}
+	}
 
 	@Override
 	public void run() {
 		Main.clientGUI.disableSyncButton();
-		List<Path> clientConfigPaths = PathUtils.fileListDeep(Paths.get("config/"));
-		List<Path> clientFilePaths = new ArrayList<>();
-
+		
 		server = new Server(this, Main.CONFIG.SERVER_IP, Main.CONFIG.SERVER_PORT);
 		boolean updateNeeded = false;
 		updateHappened = false;
@@ -111,41 +150,8 @@ public class ClientWorker implements Runnable {
 			closeWorker();
 			return;
 		}
-
-		for (String directory : syncableDirectories) {
-			if (directory.equals("config")) {
-				continue;
-			}
-
-			List<Path> _files = PathUtils.fileListDeep(Paths.get(directory + "/"));
-			if (_files != null) {
-				clientFilePaths.addAll(_files);
-			}
-		}
-
-		// Populate Clients SyncFiles ////////////////////////////////
-		if (!clientFilePaths.isEmpty()) {
-			FileIgnoreMatcher ignoredFiles = new FileIgnoreMatcher();
-
-			for (Path path : clientFilePaths) {
-				if (ignoredFiles.matches(path)) {
-					logs.updateLogs(Main.strings.getString("ignoring") + " " + path.toString());
-				} else {
-					clientFiles.add(SyncFile.StandardSyncFile(path));
-				}
-			}
-		}
-		//////////////////////////////////////////////////////////////
-
-		if (clientConfigPaths != null) {
-			FileIncludeMatcher includedFiles = new FileIncludeMatcher();
-
-			for (Path path : clientConfigPaths) {
-				if (includedFiles.matches(path)) {
-					clientFiles.add(SyncFile.ConfigSyncFile(path));
-				}
-			}
-		}
+		
+		populateClientFiles(syncableDirectories);
 
 		logs.updateLogs(Main.strings.getString("config_check"));
 
@@ -228,11 +234,16 @@ public class ClientWorker implements Runnable {
 				boolean exists = Files.exists(clientFile.getFileAsPath());
 
 				if (exists) {
-					if (!clientFile.equals(serverFile)) {
-						server.updateFile(serverFile, clientFile);
-					} else {
-						logs.updateLogs(clientFile.getFileName() + " " + Main.strings.getString("up_to_date"),
-								Logger.FULL_LOG);
+					try {						
+						if (!clientFile.equals(serverFile)) {
+							server.updateFile(serverFile, clientFile);
+						} else {
+							logs.updateLogs(clientFile.getFileName() + " " + Main.strings.getString("up_to_date"),
+									Logger.FULL_LOG);
+						}
+					} catch (InvalidSyncFileException e) {
+						//TODO stub invalid file handling
+						e.printStackTrace();
 					}
 				} else {
 					// only need to check for ignore here as we are working
@@ -265,10 +276,14 @@ public class ClientWorker implements Runnable {
 					boolean servedByServer = false;
 					for (SyncFile ignoredClientFile : this.ignoredClientSideFiles) {
 						// Client side files provided by the server
-						if (ignoredClientFile.equals(clientFile)) {
-							servedByServer = true;
+						try {							
+							if (clientFile.equals(ignoredClientFile)) {
+								servedByServer = true;
+							}
+						} catch (InvalidSyncFileException e) {
+							//TODO stub invalid sync file handling
+							e.printStackTrace();
 						}
-
 					}
 					if (servedByServer) {
 						logs.updateLogs(Main.strings.getString("ignoring") + " " + clientFile.getFileName(),
@@ -293,6 +308,26 @@ public class ClientWorker implements Runnable {
 					Main.clientGUI.updateProgress((int) (currentPercent / percentScale));
 				}
 			}
+			
+			//TODO complete this with user prompt to pick which duplicate to keep
+			/* DUPLICATE CHECK */
+			populateClientFiles(syncableDirectories);
+			HashMap<String, SyncFile> modList = new HashMap<String, SyncFile>(200);
+			ArrayList<SyncFile> dupes = new ArrayList<SyncFile>(10);
+			for (SyncFile clientFile : clientFiles) {
+				if (clientFile.getModInformation() != null) {
+					System.out.println(clientFile.getFileName());
+					if (modList.get(clientFile.getModInformation().name) != null) {	
+						logs.updateLogs("<!> Potential duplicate: " + clientFile.getFileName() + " - " + clientFile.getModInformation().name);
+						dupes.add(clientFile);
+					} else {
+						modList.put(clientFile.getModInformation().name, clientFile);					
+					}					
+				} else {
+					//TODO what to do when the file has no mod information available
+				}	
+			}
+			System.out.println(dupes);
 		}
 		logs.updateLogs(Main.strings.getString("update_complete"));
 

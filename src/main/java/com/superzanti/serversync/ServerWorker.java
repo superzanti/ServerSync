@@ -24,6 +24,7 @@ import com.superzanti.serversync.util.ServerTimeout;
 import com.superzanti.serversync.util.SyncFile;
 import com.superzanti.serversync.util.enums.EErrorType;
 import com.superzanti.serversync.util.enums.EServerMessage;
+import com.superzanti.serversync.util.errors.InvalidSyncFileException;
 import com.superzanti.serversync.util.errors.MessageError;
 import com.superzanti.serversync.util.errors.UnknownMessageError;
 
@@ -265,14 +266,24 @@ public class ServerWorker implements Runnable {
 						
 						if (checkLevel == 3) {
 							for (SyncFile serverFile : ServerSetup.allFiles) {
-								if (serverFile.equals(clientFile)) {
-									exists = true;
+								try {									
+									if (serverFile.equals(clientFile)) {
+										exists = true;
+									}
+								} catch (InvalidSyncFileException e) {
+									//TODO stub invalid file handling
+									e.printStackTrace();
 								}
 							}
 						} else {
 							for (SyncFile serverFile : ServerSetup.standardSyncableFiles) {
-								if (serverFile.equals(clientFile)) {
-									exists = true;
+								try {									
+									if (serverFile.equals(clientFile)) {
+										exists = true;
+									}
+								} catch (InvalidSyncFileException e) {
+									//TODO stub invalid file handling
+									e.printStackTrace();
 								}
 							}
 						}

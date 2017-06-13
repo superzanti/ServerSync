@@ -18,6 +18,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonStreamParser;
+import com.superzanti.serversync.util.errors.InvalidSyncFileException;
 
 /**
  * Holds all relevant information about a synchronizable file, also handles client only files
@@ -31,6 +32,9 @@ public class SyncFile implements Serializable {
 	public final boolean isConfigurationFile;
 	public final boolean isClientSideOnlyFile;
 	private MinecraftModInformation minecraftInformation;
+	public MinecraftModInformation getModInformation() {
+		return this.minecraftInformation;
+	}
 	
 	private final String fileHash;
 	private final File synchronizableFile;
@@ -131,10 +135,20 @@ public class SyncFile implements Serializable {
 			JsonStreamParser parser = null;
 			JarFile packagedMod = null;
 			try {
-
+				ArrayList<String> infoTests = new ArrayList<String>(2);
+				infoTests.add("mcmod.info");
+				infoTests.add("neimod.info");
 				packagedMod = new JarFile(this.synchronizableFile);
-				JarEntry modInfo = packagedMod.getJarEntry("mcmod.info");
+				JarEntry modInfo = null;
 				
+				for (String test : infoTests) {
+					modInfo = packagedMod.getJarEntry(test);
+					
+					if (modInfo != null) {
+						break;
+					}
+				}
+					
 				if (modInfo != null) {
 					is = packagedMod.getInputStream(modInfo);
 					read = new InputStreamReader(is);
@@ -203,7 +217,18 @@ public class SyncFile implements Serializable {
 	 *         False if versions are different or if version is unknown and
 	 *         contents could not be read
 	 */
-	public boolean equals(SyncFile otherSyncFile) {
+	public boolean equals(SyncFile otherSyncFile) throws InvalidSyncFileException {
+		if (otherSyncFile == null) {
+			System.out.println("Attempted to compare a null SyncFile");
+			throw new InvalidSyncFileException();
+		}
+		
+		if (this.fileHash == null || otherSyncFile.fileHash == null) {
+			System.out.println("File hash comparison impossible");
+			System.out.println(this.getFileName() + " : " + otherSyncFile.getFileName());
+			throw new InvalidSyncFileException();
+		}
+		
 		if (otherSyncFile.minecraftInformation != null && this.minecraftInformation != null) {
 			return this.minecraftInformation.version.equals(otherSyncFile.minecraftInformation.version)
 					&& this.minecraftInformation.name.equals(otherSyncFile.minecraftInformation.name);
