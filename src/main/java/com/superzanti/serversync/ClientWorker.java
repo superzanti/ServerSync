@@ -29,7 +29,6 @@ public class ClientWorker implements Runnable {
 	private boolean errorInUpdates = false;
 	private boolean updateHappened = false;
 	private boolean finished = false;
-	private Logger logs;
 
 	private Server server;
 
@@ -37,15 +36,11 @@ public class ClientWorker implements Runnable {
 	private List<SyncFile> ignoredClientSideFiles;
 
 	public ClientWorker() {
-		logs = new Logger();
+		clientFiles = new ArrayList<SyncFile>();
 		ignoredClientSideFiles = new ArrayList<SyncFile>(20);
 		errorInUpdates = false;
 		updateHappened = false;
 		finished = false;
-	}
-
-	public Logger getLogger() {
-		return logs;
 	}
 
 	public boolean getErrors() {
@@ -66,19 +61,21 @@ public class ClientWorker implements Runnable {
 		}
 
 		if (server.close()) {
-			logs.updateLogs("Successfully closed all connections", Logger.FULL_LOG);
+			Logger.debug("Successfully closed all connections");
 		}
 
 		if (!updateHappened && !errorInUpdates) {
-			logs.updateLogs("No update required", Logger.FULL_LOG);
+			Logger.debug("No update required");
+			// TODO Why the manual GUI manipulation here, could use logger?
 			Main.clientGUI.updateText(Main.strings.getString("update_not_needed"));
 			Main.clientGUI.updateProgress(100);
 		} else {
-			logs.updateLogs(Main.strings.getString("update_happened"), Logger.FULL_LOG);
+			Logger.debug(Main.strings.getString("update_happened"));
 			Main.clientGUI.updateProgress(100);
 		}
+
 		if (errorInUpdates) {
-			logs.updateLogs(Main.strings.getString("update_error"));
+			Logger.error(Main.strings.getString("update_error"));
 		}
 
 		Main.clientGUI.enableSyncButton();
@@ -105,7 +102,7 @@ public class ClientWorker implements Runnable {
 
 			for (Path path : clientFilePaths) {
 				if (ignoredFiles.matches(path)) {
-					logs.updateLogs(Main.strings.getString("ignoring") + " " + path.toString());
+					Logger.log(Main.strings.getString("ignoring") + " " + path.toString());
 				} else {
 					clientFiles.add(SyncFile.StandardSyncFile(path));
 				}
@@ -145,7 +142,7 @@ public class ClientWorker implements Runnable {
 		}
 
 		if (syncableDirectories.isEmpty()) {
-			logs.updateLogs(Main.strings.getString("no_syncable_directories"));
+			Logger.log(Main.strings.getString("no_syncable_directories"));
 			finished = true;
 			closeWorker();
 			return;
@@ -153,39 +150,41 @@ public class ClientWorker implements Runnable {
 		
 		populateClientFiles(syncableDirectories);
 
-		logs.updateLogs(Main.strings.getString("config_check"));
+		Logger.log(Main.strings.getString("config_check"));
 
 		// TODO is this needed now? check against last updated perhaps
 		if (!server.getConfig()) {
-			logs.updateLogs("Failed to obtain config from server");
+			Logger.error("Failed to obtain config from server");
 			errorInUpdates = true;
-			this.closeWorker();
+			closeWorker();
 			return;
 		}
 
-		logs.updateLogs("Checking if update is needed", Logger.FULL_LOG);
+		Logger.debug("Checking Server.isUpdateNeeded()");
+		Logger.debug(clientFiles.toString());
 		updateNeeded = server.isUpdateNeeded(clientFiles);
 
 		/* MAIN PROCESSING CHUNK */
 		if (updateNeeded) {
-			logs.updateLogs("Update required", Logger.FULL_LOG);
 			updateHappened = true;
-			logs.updateLogs(Main.strings.getString("mods_incompatable"));
-			logs.updateLogs("<------> " + "Getting files" + " <------>");
+			Logger.log(Main.strings.getString("mods_incompatable"));
+			Logger.log("<------> " + "Getting files" + " <------>");
 
 			// get all files on server
-			logs.updateLogs(Main.strings.getString("mods_get"));
+			Logger.log(Main.strings.getString("mods_get"));
 			ArrayList<SyncFile> serverFiles = server.getFiles();
 
 			if (serverFiles == null) {
-				logs.updateLogs("Failed to get files from server, check detailed log in minecraft/logs");
+				// TODO add to TDB
+				Logger.log("Failed to get files from server, check detailed log in minecraft/logs");
 				errorInUpdates = true;
 				closeWorker();
 				return;
 			}
 
 			if (serverFiles.isEmpty()) {
-				logs.updateLogs("Server has no syncable files");
+				// TODO add to TDB
+				Logger.log("Server has no syncable files");
 				finished = true;
 				closeWorker();
 				return;
@@ -193,21 +192,22 @@ public class ClientWorker implements Runnable {
 
 			/* CLIENT MODS */
 			if (!Main.CONFIG.REFUSE_CLIENT_MODS) {
-				logs.updateLogs(Main.strings.getString("mods_accepting_clientmods"));
+				Logger.log(Main.strings.getString("mods_accepting_clientmods"));
 
 				ArrayList<SyncFile> serverClientOnlyMods = server.getClientOnlyFiles();
 
 				if (serverClientOnlyMods == null) {
-					logs.updateLogs("Failed to access servers client only mods");
+					// TODO add to TDB
+					Logger.log("Failed to access servers client only mods");
 					errorInUpdates = true;
 				} else {
 					serverFiles.addAll(serverClientOnlyMods);
 				}
 			} else {
-				logs.updateLogs(Main.strings.getString("mods_refusing_clientmods"));
+				Logger.log(Main.strings.getString("mods_refusing_clientmods"));
 			}
 
-			logs.updateLogs(Main.strings.getString("ignoring") + " " + Main.CONFIG.FILE_IGNORE_LIST, Logger.FULL_LOG);
+			Logger.debug(Main.strings.getString("ignoring") + " " + Main.CONFIG.FILE_IGNORE_LIST);
 
 			// run calculations to figure out how big the progress bar is
 			// TODO check this logic
@@ -216,7 +216,7 @@ public class ClientWorker implements Runnable {
 			float currentPercent = 0;
 
 			/* UPDATING */
-			logs.updateLogs("<------> " + Main.strings.getString("update_start") + " <------>");
+			Logger.log("<------> " + Main.strings.getString("update_start") + " <------>");
 
 			/* COMMON MODS */
 			for (SyncFile serverFile : serverFiles) {
@@ -225,8 +225,8 @@ public class ClientWorker implements Runnable {
 				if (serverFile.isClientSideOnlyFile) {
 					// TODO link this to a config value
 					clientFile = SyncFile.ClientOnlySyncFile(serverFile.getClientSidePath());
-					this.ignoredClientSideFiles.add(clientFile);
-					logs.updateLogs(Main.strings.getString("mods_clientmod_added") + ": " + clientFile.getFileName());
+					ignoredClientSideFiles.add(clientFile);
+					Logger.log(Main.strings.getString("mods_clientmod_added") + ": " + clientFile.getFileName());
 				} else {
 					clientFile = SyncFile.StandardSyncFile(serverFile.getFileAsPath());
 				}
@@ -238,21 +238,19 @@ public class ClientWorker implements Runnable {
 						if (!clientFile.equals(serverFile)) {
 							server.updateFile(serverFile, clientFile);
 						} else {
-							logs.updateLogs(clientFile.getFileName() + " " + Main.strings.getString("up_to_date"),
-									Logger.FULL_LOG);
+							Logger.log(clientFile.getFileName() + " " + Main.strings.getString("up_to_date"));
 						}
 					} catch (InvalidSyncFileException e) {
 						//TODO stub invalid file handling
-						e.printStackTrace();
+						Logger.debug(e);
 					}
 				} else {
 					// only need to check for ignore here as we are working
 					// on the servers file tree
 					if (serverFile.matchesIgnoreListPattern() && !serverFile.isClientSideOnlyFile) {
-						logs.updateLogs("<>" + Main.strings.getString("ignoring") + " " + serverFile.getFileName());
+						Logger.log("<>" + Main.strings.getString("ignoring") + " " + serverFile.getFileName());
 					} else {
-						logs.updateLogs(serverFile.getFileName() + " " + Main.strings.getString("does_not_exist"),
-								Logger.FULL_LOG);
+						Logger.debug(serverFile.getFileName() + " " + Main.strings.getString("does_not_exist"));
 						server.updateFile(serverFile, clientFile);
 					}
 				}
@@ -261,20 +259,18 @@ public class ClientWorker implements Runnable {
 			}
 
 			/* DELETION */
-			logs.updateLogs("<------> " + Main.strings.getString("delete_start") + " <------>");
+			Logger.log("<------> " + Main.strings.getString("delete_start") + " <------>");
 			for (SyncFile clientFile : clientFiles) {
 				currentPercent++;
 
 				if (clientFile.matchesIgnoreListPattern()) {
 					// User created ignore rules
-					logs.updateLogs(Main.strings.getString("ignoring") + " " + clientFile.getFileName(),
-							Logger.FULL_LOG);
+					Logger.debug(Main.strings.getString("ignoring") + " " + clientFile.getFileName());
 				} else {
-					logs.updateLogs(Main.strings.getString("client_check") + " " + clientFile.getFileName(),
-							Logger.FULL_LOG);
+					Logger.debug(Main.strings.getString("client_check") + " " + clientFile.getFileName());
 
 					boolean servedByServer = false;
-					for (SyncFile ignoredClientFile : this.ignoredClientSideFiles) {
+					for (SyncFile ignoredClientFile : ignoredClientSideFiles) {
 						// Client side files provided by the server
 						try {							
 							if (clientFile.equals(ignoredClientFile)) {
@@ -287,22 +283,21 @@ public class ClientWorker implements Runnable {
 						}
 					}
 					if (servedByServer) {
-						logs.updateLogs(Main.strings.getString("ignoring") + " " + clientFile.getFileName(),
-								Logger.FULL_LOG);
+						Logger.debug(Main.strings.getString("ignoring") + " " + clientFile.getFileName());
 						continue;
 					}
 
 					boolean exists = server.modExists(clientFile);
 
 					if (!exists) {
-						logs.updateLogs(clientFile.getFileName() + " " + Main.strings.getString("does_not_match")
-								+ Main.strings.getString("delete_attempt"), Logger.FULL_LOG);
+						Logger.debug(clientFile.getFileName() + " " + Main.strings.getString("does_not_match")
+								+ Main.strings.getString("delete_attempt"));
 
 						if (clientFile.delete()) {
-							logs.updateLogs(
+							Logger.log(
 									"<>" + clientFile.getFileName() + " " + Main.strings.getString("delete_success"));
 						} else {
-							logs.updateLogs("!!! failed to delete: " + clientFile.getFileName() + " !!!");
+							Logger.log("!!! failed to delete: " + clientFile.getFileName() + " !!!");
 						}
 						updateHappened = true;
 					}
@@ -319,7 +314,7 @@ public class ClientWorker implements Runnable {
 				if (clientFile.getModInformation() != null) {
 					System.out.println(clientFile.getFileName());
 					if (modList.get(clientFile.getModInformation().name) != null) {	
-						logs.updateLogs("<!> Potential duplicate: " + clientFile.getFileName() + " - " + clientFile.getModInformation().name);
+						Logger.log("<!> Potential duplicate: " + clientFile.getFileName() + " - " + clientFile.getModInformation().name);
 						dupes.add(clientFile);
 					} else {
 						modList.put(clientFile.getModInformation().name, clientFile);					
@@ -330,7 +325,7 @@ public class ClientWorker implements Runnable {
 			}
 			System.out.println(dupes);
 		}
-		logs.updateLogs(Main.strings.getString("update_complete"));
+		Logger.log(Main.strings.getString("update_complete"));
 
 		// Teardown
 		closeWorker();

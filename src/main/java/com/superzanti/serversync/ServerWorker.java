@@ -71,12 +71,7 @@ public class ServerWorker implements Runnable {
 			e.printStackTrace();
 		}
 
-		while (true) {
-
-			if (clientsocket.isClosed()) {
-				return;
-			}
-
+		while (!clientsocket.isClosed()) {
 			String message = null;
 			try {
 				timeout = new Timer(true);
@@ -318,14 +313,31 @@ public class ServerWorker implements Runnable {
 				break;
 			}
 		}
+		
 		ServerSetup.serverLog.addToConsole("Closing connection with: " + clientsocket);
-		return; // End thread
+		teardown();
+		return; // End thread, probably not needed here as it is the terminal point of the thread anyway
+	}
+	
+	private void teardown() {
+		try {
+			timeout = null;
+			
+			if (!clientsocket.isClosed()) {				
+				clientsocket.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
-	public void shutdown() {
+	public void timeoutShutdown() {
 		try {
 			ServerSetup.serverLog.addToConsole("Client connection timed out, closing " + clientsocket);
-			clientsocket.close();
+			
+			if (!clientsocket.isClosed()) {				
+				clientsocket.close();
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

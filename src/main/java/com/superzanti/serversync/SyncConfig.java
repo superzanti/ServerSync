@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
+import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.MCConfigReader.MCCCategory;
 import com.superzanti.serversync.util.MCConfigReader.MCCConfig;
 import com.superzanti.serversync.util.MCConfigReader.MCCElement;
@@ -83,7 +84,7 @@ public class SyncConfig {
 			try {
 				Files.createDirectories(configPath.getParent());
 			} catch (IOException e) {
-				System.out.println("Failed to create directories for: " + configPath.toString());
+				Logger.debug("Failed to create directories for: " + configPath.toString());
 			}
 		}
 		
@@ -99,7 +100,7 @@ public class SyncConfig {
 		try {
 			config.readConfig(new MCCReader(Files.newBufferedReader(configPath)));
 		} catch (IOException e) {
-			System.out.println("Failed to read config file: " + e.getMessage());
+			Logger.debug("Failed to read config file: " + e.getMessage());
 			e.printStackTrace();
 		}
 	}
@@ -108,7 +109,7 @@ public class SyncConfig {
 		try {
 			Files.createFile(configPath);
 		} catch (IOException e) {
-			System.out.println("Failed to create config file: " + e.getMessage());
+			Logger.debug("Failed to create config file: " + e.getMessage());
 			return false;
 		}
 		
@@ -158,7 +159,7 @@ public class SyncConfig {
 				try {
 					config.writeConfig(new MCCWriter(Files.newBufferedWriter(configPath)));
 				} catch (IOException e) {
-					System.out.println("Failed to write server config file: " + e.getMessage());
+					Logger.debug("Failed to write server config file: " + e.getMessage());
 					e.printStackTrace();
 				}
 			
@@ -202,7 +203,7 @@ public class SyncConfig {
 			try {
 				config.writeConfig(new MCCWriter(Files.newBufferedWriter(configPath)));
 			} catch (IOException e) {
-				System.out.println("Failed to write client config file: " + e.getMessage());
+				Logger.debug("Failed to write client config file: " + e.getMessage());
 				e.printStackTrace();
 			}
 		}
@@ -225,6 +226,7 @@ public class SyncConfig {
 			
 			try {				
 				FILE_IGNORE_LIST.addAll(config.getEntryByName("FILE_IGNORE_LIST").getList());
+				FILE_IGNORE_LIST.add("serversync*");
 			} catch (NullPointerException e) {
 				// Specific conversion from old config files
 				FILE_IGNORE_LIST.addAll(config.getEntryByName("MOD_IGNORE_LIST").getList());
@@ -242,9 +244,9 @@ public class SyncConfig {
 				REFUSE_CLIENT_MODS = config.getEntryByName("REFUSE_CLIENT_MODS").getBoolean();
 			}
 		} catch(NullPointerException e) {
-			System.out.println("could not retrieve an entry from the config file, have you altered the entry names?");
+			Logger.debug("could not retrieve an entry from the config file, have you altered the entry names?");
 		}
 
-		System.out.println("finished loading config");
+		Logger.debug("finished loading config");
 	}
 }

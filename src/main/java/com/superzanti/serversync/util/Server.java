@@ -37,13 +37,11 @@ public class Server {
 	private ObjectInputStream ois = null;
 	private Socket clientSocket = null;
 	private InetAddress host = null;
-	private Logger logs;
 	private EnumMap<EServerMessage, String> SCOMS;
 
 	public Server(ClientWorker caller, String ip, int port) {
 		IP_ADDRESS = ip;
 		PORT = port;
-		logs = caller.getLogger();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -51,35 +49,37 @@ public class Server {
 		try {
 			host = InetAddress.getByName(IP_ADDRESS);
 		} catch (UnknownHostException e) {
-			logs.updateLogs(Main.strings.getString("connection_failed_host") + ": " + IP_ADDRESS);
+			Logger.error(Main.strings.getString("connection_failed_host") + ": " + IP_ADDRESS);
 			return false;
 		}
 
-		logs.updateLogs(Main.strings.getString("connection_attempt_server"), Logger.FULL_LOG);
+		Logger.debug(Main.strings.getString("connection_attempt_server"));
 		clientSocket = new Socket();
 
-		logs.updateLogs("< " + Main.strings.getString("connection_message") + " >");
+		Logger.log("< " + Main.strings.getString("connection_message") + " >");
 		try {
 			clientSocket.connect(new InetSocketAddress(host.getHostName(), PORT), 5000);
 		} catch (IOException e) {
-			logs.updateLogs(Main.strings.getString("connection_failed_server") + ": " + IP_ADDRESS + ":" + PORT);
+			Logger.error(Main.strings.getString("connection_failed_server") + ": " + IP_ADDRESS + ":" + PORT);
+			AutoClose.closeResource(clientSocket);
 			return false;
 		}
 
 		// write to socket using ObjectOutputStream
-		logs.updateLogs(Main.strings.getString("debug_IO_streams"), Logger.FULL_LOG);
+		Logger.debug(Main.strings.getString("debug_IO_streams"));
 		try {
 			oos = new ObjectOutputStream(clientSocket.getOutputStream());
 			ois = new ObjectInputStream(clientSocket.getInputStream());
 		} catch (IOException e) {
-			logs.updateLogs(Main.strings.getString("debug_IO_streams_failed"), Logger.FULL_LOG);
+			Logger.debug(Main.strings.getString("debug_IO_streams_failed"));
+			AutoClose.closeResource(clientSocket);
 			return false;
 		}
 		
 		try {
 			oos.writeObject(Main.HANDSHAKE);
 		} catch (IOException e) {
-			logs.outputError(Main.HANDSHAKE);
+			Logger.outputError(Main.HANDSHAKE);
 		}
 		
 		try {
@@ -87,7 +87,7 @@ public class Server {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			logs.inputError(e.getMessage());
+			Logger.inputError(e.getMessage());
 		}
 		
 		System.out.println(SCOMS);
@@ -106,7 +106,7 @@ public class Server {
 			oos.writeObject(message);
 			oos.flush();
 		} catch (IOException e) {
-			logs.updateLogs("Failed to write object (" + message + ") to output stream", Logger.FULL_LOG);
+			Logger.debug("Failed to write object (" + message + ") to output stream");
 			//TODO handle retrys / stream sanitation
 		}
 		
@@ -116,9 +116,9 @@ public class Server {
 			dirs = (ArrayList<String>) ois.readObject();
 			return dirs;
 		} catch (ClassNotFoundException e) {
-			logs.updateLogs("Failed to read class of streamed object: " + e.getMessage(), Logger.FULL_LOG);
+			Logger.debug("Failed to read class of streamed object: " + e.getMessage());
 		} catch (IOException e) {
-			logs.updateLogs("Failed to access input stream for syncable directories: " + e.getMessage(), Logger.FULL_LOG);
+			Logger.debug("Failed to access input stream for syncable directories: " + e.getMessage());
 		}
 		
 		return dirs;
@@ -130,13 +130,13 @@ public class Server {
 	 */
 	private void exit() {
 		String message = SCOMS.get(EServerMessage.EXIT);
-		logs.updateLogs(Main.strings.getString("debug_server_exit"), Logger.FULL_LOG);
+		Logger.debug(Main.strings.getString("debug_server_exit"));
 		
 		try {
 			oos.writeObject(message);
 			oos.flush();
 		} catch(IOException e) {
-			logs.updateLogs("Failed to write object (" + message + ") to client output stream", Logger.FULL_LOG);
+			Logger.debug("Failed to write object (" + message + ") to client output stream");
 		}
 	}
 
@@ -146,19 +146,15 @@ public class Server {
 	 */
 	public boolean close() {
 		exit();
-		logs.updateLogs(Main.strings.getString("debug_server_close"), Logger.FULL_LOG);
+		Logger.debug(Main.strings.getString("debug_server_close"));
 		try {
-			if (oos != null)
-				oos.close();
-			if (ois != null)
-				ois.close();
 			if (clientSocket != null && !clientSocket.isClosed())
 				clientSocket.close();
 		} catch (IOException e) {
-			logs.updateLogs("Failed to close client socket: " + e.getMessage(), Logger.FULL_LOG);
+			Logger.debug("Failed to close client socket: " + e.getMessage());
 			return false;
 		}
-		logs.updateLogs(Main.strings.getString("debug_server_close_success"), Logger.FULL_LOG);
+		Logger.debug(Main.strings.getString("debug_server_close_success"));
 		return true;
 	}
 
@@ -181,25 +177,25 @@ public class Server {
 			ArrayList<String> serverModNames = (ArrayList<String>) ois.readObject();
 			ArrayList<String> clientModNames = SyncFile.listModNames(clientMods);
 
-			logs.updateLogs(Main.strings.getString("info_syncable_client") + ": " + clientModNames.toString(), Logger.FULL_LOG);
-			logs.updateLogs(Main.strings.getString("info_syncable_server") + ": " + serverModNames.toString(), Logger.FULL_LOG);
+			Logger.debug(Main.strings.getString("info_syncable_client") + ": " + clientModNames.toString());
+			Logger.debug(Main.strings.getString("info_syncable_server") + ": " + serverModNames.toString());
 			
 			ArrayList<String> _SMNC = (ArrayList<String>) serverModNames.clone();
 			ArrayList<String> _CMNC = (ArrayList<String>) clientModNames.clone();
 			
 			_SMNC.removeAll(clientModNames);
 			_CMNC.removeAll(serverModNames);
-			System.out.println("Server: " + _SMNC + " | Client: " +_CMNC);
+			Logger.debug("Server: " + _SMNC + " | Client: " +_CMNC);
 
 			if (_SMNC.size() == 0 && _CMNC.size() == 0) {
 				return false;
 			}
 		} catch (Exception e) {
-			logs.updateLogs(Main.strings.getString("update_failed") + ": " + e.getMessage(), Logger.FULL_LOG);
+			Logger.debug(Main.strings.getString("update_failed") + ": " + e.getMessage());
 			return false;
 		}
 		
-		System.out.println("reached end of update needed");
+		Logger.debug("reached end of Server.isUpdateNeeded()");
 		return true;
 	}
 
@@ -214,19 +210,19 @@ public class Server {
 			oos.writeObject(message);
 			oos.flush();
 		} catch (IOException e) {
-			logs.updateLogs("Failed to write object (" + message + ") to client output stream");
+			Logger.debug(e);
 		}
 
 		try {
 			ArrayList<SyncFile> serverMods = new ArrayList<SyncFile>();
 			serverMods = (ArrayList<SyncFile>) ois.readObject();
-			logs.updateLogs(Main.strings.getString("debug_files_server_tree"), Logger.FULL_LOG);
+			Logger.debug(Main.strings.getString("debug_files_server_tree"));
 
 			return serverMods;
 		} catch (ClassNotFoundException e) {
-			logs.updateLogs("Failed to read class: " + e.getMessage(), Logger.FULL_LOG);
+			Logger.debug("Failed to read class: " + e.getMessage());
 		} catch (IOException e) {
-			logs.updateLogs("Failed to read object from client input stream", Logger.FULL_LOG);
+			Logger.debug(e);
 		}
 		
 		return null;
@@ -243,19 +239,19 @@ public class Server {
 			oos.writeObject(message);
 			oos.flush();
 		} catch (IOException e) {
-			logs.outputError(message);
+			Logger.debug(e);
 		}
 
 		try {
 			ArrayList<SyncFile> serverMods = new ArrayList<SyncFile>();
 			serverMods = (ArrayList<SyncFile>) ois.readObject();
-			logs.updateLogs(Main.strings.getString("debug_files_client_only"), Logger.FULL_LOG);
+			Logger.debug(Main.strings.getString("debug_files_client_only"));
 
 			return serverMods;
 		} catch (ClassNotFoundException e) {
-			logs.updateLogs("Failed to read class: " + e.getMessage(), Logger.FULL_LOG);
+			Logger.debug(e);
 		} catch (IOException e) {
-			logs.inputError(e.getMessage());
+			Logger.debug(e);
 		}
 		
 		return null;
@@ -268,7 +264,7 @@ public class Server {
 			oos.writeObject(message);
 			oos.flush();
 		} catch (IOException e) {
-			logs.outputError(message);
+			Logger.debug(e);
 		}
 		
 		try {
@@ -283,18 +279,17 @@ public class Server {
 			included.removeAll(myIncluded);
 			
 			if (!ignored.isEmpty() || !included.isEmpty()) {
-				logs.updateLogs(Main.strings.getString("info_config_desync"));
+				Logger.log(Main.strings.getString("info_config_desync"));
 				Main.CONFIG.FILE_IGNORE_LIST.addAll(ignored);
 				Main.CONFIG.CONFIG_INCLUDE_LIST.addAll(included);
 				Main.CONFIG.writeConfigUpdates();
 			}
 			return true;
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Logger.debug(e);
 			return false;
 		} catch (IOException e) {
-			logs.inputError(e.getMessage());
+			Logger.debug(e);
 			return false;
 		}
 	}
@@ -311,7 +306,7 @@ public class Server {
 			}
 			oos.flush();
 		} catch(IOException e) {
-			logs.outputError(message);
+			Logger.debug(e);
 			return false;
 		}
 		
@@ -319,14 +314,15 @@ public class Server {
 			oos.writeObject(mod);
 			oos.flush();
 		} catch(IOException e) {
-			logs.outputError(mod.getFileName());
+			Logger.debug(mod.getFileName());
+			Logger.debug(e);
 			return false;
 		}
 
 		try {
 			return ois.readBoolean();
 		} catch (IOException e) {
-			logs.inputError(e.getMessage());
+			Logger.debug(e);
 			return false;
 		}
 	}
@@ -339,20 +335,20 @@ public class Server {
 	public boolean updateFile(SyncFile serverFile, SyncFile clientFile) {
 		String message = SCOMS.get(EServerMessage.INFO_GET_FILESIZE);
 		try {
-			logs.updateLogs("Fetching file size from server", Logger.FULL_LOG);
+			Logger.debug("Fetching file size from server");
 			oos.writeObject(message);
 			oos.flush();
 		} catch (IOException e) {
-			logs.outputError(message);
+			Logger.outputError(message);
 			return false;
 		}
 		
 		try {			
-			logs.updateLogs("Sending file path to server", Logger.FULL_LOG);
+			Logger.debug("Sending file path to server");
 			oos.writeObject(serverFile);
 			oos.flush();
 		} catch(IOException e) {
-			logs.outputError(serverFile);
+			Logger.outputError(serverFile);
 			return false;
 		}
 		
@@ -364,7 +360,8 @@ public class Server {
 		try {
 			numberOfBytesToRecieve = ois.readLong();
 		} catch (IOException e) {
-			logs.updateLogs(Main.strings.getString("debug_files_size_failed"), Logger.FULL_LOG);
+			Logger.debug(Main.strings.getString("debug_files_size_failed"));
+			Logger.debug(e);
 			return false;
 		}
 
@@ -373,7 +370,8 @@ public class Server {
 			oos.writeObject(message);
 			oos.flush();
 		} catch(IOException e) {
-			logs.outputError(message);
+			Logger.debug(message);
+			Logger.debug(e);
 			return false;
 		}
 		
@@ -381,7 +379,8 @@ public class Server {
 			oos.writeObject(serverFile);
 			oos.flush();
 		} catch(IOException e) {
-			logs.outputError(serverFile);
+			Logger.outputError(serverFile);
+			Logger.debug(e);
 			return false;
 		}
 		
@@ -389,7 +388,8 @@ public class Server {
 		try {			
 			Files.createDirectories(pFile.getParent());
 		} catch (IOException e) {
-			logs.updateLogs("Could not create parent directories for: " + clientFile.getFileName(), Logger.FULL_LOG);
+			Logger.debug("Could not create parent directories for: " + clientFile.getFileName());
+			Logger.debug(e);
 		}
 		
 		if (Files.exists(pFile)) {
@@ -397,13 +397,14 @@ public class Server {
 				Files.delete(pFile);
 				Files.createFile(pFile);
 			} catch (IOException e) {
-				System.out.println("Failed to delete file: " + pFile.getFileName().toString());
+				Logger.debug("Failed to delete file: " + pFile.getFileName().toString());
+				Logger.debug(e);
 			}
 		}
 		
 		try {			
 			//TODO NIO this
-			logs.updateLogs("Attempting to write file (" + clientFile + ")", Logger.FULL_LOG);
+			Logger.debug("Attempting to write file (" + clientFile + ")");
 			FileOutputStream wr = new FileOutputStream(clientFile.getFile());
 			
 			byte[] outBuffer = new byte[clientSocket.getReceiveBufferSize()];
@@ -417,8 +418,7 @@ public class Server {
 				while ((bytesReceived = ois.read(outBuffer)) > 0) {
 					bytesRecievedSoFar += bytesReceived;
 					factor = (double) bytesRecievedSoFar / numberOfBytesToRecieve;
-					System.out.println(factor);
-					System.out.println(bytesRecievedSoFar + " / " + numberOfBytesToRecieve);
+					
 					wr.write(outBuffer, 0, bytesReceived);
 					GUIUpdater.updateProgress((int)Math.ceil(factor * 100), clientFile.getFileName());
 					if (factor == 1) {
@@ -426,25 +426,27 @@ public class Server {
 					}
 				}
 			} else {
-				System.out.println("Empty file: " + clientFile.getFileName());
+				Logger.debug("Empty file: " + clientFile.getFileName());
 			}
 			
 			GUIUpdater.fileFinished();
 			wr.flush();
 			wr.close();
-			System.out.println("Finished writing file");
+			Logger.debug("Finished writing file" + clientFile.getFileName());
 		} catch(FileNotFoundException e) {
-			logs.updateLogs("Failed to create file (" + clientFile + "): " + e.getMessage(), Logger.FULL_LOG);
+			Logger.debug("Failed to create file (" + clientFile + "): " + e.getMessage());
+			Logger.debug(e);
 			return false;
 		} catch (SocketException e) {
-			logs.updateLogs(e.getMessage());
+			Logger.log(e.getMessage());
+			Logger.debug(e);
 			return false;
 		} catch(IOException e) {
-			logs.updateLogs("Failed to read bytes from client input stream", Logger.FULL_LOG);
+			Logger.debug(e);
 			return false;
 		}
 		
-		logs.updateLogs(Main.strings.getString("update_success") + ": " + clientFile.getFileName());
+		Logger.log(Main.strings.getString("update_success") + ": " + clientFile.getFileName());
 		return true;
 	}
 }

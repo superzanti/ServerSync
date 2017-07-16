@@ -1,7 +1,5 @@
 package com.superzanti.serversync.util;
 
-import java.lang.reflect.InvocationTargetException;
-
 import com.superzanti.serversync.gui.Console;
 
 /**
@@ -10,60 +8,49 @@ import com.superzanti.serversync.gui.Console;
  *
  */
 public class Logger {
-	private Log fullLog;
-	private Log userLog;
+	private static Log fullLog = new Log("serversync-detailed");
+	private static Log userLog = new Log("serversync-ui");
 	public static final String FULL_LOG = "full";
 	public static final String USER_LOG = "user";
-	private Console console;
-	
-	public Logger() {
-		fullLog = new Log("serversync-detailed");
-		userLog = new Log("serversync-ui");
-		console = new Console();
-	}
-	
+	public static final String TAG_DEBUG = "DEBUG:";
+	public static final String TAG_ERROR = "ERROR:";
+	public static final String TAG_LOG = "LOG:";
+	private static Console console = new Console();
+
 	public boolean save() {
 		fullLog.saveLog();
 		return true;
 	}
 	
-	/**
-	 * Shorthand for upadteLogs(string,true), updates GUI console text as well
-	 * @param s - Text to update logs with
-	 * @throws InterruptedException 
-	 * @throws InvocationTargetException 
-	 */
-	public void updateLogs(String s) {
-		updateLogs(s,true);
-	}
-	
-	/**
-	 * Update a specific log
-	 * @param s - Text to update log with
-	 * @param logToUpdate - Use Logger constants
-	 */
-	public void updateLogs(String s, String logToUpdate) {
-		if (logToUpdate.equals(FULL_LOG))
-			fullLog.add(s);
-			fullLog.saveLog();
-		if (logToUpdate.equals(USER_LOG))
-			userLog.add(s);
-	}
-	
-	public void updateLogs(String s, boolean update) {
-		fullLog.add(s);
+	public static void log(String s) {
+		fullLog.add(String.format("%s %s", TAG_LOG, s));
+		fullLog.saveLog();
 		userLog.add(s);
-
-		if (update) {
-			console.updateText(userLog.getReadableContent());
-		}
+		console.updateText(userLog.getReadableContent());
 	}
 	
-	public void outputError(Object object) {
-		updateLogs("Failed to write object (" + object + ") to client output stream", Logger.FULL_LOG);
+	public static void error(String s) {
+		fullLog.add(String.format("%s %s", TAG_ERROR, s));
+		fullLog.saveLog();
+		userLog.add(s);
+		console.updateText(userLog.getReadableContent());
 	}
 	
-	public void inputError(Object object) {
-		updateLogs("Failed to read object from clients input stream: " + object, Logger.FULL_LOG);
+	public static void debug(Exception e) {
+		fullLog.add(e.getStackTrace().toString());
+		fullLog.saveLog();
+	}
+	
+	public static void debug(String s) {
+		fullLog.add(String.format("%s %s", TAG_DEBUG, s));
+		fullLog.saveLog();
+	}
+	
+	public static void outputError(Object object) {
+		debug("Failed to write object (" + object + ") to output stream");
+	}
+	
+	public static void inputError(Object object) {
+		debug("Failed to read object from input stream: " + object);
 	}
 }

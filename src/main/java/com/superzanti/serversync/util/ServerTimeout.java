@@ -14,7 +14,7 @@ public class ServerTimeout extends TimerTask {
 
 	@Override
 	public void run() {
-		this.worker.shutdown();
+		this.worker.timeoutShutdown();
 	}
 	
 }
