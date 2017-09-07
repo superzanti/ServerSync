@@ -128,14 +128,15 @@ public class ServerSetup implements Runnable {
 		/* CONFIGS */
 		if (!Main.CONFIG.CONFIG_INCLUDE_LIST.isEmpty() && !configsInDirectoryList) {
 			//TODO double up? dont we alredy have configs from earlier
-			_list = PathUtils.fileListDeep(Paths.get("config"));
+			Path configDir = Paths.get("config");
+			_list = PathUtils.fileListDeep(configDir);
 			serverLog.addToConsole("Found " + _list.size() + " files in: config");
 
 			if (_list != null) {
-				_list.forEach((path) -> {
-					if (includedFiles.matches(path)) {							
-						serverLog.addToConsole("Including config: " + path.getFileName().toString());
-						configFiles.add(SyncFile.ConfigSyncFile(path));
+				_list.forEach((configPath) -> {
+					if (includedFiles.matches(configPath)) {							
+						serverLog.addToConsole("Including config: " + configPath.getFileName().toString());
+						configFiles.add(SyncFile.ConfigSyncFile(configPath));
 					}
 				});
 			}
