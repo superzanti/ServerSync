@@ -37,6 +37,9 @@ public class SyncFile implements Serializable {
 	}
 	
 	private final String fileHash;
+	public String getFileHash() {
+		return this.fileHash;
+	}
 	private final File synchronizableFile;
 	public String getFileName() {
 		return this.synchronizableFile.getName();
@@ -206,6 +209,20 @@ public class SyncFile implements Serializable {
 			System.out.println("File: " + this.synchronizableFile.getName() + " not recognized as a minecraft mod (not a problem)");
 		}
 	}
+	
+	@Override
+	public boolean equals(Object o) {
+		// Patch for using compare on lists with sync files
+		if (o instanceof SyncFile) {
+			try {
+				return this.equals((SyncFile)o);
+			} catch (InvalidSyncFileException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return super.equals(o);
+	}
 
 	/**
 	 * Compares mod versions from mcmod.info or compares file contents if
@@ -223,10 +240,19 @@ public class SyncFile implements Serializable {
 			throw new InvalidSyncFileException();
 		}
 		
+		if (this.getFileName() == null || otherSyncFile.getFileName() == null) {
+			System.out.println("Could not get file names");
+			throw new InvalidSyncFileException();
+		}
+		
 		if (this.fileHash == null || otherSyncFile.fileHash == null) {
 			System.out.println("File hash comparison impossible");
 			System.out.println(this.getFileName() + " : " + otherSyncFile.getFileName());
 			throw new InvalidSyncFileException();
+		}
+		
+		if (!this.getFileName().equals(otherSyncFile.getFileName())) {
+			return false;
 		}
 		
 		if (otherSyncFile.minecraftInformation != null && this.minecraftInformation != null) {

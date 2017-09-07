@@ -446,7 +446,7 @@ public class Server {
 			return false;
 		}
 		
-		Logger.log(Main.strings.getString("update_success") + ": " + clientFile.getFileName());
+		Logger.log(Main.strings.getString("update_success") + ": " + clientFile.getFileAsPath().toString());
 		return true;
 	}
 }

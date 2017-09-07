@@ -4,12 +4,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import com.superzanti.serversync.util.FileIgnoreMatcher;
 import com.superzanti.serversync.util.FileIncludeMatcher;
 import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.MinecraftModInformation;
 import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.Server;
 import com.superzanti.serversync.util.SyncFile;
@@ -82,6 +82,10 @@ public class ClientWorker implements Runnable {
 	}
 	
 	private void populateClientFiles(ArrayList<String> directories) {
+		populateClientFiles(directories, false);
+	}
+	
+	private void populateClientFiles(ArrayList<String> directories, boolean ignoreRules) {
 		List<Path> clientFilePaths = new ArrayList<>();
 		List<Path> clientConfigPaths = PathUtils.fileListDeep(Paths.get("config/"));
 		clientFiles = new ArrayList<SyncFile>(200);
@@ -101,7 +105,7 @@ public class ClientWorker implements Runnable {
 			FileIgnoreMatcher ignoredFiles = new FileIgnoreMatcher();
 
 			for (Path path : clientFilePaths) {
-				if (ignoredFiles.matches(path)) {
+				if (!ignoreRules && ignoredFiles.matches(path)) {
 					Logger.log(Main.strings.getString("ignoring") + " " + path.toString());
 				} else {
 					clientFiles.add(SyncFile.StandardSyncFile(path));
@@ -113,7 +117,7 @@ public class ClientWorker implements Runnable {
 			FileIncludeMatcher includedFiles = new FileIncludeMatcher();
 
 			for (Path path : clientConfigPaths) {
-				if (includedFiles.matches(path)) {
+				if (ignoreRules || includedFiles.matches(path)) {
 					clientFiles.add(SyncFile.ConfigSyncFile(path));
 				}
 			}
@@ -150,19 +154,10 @@ public class ClientWorker implements Runnable {
 		
 		populateClientFiles(syncableDirectories);
 
-		Logger.log(Main.strings.getString("config_check"));
-
-		// TODO is this needed now? check against last updated perhaps
-		if (!server.getConfig()) {
-			Logger.error("Failed to obtain config from server");
-			errorInUpdates = true;
-			closeWorker();
-			return;
-		}
-
 		Logger.debug("Checking Server.isUpdateNeeded()");
 		Logger.debug(clientFiles.toString());
 		updateNeeded = server.isUpdateNeeded(clientFiles);
+		updateNeeded = true; // TEMP
 
 		/* MAIN PROCESSING CHUNK */
 		if (updateNeeded) {
@@ -245,9 +240,8 @@ public class ClientWorker implements Runnable {
 						Logger.debug(e);
 					}
 				} else {
-					// only need to check for ignore here as we are working
-					// on the servers file tree
-					if (serverFile.matchesIgnoreListPattern() && !serverFile.isClientSideOnlyFile) {
+					// Ignore support for client only files, users may wish to not allow some mods out of personal preference
+					if (serverFile.isClientSideOnlyFile && serverFile.matchesIgnoreListPattern()) {
 						Logger.log("<>" + Main.strings.getString("ignoring") + " " + serverFile.getFileName());
 					} else {
 						Logger.debug(serverFile.getFileName() + " " + Main.strings.getString("does_not_exist"));
@@ -268,31 +262,8 @@ public class ClientWorker implements Runnable {
 					Logger.debug(Main.strings.getString("ignoring") + " " + clientFile.getFileName());
 				} else {
 					Logger.debug(Main.strings.getString("client_check") + " " + clientFile.getFileName());
-
-					boolean servedByServer = false;
-					for (SyncFile ignoredClientFile : ignoredClientSideFiles) {
-						// Client side files provided by the server
-						try {							
-							if (clientFile.equals(ignoredClientFile)) {
-								servedByServer = true;
-								break;
-							}
-						} catch (InvalidSyncFileException e) {
-							//TODO stub invalid sync file handling
-							e.printStackTrace();
-						}
-					}
-					if (servedByServer) {
-						Logger.debug(Main.strings.getString("ignoring") + " " + clientFile.getFileName());
-						continue;
-					}
-
-					boolean exists = server.modExists(clientFile);
-
-					if (!exists) {
-						Logger.debug(clientFile.getFileName() + " " + Main.strings.getString("does_not_match")
-								+ Main.strings.getString("delete_attempt"));
-
+					
+					if (!serverFiles.contains(clientFile)) { 
 						if (clientFile.delete()) {
 							Logger.log(
 									"<>" + clientFile.getFileName() + " " + Main.strings.getString("delete_success"));
@@ -301,26 +272,34 @@ public class ClientWorker implements Runnable {
 						}
 						updateHappened = true;
 					}
+					
 					Main.clientGUI.updateProgress((int) (currentPercent / percentScale));
 				}
 			}
 			
 			//TODO complete this with user prompt to pick which duplicate to keep
 			/* DUPLICATE CHECK */
-			populateClientFiles(syncableDirectories);
-			HashMap<String, SyncFile> modList = new HashMap<String, SyncFile>(200);
+			populateClientFiles(syncableDirectories, true);
+			ArrayList<String> modNames = new ArrayList<>(200);
+			ArrayList<String> modHashes = new ArrayList<>(200);
 			ArrayList<SyncFile> dupes = new ArrayList<SyncFile>(10);
 			for (SyncFile clientFile : clientFiles) {
-				if (clientFile.getModInformation() != null) {
-					System.out.println(clientFile.getFileName());
-					if (modList.get(clientFile.getModInformation().name) != null) {	
-						Logger.log("<!> Potential duplicate: " + clientFile.getFileName() + " - " + clientFile.getModInformation().name);
+				MinecraftModInformation modInfo = clientFile.getModInformation();
+				if (modInfo != null) {
+					if (modNames.contains(modInfo.name)) {	
+						Logger.log("<!> Potential duplicate: " + clientFile.getFileName() + " - " + modInfo.name);
 						dupes.add(clientFile);
 					} else {
-						modList.put(clientFile.getModInformation().name, clientFile);					
+						modNames.add(modInfo.name);					
 					}					
 				} else {
-					//TODO what to do when the file has no mod information available
+					String hash = clientFile.getFileHash();
+					if (modHashes.contains(hash)) {
+						Logger.log("<!> Potential duplicate: " + clientFile.getFileName() + " - " + hash);
+						dupes.add(clientFile);
+					} else {
+						modHashes.add(hash);
+					}
 				}	
 			}
 			System.out.println(dupes);
