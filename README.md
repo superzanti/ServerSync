@@ -19,11 +19,11 @@ Honorable Mentions:
 
 DISCLAIMER:
 -----------
-This mod is only intended for personal use. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to mass distribute other people's mods.
+This mod is only intended for personal use. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to mass distribute other people's mods without explicit permisson.
 
 Depending on the copyright and/or pattent laws in your area using this mod with other developer's mods for a commercial purpose could be ILLEGAL, check licenses.
 
-Don't trust anyone with this mod. This mod allows ANY server running it to put ANY file in your mods folder. Any mod means any function of java, such as making a virus or a keylogger. So if you are a client please make sure you trust your server administrator.
+This mod allows ANY server running it to put ANY file in your mods folder, such as a virus or a keylogger. So if you are a client please make sure you trust your server administrator and as a good measure make sure to scan your mods folder for malicious content.
 
 
 FREQUENTLY ASKED QUESTIONS:
