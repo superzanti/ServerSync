@@ -189,20 +189,9 @@ public class SyncFile implements Serializable {
 								if (!info.has("version") || !info.has("name")) {
 									continue;
 								}
-								////////////////////////////////////////////////
 
-								// Sanitize strings
-								// Some users put various characters in here to alter things like color '§'
-								// Don't really want to enforce a versioning schema here as there is no
-								// enforcement
-								// on mod creators, any arbitrary string is allowed
-								//
-								// Instead we can specifically look for common problems
-								String sanitizedVersion = info.get("version").getAsString().replaceAll("^[§&]+.", "");
-								String sanitizedName = info.get("name").getAsString().replaceAll("^[§&]+.", "");
-
-								this.minecraftInformation = new MinecraftModInformation(sanitizedVersion,
-										sanitizedName);
+								this.minecraftInformation = new MinecraftModInformation(
+										info.get("version").getAsString(), info.get("name").getAsString());
 							}
 						}
 					}
@@ -280,12 +269,7 @@ public class SyncFile implements Serializable {
 			return false;
 		}
 
-		if (otherSyncFile.minecraftInformation != null && this.minecraftInformation != null) {
-			return this.minecraftInformation.version.equals(otherSyncFile.minecraftInformation.version)
-					&& this.minecraftInformation.name.equals(otherSyncFile.minecraftInformation.name);
-		} else {
-			return this.fileHash.equals(otherSyncFile.fileHash);
-		}
+		return this.fileHash.equals(otherSyncFile.fileHash);
 	}
 
 	/**
