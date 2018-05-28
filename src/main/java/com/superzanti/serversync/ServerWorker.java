@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 
-import com.superzanti.serversync.util.Md5;
+import com.superzanti.serversync.util.FileHash;
 import com.superzanti.serversync.util.ServerTimeout;
 import com.superzanti.serversync.util.SyncFile;
 import com.superzanti.serversync.util.enums.EErrorType;
@@ -167,7 +167,7 @@ public class ServerWorker implements Runnable {
 					File theFile;
 					try {
 						theFile = (File) ois.readObject();
-						String serverChecksum = Md5.md5String(theFile);
+						String serverChecksum = FileHash.hashString(theFile);
 						oos.writeObject(serverChecksum);
 						oos.flush();
 					} catch (ClassNotFoundException e) {

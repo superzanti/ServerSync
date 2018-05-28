@@ -98,7 +98,7 @@ public class SyncFile implements Serializable {
 		this.synchronizableFile = fileToSync.toFile();
 		this.isConfigurationFile = isConfig;
 		this.isClientSideOnlyFile = isClientSideOnly;
-		this.fileHash = Md5.md5String(this.synchronizableFile);
+		this.fileHash = FileHash.hashString(this.synchronizableFile);
 
 		if (!isConfig) {
 			this.populateModInformation();
