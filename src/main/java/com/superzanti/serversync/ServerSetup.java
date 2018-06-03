@@ -87,7 +87,7 @@ public class ServerSetup implements Runnable {
 				}
 			}
 			
-			clientOnlyFiles = fileManager.getModFiles("clientmods", Main.CONFIG.FILE_IGNORE_LIST, EFileMatchingMode.NONE);
+			clientOnlyFiles = fileManager.getClientOnlyFiles();
 			Logger.log(String.format("Found %d files in clientmods", clientOnlyFiles.size()));
 		}
 

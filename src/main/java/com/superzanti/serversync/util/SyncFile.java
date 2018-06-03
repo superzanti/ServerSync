@@ -264,11 +264,18 @@ public class SyncFile implements Serializable {
 			System.out.println(this.getFileName() + " : " + otherSyncFile.getFileName());
 			throw new InvalidSyncFileException();
 		}
-
+		
+		// File names do not match, assuming different file (ie. assuming the server owner actually has a working server)
 		if (!this.getFileName().equals(otherSyncFile.getFileName())) {
 			return false;
 		}
+		
+		// Make sure files are in the same location
+		if (!this.getClientSidePath().toAbsolutePath().toString().equals(otherSyncFile.getClientSidePath().toAbsolutePath().toString())) {
+			return false;
+		}
 
+		// Actual file contents comparison, in this case a hash check
 		return this.fileHash.equals(otherSyncFile.fileHash);
 	}
 

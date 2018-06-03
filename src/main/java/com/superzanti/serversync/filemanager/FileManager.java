@@ -75,6 +75,12 @@ public class FileManager {
 				.map(file -> SyncFile.StandardSyncFile(file))
 				.collect(Collectors.toCollection(ArrayList::new));
 	}
+	
+	public ArrayList<SyncFile> getClientOnlyFiles() {
+		return PathUtils.fileListDeep(Paths.get("clientmods")).stream()
+				.map(file -> SyncFile.ClientOnlySyncFile(file))
+				.collect(Collectors.toCollection(ArrayList::new));
+	}
 
 	public ArrayList<SyncFile> getConfigurationFiles(List<String> fileMatchPatterns, EFileMatchingMode fileMatchingMode) {
 

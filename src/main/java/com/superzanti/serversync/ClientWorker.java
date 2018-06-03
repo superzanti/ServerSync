@@ -1,6 +1,9 @@
 package com.superzanti.serversync;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -245,6 +248,17 @@ public class ClientWorker implements Runnable {
 						if (clientFile.delete()) {
 							Logger.log(
 									"<>" + clientFile.getFileName() + " " + Main.strings.getString("delete_success"));
+							Path parentDirectory = clientFile.getClientSidePath().getParent();
+							// TODO check this logic well, don't want to have potential for deleting random folders
+							if (parentDirectory != null && Files.isDirectory(parentDirectory) && !parentDirectory.getFileName().toString().matches("mods|minecraft")) {
+								try {
+									Files.delete(parentDirectory);
+								} catch (IOException e) {
+									// Don't actually care if this fails, this either means there are files
+									// left in the directory so we don't want to delete it
+									// or some other failure to delete has happened, eg permissions
+								}
+							}
 						} else {
 							Logger.log("!!! failed to delete: " + clientFile.getFileName() + " !!!");
 						}
