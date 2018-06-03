@@ -14,11 +14,10 @@ import java.util.EnumMap;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import com.superzanti.serversync.util.FileIgnoreMatcher;
-import com.superzanti.serversync.util.FileIncludeMatcher;
-import com.superzanti.serversync.util.Log;
-import com.superzanti.serversync.util.PathUtils;
+import com.superzanti.serversync.filemanager.FileManager;
+import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.SyncFile;
+import com.superzanti.serversync.util.enums.EFileMatchingMode;
 import com.superzanti.serversync.util.enums.EServerMessage;
 
 import runme.Main;
@@ -31,7 +30,6 @@ import runme.Main;
  */
 public class ServerSetup implements Runnable {
 
-	public static Log serverLog = new Log("serversync-server");
 
 	// static ServerSocket variable
 	private static ServerSocket server;
@@ -44,9 +42,6 @@ public class ServerSetup implements Runnable {
 	public static ArrayList<SyncFile> clientOnlyFiles = new ArrayList<SyncFile>(20);
 	public static ArrayList<String> directories = new ArrayList<String>(20);
 	
-	private FileIgnoreMatcher ignoredFiles = new FileIgnoreMatcher();
-	private FileIncludeMatcher includedFiles = new FileIncludeMatcher();
-
 	public static EnumMap<EServerMessage, String> generateServerMessages() {
 		EnumMap<EServerMessage, String> SERVER_MESSAGES = new EnumMap<EServerMessage, String>(EServerMessage.class);
 
@@ -62,7 +57,8 @@ public class ServerSetup implements Runnable {
 
 	public ServerSetup() {
 		DateFormat dateFormatter = DateFormat.getDateInstance();
-		ArrayList<Path> _list = null;
+		FileManager fileManager = new FileManager();
+		
 		boolean configsInDirectoryList = false;
 
 		/* SYNC DIRECTORIES */
@@ -79,67 +75,34 @@ public class ServerSetup implements Runnable {
 		}
 
 		if (Main.CONFIG.PUSH_CLIENT_MODS) {
+			Logger.log("Server configured to push client only mods, clients can still refuse these mods!");
 			// Create clientmods directory if it does not exist
 			Path clientOnlyMods = Paths.get("clientmods/");
 			if (!Files.exists(clientOnlyMods)) {				
 				try {
 					Files.createDirectories(clientOnlyMods);
-					serverLog.addToConsole("clientmods directory did not exist, creating");
+					Logger.log("clientmods directory did not exist, creating");
 				} catch (IOException e) {
-					serverLog.addToConsole("Could not create clientmods directory");
+					Logger.error("Could not create clientmods directory");
 				}
 			}
 			
-			_list = PathUtils.fileListDeep(Paths.get("clientmods"));
-			serverLog.addToConsole("Found " + _list.size() + " files in: clientmods");
-
-			if (_list != null) {
-				_list.forEach((path) -> {
-					clientOnlyFiles.add(SyncFile.ClientOnlySyncFile(path));
-					serverLog.addToConsole(path.getFileName().toString());					
-				});
-			}
+			clientOnlyFiles = fileManager.getModFiles("clientmods", Main.CONFIG.FILE_IGNORE_LIST, EFileMatchingMode.NONE);
+			Logger.log(String.format("Found %d files in clientmods", clientOnlyFiles.size()));
 		}
 
 		// Main directory scan for mods
-		serverLog.addToConsole("Starting scan for sync files: " + dateFormatter.format(new Date()));
-		for (String directory : directories) {
-			serverLog.addToConsole("Scanning " + directory);
-			Path _d = Paths.get(directory);
-			if (Files.isDirectory(_d)) {
-				_list = PathUtils.fileListDeep(Paths.get(directory));
-
-				if (_list != null) {
-					serverLog.addToConsole("Found " + _list.size() + " files in: " + directory);
-
-					_list.forEach((path) -> {
-						if (!ignoredFiles.matches(path)) {
-							standardFiles.add(SyncFile.StandardSyncFile(path));
-						} else {								
-							serverLog.addToConsole(Main.strings.getString("ignoring") + " " + path.toString());
-						}
-					});
-				} else {
-					serverLog.addToConsole("Failed to access: " + directory);
-				}
-			}
-		}
+		Logger.log("Starting scan for sync files: " + dateFormatter.format(new Date()));
+		standardFiles = fileManager.getModFiles(directories, Main.CONFIG.FILE_IGNORE_LIST, EFileMatchingMode.INGORE);
+		Logger.log(String.format("Found %d files that match user defined patterns", standardFiles.size()));
 
 		/* CONFIGS */
+		// If the include list is empty then we have no configs to add
+		// If the user has added the config directory to the directory list then they are switching to blacklist mode
+		// configs in this mode will be treated as standard files
+		// TODO clean up this cruft, just let the user switch their config matching list from white to blacklist in the SS config
 		if (!Main.CONFIG.CONFIG_INCLUDE_LIST.isEmpty() && !configsInDirectoryList) {
-			//TODO double up? dont we alredy have configs from earlier
-			Path configDir = Paths.get("config");
-			_list = PathUtils.fileListDeep(configDir);
-			serverLog.addToConsole("Found " + _list.size() + " files in: config");
-
-			if (_list != null) {
-				_list.forEach((configPath) -> {
-					if (includedFiles.matches(configPath)) {							
-						serverLog.addToConsole("Including config: " + configPath.getFileName().toString());
-						configFiles.add(SyncFile.ConfigSyncFile(configPath));
-					}
-				});
-			}
+			configFiles = fileManager.getConfigurationFiles(Main.CONFIG.CONFIG_INCLUDE_LIST, EFileMatchingMode.INCLUDE);
 		}
 		
 		ServerSetup.allFiles.addAll(ServerSetup.clientOnlyFiles);
@@ -152,11 +115,11 @@ public class ServerSetup implements Runnable {
 
 	@Override
 	public void run() {
-		serverLog.addToConsole("Creating new server socket");
+		Logger.debug("Creating new server socket");
 		try {
 			server = new ServerSocket(Main.CONFIG.SERVER_PORT);
 		} catch (BindException e) {
-			serverLog.addToConsole("socket alredy bound at: " + Main.CONFIG.SERVER_PORT);
+			Logger.error("Socket alredy bound at: " + Main.CONFIG.SERVER_PORT);
 			return;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -164,7 +127,7 @@ public class ServerSetup implements Runnable {
 		}
 
 		// keep listening indefinitely until program terminates
-		serverLog.addToConsole("Now accepting clients...");
+		Logger.log("Now accepting clients...");
 
 		while (true) {
 			try {
@@ -178,7 +141,7 @@ public class ServerSetup implements Runnable {
 				clientThread.setName("ClientThread - " + socket.getInetAddress());
 				clientThread.start();
 			} catch (IOException e) {
-				serverLog.addToConsole("Error while accepting client connection, breaking server listener. You will need to restart serversync");
+				Logger.error("Error while accepting client connection, breaking server listener. You will need to restart serversync");
 			}
 		}
 	}

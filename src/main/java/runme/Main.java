@@ -19,6 +19,7 @@ import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.gui.GUI_Client;
 import com.superzanti.serversync.gui.GUI_Client_Mock;
 import com.superzanti.serversync.gui.GUI_Server;
+import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.ProgramArguments;
 import com.superzanti.serversync.util.enums.EConfigType;
 
@@ -40,21 +41,6 @@ public class Main {
 
 	public static void main(String[] args) throws InterruptedException, IOException {
 		arguments = new ProgramArguments(args);
-		CONFIG = new SyncConfig(EConfigType.COMMON);
-
-		try {
-			// TODO left off here, fix locale use and other main references
-			System.out.println("Loading language file: " + CONFIG.LOCALE);
-			strings = ResourceBundle.getBundle("assets.serversync.MessagesBundle", CONFIG.LOCALE);
-		} catch (MissingResourceException e) {
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					System.out.println("No language file available for: " + CONFIG.LOCALE + ", defaulting to en_US");
-				}
-			});
-			strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", new Locale("en", "US"));
-		}
 
 		if (arguments.isServer) {
 			runInServerMode();
@@ -88,16 +74,38 @@ public class Main {
 			}
 		}
 	}
+	
+	private static void commonInit() {
+		try {
+			System.out.println("Loading language file: " + CONFIG.LOCALE);
+			strings = ResourceBundle.getBundle("assets.serversync.MessagesBundle", CONFIG.LOCALE);
+		} catch (MissingResourceException e) {
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					System.out.println("No language file available for: " + CONFIG.LOCALE + ", defaulting to en_US");
+				}
+			});
+			strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", new Locale("en", "US"));
+		}
+	}
 
 	private static void runInServerMode() {
+		new Logger("server");
+		Logger.setSystemOutput(true);
 		CONFIG = new SyncConfig(EConfigType.SERVER);
+		commonInit();
+		
 		ServerSetup setup = new ServerSetup();
 		Thread serverThread = new Thread(setup);
 		serverThread.start();
 	}
 
 	private static void runInClientMode() {
+		new Logger("client");
 		CONFIG = new SyncConfig(EConfigType.CLIENT);
+		commonInit();
+		
 		Thread clientThread;
 		if (arguments.syncSilent) {
 			clientGUI = new GUI_Client_Mock();

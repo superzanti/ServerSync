@@ -1,18 +1,15 @@
 package com.superzanti.serversync;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.superzanti.serversync.util.FileIgnoreMatcher;
-import com.superzanti.serversync.util.FileIncludeMatcher;
+import com.superzanti.serversync.filemanager.FileManager;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.MinecraftModInformation;
-import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.Server;
 import com.superzanti.serversync.util.SyncFile;
+import com.superzanti.serversync.util.enums.EFileMatchingMode;
 import com.superzanti.serversync.util.errors.InvalidSyncFileException;
 
 import runme.Main;
@@ -34,6 +31,7 @@ public class ClientWorker implements Runnable {
 
 	private List<SyncFile> clientFiles;
 	private List<SyncFile> ignoredClientSideFiles;
+	private FileManager fileManager = new FileManager();
 
 	public ClientWorker() {
 		clientFiles = new ArrayList<SyncFile>();
@@ -65,9 +63,7 @@ public class ClientWorker implements Runnable {
 		}
 
 		if (!updateHappened && !errorInUpdates) {
-			Logger.debug("No update required");
-			// TODO Why the manual GUI manipulation here, could use logger?
-			Main.clientGUI.updateText(Main.strings.getString("update_not_needed"));
+			Logger.log(Main.strings.getString("update_not_needed"));
 			Main.clientGUI.updateProgress(100);
 		} else {
 			Logger.debug(Main.strings.getString("update_happened"));
@@ -86,51 +82,33 @@ public class ClientWorker implements Runnable {
 	}
 	
 	private void populateClientFiles(ArrayList<String> directories, boolean ignoreRules) {
-		List<Path> clientFilePaths = new ArrayList<>();
-		List<Path> clientConfigPaths = PathUtils.fileListDeep(Paths.get("config/"));
-		clientFiles = new ArrayList<SyncFile>(200);
+		boolean addConfigFiles = true;
 		
 		for (String directory : directories) {
+			// Currently servers can add the config directory to the included dirs list
+			// this essentially switches the included configs from whitelist to blacklist
+			// TODO make this system simpler
 			if (directory.equals("config")) {
-				continue;
-			}
-
-			List<Path> _files = PathUtils.fileListDeep(Paths.get(directory + "/"));
-			if (_files != null) {
-				clientFilePaths.addAll(_files);
+				addConfigFiles = false;
+				
 			}
 		}
-
-		if (!clientFilePaths.isEmpty()) {
-			FileIgnoreMatcher ignoredFiles = new FileIgnoreMatcher();
-
-			for (Path path : clientFilePaths) {
-				if (!ignoreRules && ignoredFiles.matches(path)) {
-					Logger.log(Main.strings.getString("ignoring") + " " + path.toString());
-				} else {
-					clientFiles.add(SyncFile.StandardSyncFile(path));
-				}
-			}
-		}
-
-		if (clientConfigPaths != null) {
-			FileIncludeMatcher includedFiles = new FileIncludeMatcher();
-
-			for (Path path : clientConfigPaths) {
-				if (ignoreRules || includedFiles.matches(path)) {
-					clientFiles.add(SyncFile.ConfigSyncFile(path));
-				}
-			}
+		
+		clientFiles = fileManager.getModFiles(directories, Main.CONFIG.FILE_IGNORE_LIST, EFileMatchingMode.INGORE);
+		
+		if (addConfigFiles) {
+			clientFiles.addAll(fileManager.getConfigurationFiles(Main.CONFIG.CONFIG_INCLUDE_LIST, EFileMatchingMode.INCLUDE));
 		}
 	}
 
 	@Override
 	public void run() {
+		updateHappened = false;
+		
 		Main.clientGUI.disableSyncButton();
+		Logger.getLog().clearUserFacingLog();
 		
 		server = new Server(this, Main.CONFIG.SERVER_IP, Main.CONFIG.SERVER_PORT);
-		boolean updateNeeded = false;
-		updateHappened = false;
 
 		if (!server.connect()) {
 			errorInUpdates = true;
@@ -156,8 +134,8 @@ public class ClientWorker implements Runnable {
 
 		Logger.debug("Checking Server.isUpdateNeeded()");
 		Logger.debug(clientFiles.toString());
-		updateNeeded = server.isUpdateNeeded(clientFiles);
-		updateNeeded = true; // TEMP
+		boolean updateNeeded = server.isUpdateNeeded(clientFiles);
+		updateNeeded = true; // TODO TEMP
 
 		/* MAIN PROCESSING CHUNK */
 		if (updateNeeded) {
@@ -302,7 +280,6 @@ public class ClientWorker implements Runnable {
 					}
 				}	
 			}
-			System.out.println(dupes);
 		}
 		Logger.log(Main.strings.getString("update_complete"));
 

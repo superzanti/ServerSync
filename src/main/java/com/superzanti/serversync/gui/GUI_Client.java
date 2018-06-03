@@ -10,6 +10,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Locale;
+import java.util.Observable;
+import java.util.Observer;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -34,6 +36,8 @@ import javax.swing.border.TitledBorder;
 import com.superzanti.lib.RefStrings;
 import com.superzanti.serversync.ClientWorker;
 import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.util.Log;
+import com.superzanti.serversync.util.Logger;
 
 import runme.Main;
 
@@ -61,6 +65,15 @@ public class GUI_Client extends JFrame {
 
 	public GUI_Client() {
 		super();
+		Logger.getLog().addObserver(new Observer() {
+			@Override
+			public void update(Observable o, Object arg) {
+				if (o instanceof Log) {
+					updateText(((Log) o).userFacingLog.toString());
+				}
+			}
+		});
+		
 		Dimension sDetailsElements = new Dimension(120, 20);
 		SoftBevelBorder TF_border = new SoftBevelBorder(BevelBorder.LOWERED, new Color(64, 64, 64),
 				new Color(192, 192, 192), new Color(64, 64, 64), new Color(0, 0, 0));

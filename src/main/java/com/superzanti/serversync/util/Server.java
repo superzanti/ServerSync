@@ -129,6 +129,10 @@ public class Server {
 	 * @throws IOException
 	 */
 	private void exit() {
+		if (SCOMS == null) {
+			// NO server messages set up, server must have not connected at this point
+			return;
+		}
 		String message = SCOMS.get(EServerMessage.EXIT);
 		Logger.debug(Main.strings.getString("debug_server_exit"));
 		
