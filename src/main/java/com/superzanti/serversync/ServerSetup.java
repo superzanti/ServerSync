@@ -35,10 +35,10 @@ public class ServerSetup implements Runnable {
 	private static ServerSocket server;
 
 	// This is what's in our folders
-	public static ArrayList<SyncFile> allFiles = new ArrayList<>(700);
-	public static ArrayList<SyncFile> standardSyncableFiles = new ArrayList<>(700);
-	public static ArrayList<SyncFile> standardFiles = new ArrayList<>(200);
-	public static ArrayList<SyncFile> configFiles = new ArrayList<>(500);
+	public static ArrayList<SyncFile> allFiles = new ArrayList<>(200);
+	public static ArrayList<SyncFile> standardSyncableFiles = new ArrayList<>(200);
+	public static ArrayList<SyncFile> standardFiles = new ArrayList<>(75);
+	public static ArrayList<SyncFile> configFiles = new ArrayList<>(200);
 	public static ArrayList<SyncFile> clientOnlyFiles = new ArrayList<>(20);
 	public static ArrayList<String> directories = new ArrayList<>(20);
 	
