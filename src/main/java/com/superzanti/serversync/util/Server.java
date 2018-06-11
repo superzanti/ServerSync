@@ -126,7 +126,6 @@ public class Server {
 
 	/**
 	 * Terminates the listener thread on the server for this client
-	 * @throws IOException
 	 */
 	private void exit() {
 		if (SCOMS == null) {
@@ -252,12 +251,10 @@ public class Server {
 			Logger.debug(Main.strings.getString("debug_files_client_only"));
 
 			return serverMods;
-		} catch (ClassNotFoundException e) {
-			Logger.debug(e);
-		} catch (IOException e) {
+		} catch (ClassNotFoundException | IOException e) {
 			Logger.debug(e);
 		}
-		
+
 		return null;
 	}
 
@@ -289,10 +286,7 @@ public class Server {
 				Main.CONFIG.writeConfigUpdates();
 			}
 			return true;
-		} catch (ClassNotFoundException e) {
-			Logger.debug(e);
-			return false;
-		} catch (IOException e) {
+		} catch (ClassNotFoundException | IOException e) {
 			Logger.debug(e);
 			return false;
 		}

@@ -13,11 +13,6 @@ import runme.Main;
 public class ForgeLoaderCPW {
 	@EventHandler
 	public void startServersync(FMLPreInitializationEvent _e) {
-		try {
-			Main.main(new String[]{"server"});
-		} catch (InterruptedException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		Main.main(new String[]{"server"});
 	}
 }

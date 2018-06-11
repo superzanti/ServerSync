@@ -42,7 +42,7 @@ public class MCCWriter extends BufferedWriter {
 	/** 
 	 * Writes this element out in its entirety, this will not automatically add new
 	 * lines after the element however it will automatically handle indentation
-	 * @param element
+	 * @param element Element to write
 	 * @throws IOException
 	 */
 	public void writeElement(MCCElement element) throws IOException {

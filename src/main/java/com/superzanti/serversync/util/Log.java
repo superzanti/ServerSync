@@ -18,12 +18,7 @@ public class Log extends Observable {
 	public Log(String fileName) {
 		this.fileName = fileName;
 		
-		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-			@Override
-			public void run() {
-				saveLog();
-			}
-		}));
+		Runtime.getRuntime().addShutdownHook(new Thread(this::saveLog));
 	}
 	
 	public void clearUserFacingLog() {
@@ -32,7 +27,6 @@ public class Log extends Observable {
 	
 	/**
 	 * Shortcut method for adding to logs string builder
-	 * @param s
 	 */
 	public Log add(String tag, String message) {
 		if (tag.equals(Logger.TAG_LOG) || tag.equals(Logger.TAG_ERROR)) {			

@@ -81,15 +81,10 @@ public class ServerWorker implements Runnable {
 				Logger.log("Recieved message from: " + clientsocket.getInetAddress());
 				timeout.cancel();
 				timeout.purge();
-			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (SocketException e) {
+				// Client timed out
 				break;
-				// client timed out
-			} catch (EOFException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
+			} catch (ClassNotFoundException | IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -191,7 +186,7 @@ public class ServerWorker implements Runnable {
 
 					SyncFile file;
 					try {
-						//TODO update this to NIO
+						// TODO update this to NIO
 						file = (SyncFile) ois.readObject();
 						File f = file.getFile();
 						Logger.log("Writing " + f + " to client " + clientsocket + "...");
@@ -266,7 +261,7 @@ public class ServerWorker implements Runnable {
 										exists = true;
 									}
 								} catch (InvalidSyncFileException e) {
-									//TODO stub invalid file handling
+									// TODO stub invalid file handling
 									e.printStackTrace();
 								}
 							}
@@ -277,7 +272,7 @@ public class ServerWorker implements Runnable {
 										exists = true;
 									}
 								} catch (InvalidSyncFileException e) {
-									//TODO stub invalid file handling
+									// TODO stub invalid file handling
 									e.printStackTrace();
 								}
 							}

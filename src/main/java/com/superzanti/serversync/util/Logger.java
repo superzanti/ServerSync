@@ -1,5 +1,7 @@
 package com.superzanti.serversync.util;
 
+import java.util.Arrays;
+
 /**
  * Manager for serversyncs logs
  * @author Rheimus
@@ -42,7 +44,7 @@ public class Logger {
 	}
 	
 	public static void debug(Exception e) {
-		debug(e.getStackTrace().toString());
+		debug(Arrays.toString(e.getStackTrace()));
 	}
 	
 	public static void debug(String s) {

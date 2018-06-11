@@ -27,12 +27,8 @@ public class AutoClose {
 				e.printStackTrace();
 			}
 		}
-		
-		if (errors > 0) {
-			return false;
-		} else {
-			return true;
-		}
+
+		return errors <= 0;
 	}
 
 }

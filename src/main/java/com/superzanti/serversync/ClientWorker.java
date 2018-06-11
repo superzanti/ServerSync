@@ -37,8 +37,8 @@ public class ClientWorker implements Runnable {
 	private FileManager fileManager = new FileManager();
 
 	public ClientWorker() {
-		clientFiles = new ArrayList<SyncFile>();
-		ignoredClientSideFiles = new ArrayList<SyncFile>(20);
+		clientFiles = new ArrayList<>();
+		ignoredClientSideFiles = new ArrayList<>(20);
 		errorInUpdates = false;
 		updateHappened = false;
 		finished = false;
@@ -269,12 +269,12 @@ public class ClientWorker implements Runnable {
 				}
 			}
 			
-			//TODO complete this with user prompt to pick which duplicate to keep
+			// TODO complete this with user prompt to pick which duplicate to keep
 			/* DUPLICATE CHECK */
 			populateClientFiles(syncableDirectories, true);
 			ArrayList<String> modNames = new ArrayList<>(200);
 			ArrayList<String> modHashes = new ArrayList<>(200);
-			ArrayList<SyncFile> dupes = new ArrayList<SyncFile>(10);
+			ArrayList<SyncFile> dupes = new ArrayList<>(10);
 			for (SyncFile clientFile : clientFiles) {
 				MinecraftModInformation modInfo = clientFile.getModInformation();
 				if (modInfo != null) {

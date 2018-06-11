@@ -18,10 +18,7 @@ public class FileProgress implements Runnable {
 		sb.append(fileName);
 		try {
 			SwingUtilities.invokeAndWait(this);
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
+		} catch (InvocationTargetException | InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
