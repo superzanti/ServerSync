@@ -217,8 +217,7 @@ public class Server {
 		}
 
 		try {
-			ArrayList<SyncFile> serverMods = new ArrayList<SyncFile>();
-			serverMods = (ArrayList<SyncFile>) ois.readObject();
+			ArrayList<SyncFile> serverMods = (ArrayList<SyncFile>) ois.readObject();
 			Logger.debug(Main.strings.getString("debug_files_server_tree"));
 
 			return serverMods;
@@ -246,8 +245,7 @@ public class Server {
 		}
 
 		try {
-			ArrayList<SyncFile> serverMods = new ArrayList<SyncFile>();
-			serverMods = (ArrayList<SyncFile>) ois.readObject();
+			ArrayList<SyncFile> serverMods = (ArrayList<SyncFile>) ois.readObject();
 			Logger.debug(Main.strings.getString("debug_files_client_only"));
 
 			return serverMods;
@@ -270,11 +268,11 @@ public class Server {
 		
 		try {
 			HashMap<String, List<String>> rules = (HashMap<String, List<String>>) ois.readObject();
-			ArrayList<String> ignored = new ArrayList<String>(rules.get("ignore"));
-			ArrayList<String> included = new ArrayList<String>(rules.get("include"));
+			ArrayList<String> ignored = new ArrayList<>(rules.get("ignore"));
+			ArrayList<String> included = new ArrayList<>(rules.get("include"));
 			
-			ArrayList<String> myIgnored = new ArrayList<String>(Main.CONFIG.FILE_IGNORE_LIST);
-			ArrayList<String> myIncluded = new ArrayList<String>(Main.CONFIG.CONFIG_INCLUDE_LIST);
+			ArrayList<String> myIgnored = new ArrayList<>(Main.CONFIG.FILE_IGNORE_LIST);
+			ArrayList<String> myIncluded = new ArrayList<>(Main.CONFIG.CONFIG_INCLUDE_LIST);
 			
 			ignored.removeAll(myIgnored);
 			included.removeAll(myIncluded);

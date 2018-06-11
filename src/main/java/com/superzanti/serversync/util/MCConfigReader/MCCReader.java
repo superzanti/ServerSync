@@ -11,7 +11,7 @@ public class MCCReader extends BufferedReader {
 	
 	public String category;
 	
-	public MCCReader(BufferedReader read) throws IOException {
+	public MCCReader(BufferedReader read) {
 		super(read);
 	}
 	
