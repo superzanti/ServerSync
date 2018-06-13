@@ -93,7 +93,6 @@ public class ClientWorker implements Runnable {
 			// TODO make this system simpler
 			if (directory.equals("config")) {
 				addConfigFiles = false;
-				
 			}
 		}
 		
@@ -185,7 +184,7 @@ public class ClientWorker implements Runnable {
 
 			Logger.debug(Main.strings.getString("ignoring") + " " + Main.CONFIG.FILE_IGNORE_LIST);
 
-			// run calculations to figure out how big the progress bar is
+			// figure out how big the progress bar is
 			// TODO check this logic
 			float numberOfFiles = clientFiles.size() + serverFiles.size();
 			float percentScale = numberOfFiles / 100;
@@ -196,7 +195,6 @@ public class ClientWorker implements Runnable {
 
 			/* COMMON MODS */
 			for (SyncFile serverFile : serverFiles) {
-				currentPercent++;
 				SyncFile clientFile;
 				if (serverFile.isClientSideOnlyFile) {
 					// TODO link this to a config value
@@ -229,7 +227,7 @@ public class ClientWorker implements Runnable {
 						server.updateFile(serverFile, clientFile);
 					}
 				}
-
+				currentPercent++;
 				Main.clientGUI.updateProgress((int) (currentPercent / percentScale));
 			}
 
@@ -246,11 +244,12 @@ public class ClientWorker implements Runnable {
 					
 					if (!serverFiles.contains(clientFile)) { 
 						if (clientFile.delete()) {
-							Logger.log(
-									"<>" + clientFile.getFileName() + " " + Main.strings.getString("delete_success"));
+							Logger.log("<>" + clientFile.getFileName()
+									+ " " + Main.strings.getString("delete_success"));
 							Path parentDirectory = clientFile.getClientSidePath().getParent();
 							// TODO check this logic well, don't want to have potential for deleting random folders
-							if (parentDirectory != null && Files.isDirectory(parentDirectory) && !parentDirectory.getFileName().toString().matches("mods|minecraft")) {
+							if (parentDirectory != null && Files.isDirectory(parentDirectory) &&
+									!parentDirectory.getFileName().toString().matches("mods|minecraft")) {
 								try {
 									Files.delete(parentDirectory);
 								} catch (IOException e) {

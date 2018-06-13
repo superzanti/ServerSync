@@ -117,14 +117,11 @@ public class PathUtils {
 				.getPath());
 	}
 
-	/**
+	/**ath.substring(0, lastIndex)
 	 * Tries to guess Minecraft directory intelligently.
 	 * @return Minecraft directory location as {@link Path} object
-	 * @throws IOException if guess is wrong or path for any magical reason does not exists.
 	 */
-	public static Path getMinecraftDirectory() throws IOException {
-		// TODO: I know there must be even more intelligent ways.
-		Path minecraft;
+	public static String getMinecraftDirectory() {
 		File jarFile = getServerSyncFile();
 		String jarFilePath = jarFile.getAbsolutePath();
 		String jarFileName = jarFile.getName();
@@ -147,8 +144,7 @@ public class PathUtils {
 			// According to repository wiki, ServerSync must be placed in Minecraft directory
 			lastIndex = jarFilePath.length() - jarFileName.length() - 1;
 		}
-		minecraft = Paths.get(jarFilePath.substring(0, lastIndex));
-		return minecraft.toRealPath();
+		return jarFilePath.substring(0, lastIndex);
 	}
 
 	private static List<String> getPathParts(String path) {
