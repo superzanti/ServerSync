@@ -128,7 +128,7 @@ public class SyncFile implements Serializable {
 	/**
 	 * Tests file to see if it is a packaged/zipped file
 	 * 
-	 * @param fileName
+	 * @param fileName file to check
 	 * @return true if file is a package
 	 */
 	private boolean isZipJar(String fileName) {
@@ -150,7 +150,7 @@ public class SyncFile implements Serializable {
 			JarFile packagedMod = null;
 
 			try {
-				ArrayList<String> infoTests = new ArrayList<String>(2);
+				ArrayList<String> infoTests = new ArrayList<>(2);
 				infoTests.add("mcmod.info");
 				infoTests.add("neimod.info");
 				packagedMod = new JarFile(this.synchronizableFile);
@@ -241,9 +241,7 @@ public class SyncFile implements Serializable {
 	/**
 	 * Compares mod versions from mcmod.info or compares file contents if version
 	 * could not be found
-	 * 
-	 * @param serversMod
-	 *            - servers version of the mod
+	 *
 	 * @return True if versions or content are the same<br>
 	 *         False if versions are different or if version is unknown and contents
 	 *         could not be read
@@ -304,10 +302,9 @@ public class SyncFile implements Serializable {
 	@SafeVarargs
 	public static ArrayList<String> listModNames(List<SyncFile>... modLists) {
 		if (modLists != null && modLists.length > 0) {
-			ArrayList<String> names = new ArrayList<String>(100);
-			int len = modLists.length;
-			for (int i = 0; i < len; i++) {
-				for (SyncFile mod : modLists[i]) {
+			ArrayList<String> names = new ArrayList<>(100);
+			for (List<SyncFile> modList : modLists) {
+				for (SyncFile mod : modList) {
 					names.add(mod.synchronizableFile.getName());
 				}
 			}

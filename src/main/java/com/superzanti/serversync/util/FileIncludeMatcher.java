@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import runme.Main;
 
 /**
- * Shortcut to match against configs include list
+ * Shortcut to match against configs <i>incldue</i> list
  * 
  * @author Rheimus
  *

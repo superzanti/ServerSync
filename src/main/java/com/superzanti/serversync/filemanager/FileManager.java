@@ -62,7 +62,7 @@ public class FileManager {
 					return false;
 				})
 				// Get files from valid directories
-				.map(path -> PathUtils.fileListDeep(path))
+				.map(PathUtils::fileListDeep)
 				.flatMap(ArrayList::stream)
 				// Filter out user ignored files
 				.filter(file -> {
@@ -72,13 +72,13 @@ public class FileManager {
 					return FileMatcher.shouldIncludeFile(file, fileMatchingMode);
 				})
 				// Create sync files for the remaining valid list
-				.map(file -> SyncFile.StandardSyncFile(file))
+				.map(SyncFile::StandardSyncFile)
 				.collect(Collectors.toCollection(ArrayList::new));
 	}
 	
 	public ArrayList<SyncFile> getClientOnlyFiles() {
 		return PathUtils.fileListDeep(Paths.get("clientmods")).stream()
-				.map(file -> SyncFile.ClientOnlySyncFile(file))
+				.map(SyncFile::ClientOnlySyncFile)
 				.collect(Collectors.toCollection(ArrayList::new));
 	}
 
@@ -91,11 +91,11 @@ public class FileManager {
 		if (fileMatchPatterns != null) {
 			Logger.debug("File matching patterns present");
 
-			return FileMatcher.filter(configFiles, fileMatchingMode).stream().map(file -> SyncFile.ConfigSyncFile(file))
+			return FileMatcher.filter(configFiles, fileMatchingMode).stream().map(SyncFile::ConfigSyncFile)
 					.collect(Collectors.toCollection(ArrayList::new));
 		}
 
-		return configFiles.stream().map(file -> SyncFile.ConfigSyncFile(file))
+		return configFiles.stream().map(SyncFile::ConfigSyncFile)
 				.collect(Collectors.toCollection(ArrayList::new));
 	}
 }

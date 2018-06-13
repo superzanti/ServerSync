@@ -115,7 +115,7 @@ public class PathUtils {
 	private static List<String> getPathParts(String path) {
 		path = path.replace('\\', '/');
 		String[] pp = path.split("/");
-		List<String> ppl = new ArrayList<String>();
+		List<String> ppl = new ArrayList<>();
 		for (String s : pp) {
 			ppl.add(s.toLowerCase());
 		}
@@ -132,7 +132,7 @@ public class PathUtils {
 			if (Files.exists(dir)) {
 				Stream<Path> ds = Files.walk(dir);
 
-				ArrayList<Path> dirList = new ArrayList<Path>();
+				ArrayList<Path> dirList = new ArrayList<>();
 
 				Iterator<Path> it = ds.iterator();
 				while (it.hasNext()) {

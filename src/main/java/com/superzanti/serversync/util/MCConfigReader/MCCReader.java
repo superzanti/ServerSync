@@ -11,7 +11,7 @@ public class MCCReader extends BufferedReader {
 	
 	public String category;
 	
-	public MCCReader(BufferedReader read) throws IOException {
+	public MCCReader(BufferedReader read) {
 		super(read);
 	}
 	
@@ -71,8 +71,7 @@ public class MCCReader extends BufferedReader {
 	}
 	
 	private String getType(String line) {
-		String sub = line.substring(line.indexOf(":") - 1, line.indexOf(":")).trim();
-		return sub;
+		return line.substring(line.indexOf(":") - 1, line.indexOf(":")).trim();
 	}
 	
 	private String getName(String line) {
@@ -86,7 +85,6 @@ public class MCCReader extends BufferedReader {
 	}
 	
 	private String getValue(String line) {
-		String sub = line.substring(line.indexOf("=")+1).trim();
-		return sub;
+		return line.substring(line.indexOf("=")+1).trim();
 	}
 }

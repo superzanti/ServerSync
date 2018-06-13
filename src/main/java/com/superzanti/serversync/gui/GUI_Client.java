@@ -10,30 +10,15 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Locale;
-import java.util.Observable;
-import java.util.Observer;
 
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.SoftBevelBorder;
 import javax.swing.border.TitledBorder;
 
-import com.superzanti.lib.RefStrings;
+import com.superzanti.serversync.RefStrings;
 import com.superzanti.serversync.ClientWorker;
 import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.util.Log;
@@ -65,12 +50,9 @@ public class GUI_Client extends JFrame {
 
 	public GUI_Client() {
 		super();
-		Logger.getLog().addObserver(new Observer() {
-			@Override
-			public void update(Observable o, Object arg) {
-				if (o instanceof Log) {
-					updateText(((Log) o).userFacingLog.toString());
-				}
+		Logger.getLog().addObserver((o, arg) -> {
+			if (o instanceof Log) {
+				updateText(((Log) o).userFacingLog.toString());
 			}
 		});
 		
@@ -81,7 +63,7 @@ public class GUI_Client extends JFrame {
 		setTitle(Main.APPLICATION_TITLE);
 		getContentPane().setBackground(new Color(0, 0, 0));
 		setResizable(false);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setPreferredSize(new Dimension(600, 300));
 		setIconImage(new ImageIcon(ClassLoader.getSystemResource("ServersyncLogo.png")).getImage());
 
@@ -150,20 +132,12 @@ public class GUI_Client extends JFrame {
 		add(root);
 
 		// Listeners
-		B_sync.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				publishSyncPressed();
-			}
-		});
+		B_sync.addActionListener(e -> publishSyncPressed());
 
 		TF_ipAddress.addKeyListener(new KeyListener() {
 
 			@Override
-			public void keyTyped(java.awt.event.KeyEvent e) {
-				return;
-			}
+			public void keyTyped(java.awt.event.KeyEvent e) { return; }
 
 			@Override
 			public void keyReleased(java.awt.event.KeyEvent e) {
@@ -211,13 +185,12 @@ public class GUI_Client extends JFrame {
 					updateText("No config found, requesting details");
 					
 					if (ip.equals("")) {
-						String serverIP = (String) JOptionPane.showInputDialog("Server IP address");
-						ip = serverIP;
+						ip = JOptionPane.showInputDialog("Server IP address");
 						setIPAddress(ip);
 					}
 					
 					if (port == 90000) {
-						String serverPort = (String) JOptionPane.showInputDialog("Server Port (numbers only)");
+						String serverPort = JOptionPane.showInputDialog("Server Port (numbers only)");
 						port = Integer.parseInt(serverPort);
 						
 						if(setPort(port)) {
@@ -257,77 +230,47 @@ public class GUI_Client extends JFrame {
 	}
 
 	public void updateText(String text) {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				TA_info.setText(text);
-			}
-		});
+		SwingUtilities.invokeLater(() -> TA_info.setText(text));
 	}
 
 	public void updateProgress(int progress) {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				B_sync.setText(progress + "%");
-			}
-		});
+		SwingUtilities.invokeLater(() -> B_sync.setText(progress + "%"));
 	}
 
 	public void updateFileProgress(String message, int progress) {
-		SwingUtilities.invokeLater(new Runnable() {
+		SwingUtilities.invokeLater(() -> {
+			if (!PB_fileProgress.isVisible() && progress < 100) {
+				PB_fileProgress.setVisible(true);
+			}
 
-			@Override
-			public void run() {
-				if (!PB_fileProgress.isVisible() && progress < 100) {
-					PB_fileProgress.setVisible(true);
-				}
+			PB_fileProgress.setString("<" + progress + "%> " + message);
+			PB_fileProgress.setValue(progress);
 
-				PB_fileProgress.setString("<" + progress + "%> " + message);
-				PB_fileProgress.setValue(progress);
-
-				if (message == null) {
-					PB_fileProgress.setVisible(false);
-					PB_fileProgress.setString(null);
-				}
+			if (message == null) {
+				PB_fileProgress.setVisible(false);
+				PB_fileProgress.setString(null);
 			}
 		});
 	}
 
 	public void enableSyncButton() {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				B_sync.setEnabled(true);
-				B_sync.setText("Sync");
-			}
+		SwingUtilities.invokeLater(() -> {
+			B_sync.setEnabled(true);
+			B_sync.setText("Sync");
 		});
 	}
 	
 	public void disableSyncButton() {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				B_sync.setEnabled(false);
-			}
-		});
+		SwingUtilities.invokeLater(() -> B_sync.setEnabled(false));
 	}
 
 	public void toggleSyncButton() {
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				if (B_sync.isEnabled()) {
-					B_sync.setEnabled(false);
-				} else {
-					B_sync.setEnabled(true);
-					B_sync.setText("Sync");
-				}
+		SwingUtilities.invokeLater(() -> {
+			if (B_sync.isEnabled()) {
+				B_sync.setEnabled(false);
+			} else {
+				B_sync.setEnabled(true);
+				B_sync.setText("Sync");
 			}
 		});
 	}
@@ -356,11 +299,7 @@ public class GUI_Client extends JFrame {
 	}
 
 	public void setIPAddress(String ip) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				TF_ipAddress.setText(ip);
-			}
-		});
+		SwingUtilities.invokeLater(() -> TF_ipAddress.setText(ip));
 	}
 
 	public int getPort() {

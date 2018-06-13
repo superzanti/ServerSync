@@ -5,7 +5,8 @@ import java.nio.file.Path;
 import runme.Main;
 
 /**
- * Shortcut to match against configs ignore list
+ * Shortcut to match against configs <i>ignore</i> list
+ *
  * @author Rheimus
  *
  */

@@ -27,7 +27,6 @@ public class GUI_Client_Mock extends GUI_Client{
 
 	@Override
 	public String getIPAddress() {
-		// TODO Auto-generated method stub
 		return Main.CONFIG.SERVER_IP;
 	}
 
@@ -36,7 +35,6 @@ public class GUI_Client_Mock extends GUI_Client{
 
 	@Override
 	public int getPort() {
-		// TODO Auto-generated method stub
 		return Main.CONFIG.SERVER_PORT;
 	}
 

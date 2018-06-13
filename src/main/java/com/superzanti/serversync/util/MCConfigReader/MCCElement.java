@@ -20,11 +20,7 @@ public class MCCElement {
 		this.name = name;
 		setType(type);
 		this.isArray = false;
-		if (comments.isEmpty()) {
-			this.hasComment = false;
-		} else {
-			this.hasComment = true;
-		}
+		this.hasComment = !comments.isEmpty();
 		this.value = value;
 		this.values = null;
 	}
@@ -32,11 +28,7 @@ public class MCCElement {
 	public MCCElement(String category,String type,String name, ArrayList<String> values, ArrayList<String> elementComments) {
 		this.category = category;
 		this.comments = elementComments;
-		if (comments.isEmpty()) {
-			this.hasComment = false;
-		} else {
-			this.hasComment = true;
-		}
+		this.hasComment = !comments.isEmpty();
 		this.name = name;
 		setType(type);
 		this.values = values;

@@ -39,7 +39,7 @@ public class Main {
 
 	public static ProgramArguments arguments;
 
-	public static void main(String[] args) throws InterruptedException, IOException {
+	public static void main(String[] args) {
 		arguments = new ProgramArguments(args);
 
 		if (arguments.isServer) {
@@ -80,13 +80,10 @@ public class Main {
 			System.out.println("Loading language file: " + CONFIG.LOCALE);
 			strings = ResourceBundle.getBundle("assets.serversync.MessagesBundle", CONFIG.LOCALE);
 		} catch (MissingResourceException e) {
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					System.out.println("No language file available for: " + CONFIG.LOCALE + ", defaulting to en_US");
-				}
-			});
-			strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", new Locale("en", "US"));
+			SwingUtilities.invokeLater(() -> System.out.println("No language file available for: " + CONFIG.LOCALE +
+					", defaulting to en_US"));
+			strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle",
+					new Locale("en", "US"));
 		}
 	}
 

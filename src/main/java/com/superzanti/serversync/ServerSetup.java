@@ -35,15 +35,15 @@ public class ServerSetup implements Runnable {
 	private static ServerSocket server;
 
 	// This is what's in our folders
-	public static ArrayList<SyncFile> allFiles = new ArrayList<SyncFile>(700);
-	public static ArrayList<SyncFile> standardSyncableFiles = new ArrayList<SyncFile>(700);
-	public static ArrayList<SyncFile> standardFiles = new ArrayList<SyncFile>(200);
-	public static ArrayList<SyncFile> configFiles = new ArrayList<SyncFile>(500);
-	public static ArrayList<SyncFile> clientOnlyFiles = new ArrayList<SyncFile>(20);
-	public static ArrayList<String> directories = new ArrayList<String>(20);
+	public static ArrayList<SyncFile> allFiles = new ArrayList<>(200);
+	public static ArrayList<SyncFile> standardSyncableFiles = new ArrayList<>(200);
+	public static ArrayList<SyncFile> standardFiles = new ArrayList<>(75);
+	public static ArrayList<SyncFile> configFiles = new ArrayList<>(200);
+	public static ArrayList<SyncFile> clientOnlyFiles = new ArrayList<>(20);
+	public static ArrayList<String> directories = new ArrayList<>(20);
 	
 	public static EnumMap<EServerMessage, String> generateServerMessages() {
-		EnumMap<EServerMessage, String> SERVER_MESSAGES = new EnumMap<EServerMessage, String>(EServerMessage.class);
+		EnumMap<EServerMessage, String> SERVER_MESSAGES = new EnumMap<>(EServerMessage.class);
 
 		for (EServerMessage msg : EServerMessage.values()) {
 			double rng = Math.random() * 1000d;
