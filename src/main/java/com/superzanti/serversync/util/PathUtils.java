@@ -1,14 +1,16 @@
 package com.superzanti.serversync.util;
 
-import runme.Main;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.stream.Stream;
+
+import runme.Main;
 
 /**
  * Helper for working with paths and directories

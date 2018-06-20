@@ -3,8 +3,6 @@ package com.superzanti.serversync.util;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedList;
-import java.util.List;
 
 public class PathBuilder {
 	private StringBuilder builder = new StringBuilder();
@@ -46,5 +44,4 @@ public class PathBuilder {
 	}
 
 	public Path buildPath() { return Paths.get(builder.toString()); }
-	 
 }

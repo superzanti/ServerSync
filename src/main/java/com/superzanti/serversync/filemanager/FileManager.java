@@ -14,17 +14,16 @@ import com.superzanti.serversync.util.PathUtils;
 import com.superzanti.serversync.util.SyncFile;
 import com.superzanti.serversync.util.enums.EFileMatchingMode;
 
-// TODO break this out into objects modelling the various directories
 public class FileManager {
 	public final Path configurationFilesDirectory;
 	public final Path modFilesDirectory;
 	public final Path logsDirectory;
 
 	public FileManager() {
-		PathBuilder builder = new PathBuilder(PathUtils.getMinecraftDirectory());
-		modFilesDirectory = builder.add("mods").buildPath();
-		configurationFilesDirectory = builder.add("config").buildPath();
-		logsDirectory = builder.add("logs").buildPath();
+		// TODO could probably DRY this out a bit
+		modFilesDirectory = new PathBuilder(PathUtils.getMinecraftDirectory()).add("mods").buildPath();
+		configurationFilesDirectory = new PathBuilder(PathUtils.getMinecraftDirectory()).add("config").buildPath();
+		logsDirectory = new PathBuilder(PathUtils.getMinecraftDirectory()).add("logs").buildPath();
 	}
 	
 	public ArrayList<SyncFile> getModFiles(String directory, List<String> fileMatchPatterns,
