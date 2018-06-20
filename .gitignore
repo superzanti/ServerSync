@@ -69,6 +69,7 @@ publish/
 mods/
 config/
 bin/
+out/
 build/
 *.tmp
 *.bak

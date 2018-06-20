@@ -21,39 +21,24 @@ public class FileManager {
 	public final Path logsDirectory;
 
 	public FileManager() {
-		Path modsDir = Paths.get("mods");
-		Path configDir;
-		Path logsDir;
-
-		if (!Files.exists(modsDir)) {
-			modsDir = Paths.get(new PathBuilder().add("..").add("mods").toString());
-
-			if (!Files.exists(modsDir)) {
-				throw new Error("Could not find a mods directory, Is serversync in the right location?");
-			}
-
-			configDir = Paths.get(new PathBuilder().add("..").add("config").toString());
-			logsDir = Paths.get(new PathBuilder().add("..").add("logs").toString());
-		} else {
-			configDir = Paths.get("config");
-			logsDir = Paths.get("logs");
-		}
-
-		configurationFilesDirectory = configDir;
-		modFilesDirectory = modsDir;
-		logsDirectory = logsDir;
+		PathBuilder builder = new PathBuilder(PathUtils.getMinecraftDirectory());
+		modFilesDirectory = builder.add("mods").buildPath();
+		configurationFilesDirectory = builder.add("config").buildPath();
+		logsDirectory = builder.add("logs").buildPath();
 	}
 	
-	public ArrayList<SyncFile> getModFiles(String directory, List<String> fileMatchPatterns, EFileMatchingMode fileMatchingMode) {
+	public ArrayList<SyncFile> getModFiles(String directory, List<String> fileMatchPatterns,
+										   EFileMatchingMode fileMatchingMode) {
 		ArrayList<String> dirs = new ArrayList<>();
 		dirs.add(directory);
 		return getModFiles(dirs, fileMatchPatterns, fileMatchingMode);
 	}
 
-	public ArrayList<SyncFile> getModFiles(List<String> includedDirectories, List<String> fileMatchPatterns, EFileMatchingMode fileMatchingMode) {
+	public ArrayList<SyncFile> getModFiles(List<String> includedDirectories, List<String> fileMatchPatterns,
+										   EFileMatchingMode fileMatchingMode) {
 		return includedDirectories.stream()
 				// Check for valid include directories
-				.map(dir -> Paths.get(dir))
+				.map(Paths::get)
 				.filter(path -> {
 					if (Files.exists(path)) {
 						return true;
@@ -82,7 +67,8 @@ public class FileManager {
 				.collect(Collectors.toCollection(ArrayList::new));
 	}
 
-	public ArrayList<SyncFile> getConfigurationFiles(List<String> fileMatchPatterns, EFileMatchingMode fileMatchingMode) {
+	public ArrayList<SyncFile> getConfigurationFiles(List<String> fileMatchPatterns,
+													 EFileMatchingMode fileMatchingMode) {
 
 		ArrayList<Path> configFiles = PathUtils.fileListDeep(configurationFilesDirectory);
 

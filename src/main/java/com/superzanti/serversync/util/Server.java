@@ -219,7 +219,6 @@ public class Server {
 		try {
 			ArrayList<SyncFile> serverMods = (ArrayList<SyncFile>) ois.readObject();
 			Logger.debug(Main.strings.getString("debug_files_server_tree"));
-
 			return serverMods;
 		} catch (ClassNotFoundException e) {
 			Logger.debug("Failed to read class: " + e.getMessage());

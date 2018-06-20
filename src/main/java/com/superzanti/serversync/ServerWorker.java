@@ -124,7 +124,7 @@ public class ServerWorker implements Runnable {
 
 				if (message.equals(messages.get(EServerMessage.UPDATE_NEEDED))) {
 					int checkLevel = ois.readInt();
-					ArrayList<String> serverFileNames = new ArrayList<String>(200);
+					ArrayList<String> serverFileNames = new ArrayList<>(200);
 					if (checkLevel == 3) {
 						Logger.log("Client Requested a list of all files");
 						serverFileNames.addAll(SyncFile.listModNames(ServerSetup.allFiles));
@@ -134,7 +134,7 @@ public class ServerWorker implements Runnable {
 					}
 					Logger.log("Sending list of syncable mods");
 
-					serverFileNames.removeAll(new ArrayList<String>(Main.CONFIG.FILE_IGNORE_LIST));
+					serverFileNames.removeAll(new ArrayList<>(Main.CONFIG.FILE_IGNORE_LIST));
 
 					Logger.log("Syncable mods are: " + serverFileNames.toString());
 					oos.writeObject(serverFileNames);
@@ -222,7 +222,7 @@ public class ServerWorker implements Runnable {
 
 				if (message.equals(messages.get(EServerMessage.FILE_GET_CONFIG))) {
 					Logger.log("Sending config info to client...");
-					HashMap<String, List<String>> rules = new HashMap<String, List<String>>();
+					HashMap<String, List<String>> rules = new HashMap<>();
 					rules.put("ignore", Main.CONFIG.FILE_IGNORE_LIST);
 					rules.put("include", Main.CONFIG.CONFIG_INCLUDE_LIST);
 					// TODO add security info in transfer

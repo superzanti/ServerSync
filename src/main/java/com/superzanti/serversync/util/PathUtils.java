@@ -1,14 +1,13 @@
 package com.superzanti.serversync.util;
 
+import runme.Main;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -107,9 +106,45 @@ public class PathUtils {
 		return pathBuilder.toString();
 	}
 
-	public static Path getMinecraftDirectory() throws IOException {
-		Path minecraft = Paths.get("");
-		return minecraft.toRealPath();
+	/**
+	 * Uses Java reflection magic and ServerSync's {@linkplain Main} class to get jar file as {@linkplain File} object.
+	 * @return ServerSync jar file
+	 */
+	public static File getServerSyncFile() {
+		return new java.io.File(Main.class.getProtectionDomain()
+				.getCodeSource()
+				.getLocation()
+				.getPath());
+	}
+
+	/**ath.substring(0, lastIndex)
+	 * Tries to guess Minecraft directory intelligently.
+	 * @return Minecraft directory location as {@link Path} object
+	 */
+	public static String getMinecraftDirectory() {
+		File jarFile = getServerSyncFile();
+		String jarFilePath = jarFile.getAbsolutePath();
+		String jarFileName = jarFile.getName();
+		int lastIndex = -1;
+		String[] directories = jarFilePath.replace("\\", "/").split("/");
+		int dirsLen = directories.length - 1;
+		if (directories[dirsLen].equals("mods")) {
+			// Length - ServerSync jar filename - "mods/"
+			// this covers mods/ServerSync.jar case
+			lastIndex = jarFilePath.length() - jarFileName.length() - 5;
+		} else if (directories[dirsLen].contains(".") && directories[dirsLen - 1].equals("mods")) {
+			// Length - ServerSync jar filename - "/" - length of directory parenting jar file - "/"
+			// this covers mods/1.12.2/ServerSync.jar case
+			lastIndex = jarFilePath.length() - jarFileName.length() - 2 - directories[dirsLen - 1].length();
+//		} else if (directories[dirsLen].equals(".minecraft")) {
+//			// Length - jar filename - "/"
+//			// this covers .minecraft/ServerSync.jar case
+//			lastIndex = jarFilePath.length() - jarFileName.length() - 1;
+		} else {
+			// According to repository wiki, ServerSync must be placed in Minecraft directory
+			lastIndex = jarFilePath.length() - jarFileName.length() - 1;
+		}
+		return jarFilePath.substring(0, lastIndex);
 	}
 
 	private static List<String> getPathParts(String path) {
