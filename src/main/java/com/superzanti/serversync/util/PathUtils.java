@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.stream.Stream;
 
 import runme.Main;
@@ -20,95 +19,6 @@ import runme.Main;
  *
  */
 public class PathUtils {
-
-	private static StringBuilder pathBuilder;
-
-	/**
-	 * Go to last occurrence of target in path
-	 * 
-	 * @param target
-	 *            what directory you want to go to
-	 * @param path
-	 *            the absolute path of your current directory
-	 * @param offset
-	 *            walk further up the chain
-	 * @return String rebuilt up to the target directory <br>
-	 * 
-	 *         <pre>
-	 * e.g. 1) target = foo, path = bar/foo/ring/ding/ 
-	 * returns: bar/foo/ <br>     2) target = foo, path = bar/foo/ring/ding, offset = 1
-	 * returns: bar/
-	 *         </pre>
-	 */
-	public static String walkTo(String target, String path, int offset) {
-		List<String> pathParts = getPathParts(path);
-		target = target.toLowerCase();
-
-		pathBuilder = new StringBuilder();
-		int locationOfTarget = pathParts.lastIndexOf(target);
-
-		ListIterator<String> iter = pathParts.listIterator();
-
-		while (iter.hasNext()) {
-			String part = iter.next();
-			int index = iter.nextIndex();
-			if (part.equalsIgnoreCase(target) && index >= locationOfTarget) {
-				pathBuilder.append(part);
-				pathBuilder.append("/");
-				System.out.println("found target");
-				System.out.println(pathBuilder.toString());
-				break;
-			} else {
-				pathBuilder.append(part);
-				pathBuilder.append("/");
-				System.out.println("appended: " + part);
-			}
-		}
-
-		if (offset > 0) {
-			try {
-				return walkUp(offset, pathBuilder.toString());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		return pathBuilder.toString();
-	}
-
-	/**
-	 * Go up offset number of parts in path
-	 * 
-	 * @param offset
-	 *            how far to walk up the path
-	 * @param path
-	 *            the absolute path of your current directory
-	 * @return String rebuilt up to the offset amount <br>
-	 * 
-	 *         <pre>
-	 * e.g. offset = 2, path = bar/foo/ring/ding/ 
-	 * returns: bar/foo/
-	 *         </pre>
-	 * 
-	 * @throws Exception
-	 *             if offset is longer than path
-	 */
-	public static String walkUp(int offset, String path) throws Exception {
-		List<String> pathParts = getPathParts(path);
-		int ppLen = pathParts.size();
-		pathBuilder = new StringBuilder();
-
-		if (offset > ppLen) {
-			throw new Exception("Offset is longer than path chain");
-		}
-
-		for (int i = 0; i < ppLen - offset; i++) {
-			pathBuilder.append(pathParts.get(i));
-			pathBuilder.append("/");
-		}
-		return pathBuilder.toString();
-	}
-
 	/**
 	 * Uses Java reflection magic and ServerSync's {@linkplain Main} class to get
 	 * jar file as {@linkplain File} object.
@@ -128,7 +38,7 @@ public class PathUtils {
 		File jarFile = getServerSyncFile();
 		String jarFilePath = jarFile.getAbsolutePath();
 
-		List<String> parts = Arrays.asList(jarFilePath.split("[\\\\/]"));
+		List<String> parts = getPathParts(jarFilePath);
 		
 		if (parts.contains("file:")) {
 			// Shift past the file declaration when loaded in a forge environment
@@ -152,13 +62,7 @@ public class PathUtils {
 	}
 
 	private static List<String> getPathParts(String path) {
-		path = path.replace('\\', '/');
-		String[] pp = path.split("/");
-		List<String> ppl = new ArrayList<>();
-		for (String s : pp) {
-			ppl.add(s.toLowerCase());
-		}
-		return ppl;
+		return Arrays.asList(path.split("[\\\\/]"));
 	}
 
 	public static File[] fileList(String directory) {
