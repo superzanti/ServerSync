@@ -20,10 +20,15 @@ public class FileManager {
 	public final Path logsDirectory;
 
 	public FileManager() {
-		// TODO could probably DRY this out a bit
-		modFilesDirectory = new PathBuilder(PathUtils.getMinecraftDirectory()).add("mods").buildPath();
-		configurationFilesDirectory = new PathBuilder(PathUtils.getMinecraftDirectory()).add("config").buildPath();
-		logsDirectory = new PathBuilder(PathUtils.getMinecraftDirectory()).add("logs").buildPath();
+		String root = PathUtils.getMinecraftDirectory();
+		
+		if (root == null) {
+			root = "";
+		}
+		
+		modFilesDirectory = new PathBuilder(root).add("mods").buildPath();
+		configurationFilesDirectory = new PathBuilder(root).add("config").buildPath();
+		logsDirectory = new PathBuilder(root).add("logs").buildPath();
 	}
 	
 	public ArrayList<SyncFile> getModFiles(String directory, List<String> fileMatchPatterns,
