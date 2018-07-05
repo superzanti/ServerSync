@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.Locale;
 
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.MCConfigReader.MCCCategory;
-import com.superzanti.serversync.util.MCConfigReader.MCCConfig;
-import com.superzanti.serversync.util.MCConfigReader.MCCElement;
-import com.superzanti.serversync.util.MCConfigReader.MCCReader;
-import com.superzanti.serversync.util.MCConfigReader.MCCWriter;
 import com.superzanti.serversync.util.enums.EConfigDefaults;
 import com.superzanti.serversync.util.enums.EConfigType;
+import com.superzanti.serversync.util.minecraft.config.MinecraftConfigCategory;
+import com.superzanti.serversync.util.minecraft.config.MinecraftConfig;
+import com.superzanti.serversync.util.minecraft.config.MinecraftConfigElement;
+import com.superzanti.serversync.util.minecraft.config.MinecraftConfigReader;
+import com.superzanti.serversync.util.minecraft.config.MinecraftConfigWriter;
 
 final class ConfigDefaults extends HashMap<EConfigDefaults, String> {
 	private static final long serialVersionUID = 71158792045085436L;
@@ -46,7 +46,7 @@ public class SyncConfig {
 	private static final String CATEGORY_CONNECTION = "serverconnection";
 	private static final String CATEGORY_OTHER = "misc";
 	
-	private MCCConfig config;
+	private MinecraftConfig config;
 	
 	private Path configPath;
 	public final EConfigType configType;
@@ -73,7 +73,7 @@ public class SyncConfig {
 	public SyncConfig(EConfigType type) {
 		this.FILE_IGNORE_LIST.add("serversync-*.jar");
 		configType = type;
-		config = new MCCConfig();
+		config = new MinecraftConfig();
 		if (configType == EConfigType.SERVER) {			
 			configPath = Paths.get(CONFIG_LOCATION + File.separator + "serversync-server.cfg");
 		} else {
@@ -98,7 +98,7 @@ public class SyncConfig {
 	
 	private void readExistingConfiguration() {
 		try {
-			config.readConfig(new MCCReader(Files.newBufferedReader(configPath)));
+			config.readConfig(new MinecraftConfigReader(Files.newBufferedReader(configPath)));
 		} catch (IOException e) {
 			Logger.debug("Failed to read config file: " + e.getMessage());
 			e.printStackTrace();
@@ -121,34 +121,34 @@ public class SyncConfig {
 				ArrayList<String> comments = new ArrayList<String>();
 				ArrayList<String> defaultValueList = new ArrayList<>();
 				
-				MCCCategory general = new MCCCategory(SyncConfig.CATEGORY_GENERAL);
+				MinecraftConfigCategory general = new MinecraftConfigCategory(SyncConfig.CATEGORY_GENERAL);
 					comments.add("# set true to push client side mods from clientmods directory, set on server [default: false]");
-					general.add(new MCCElement(SyncConfig.CATEGORY_GENERAL, "B", "PUSH_CLIENT_MODS", "false", comments));
+					general.add(new MinecraftConfigElement(SyncConfig.CATEGORY_GENERAL, "B", "PUSH_CLIENT_MODS", "false", comments));
 					comments.clear();
 				
-				MCCCategory rules = new MCCCategory(SyncConfig.CATEGORY_RULES);
+				MinecraftConfigCategory rules = new MinecraftConfigCategory(SyncConfig.CATEGORY_RULES);
 					comments.add("# These configs are included, by default configs are not synced");
-					rules.add(new MCCElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST", new ArrayList<String>(), comments));
+					rules.add(new MinecraftConfigElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST", new ArrayList<String>(), comments));
 					comments.clear();
 
 					defaultValueList.add("mods");
 					comments.add("# These directories are included, by default mods and configs are included");
-					rules.add(new MCCElement(SyncConfig.CATEGORY_RULES, "S", "DIRECTORY_INCLUDE_LIST", new ArrayList<String>(defaultValueList), comments));
+					rules.add(new MinecraftConfigElement(SyncConfig.CATEGORY_RULES, "S", "DIRECTORY_INCLUDE_LIST", new ArrayList<String>(defaultValueList), comments));
 					comments.clear();
 					defaultValueList.clear();
 				
 					comments.add("# These files are ignored by serversync, list auto updates with mods added to the clientmods directory");
-					rules.add(new MCCElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<String>(), comments));
+					rules.add(new MinecraftConfigElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<String>(), comments));
 					comments.clear();
 				
-				MCCCategory serverConnection = new MCCCategory(SyncConfig.CATEGORY_CONNECTION);
+				MinecraftConfigCategory serverConnection = new MinecraftConfigCategory(SyncConfig.CATEGORY_CONNECTION);
 					comments.add("# The port that your server will be serving on [range: 1 ~ 49151, default: 38067]");
-					serverConnection.add(new MCCElement(SyncConfig.CATEGORY_CONNECTION, "I", "SERVER_PORT", "38067", comments));
+					serverConnection.add(new MinecraftConfigElement(SyncConfig.CATEGORY_CONNECTION, "I", "SERVER_PORT", "38067", comments));
 					comments.clear();
 					
-				MCCCategory other = new MCCCategory(SyncConfig.CATEGORY_OTHER);
+				MinecraftConfigCategory other = new MinecraftConfigCategory(SyncConfig.CATEGORY_OTHER);
 					comments.add("# Your locale string");
-					other.add(new MCCElement(SyncConfig.CATEGORY_OTHER, "S", "LOCALE", Locale.getDefault().toString(), comments));
+					other.add(new MinecraftConfigElement(SyncConfig.CATEGORY_OTHER, "S", "LOCALE", Locale.getDefault().toString(), comments));
 					comments.clear();
 				
 				config.put(SyncConfig.CATEGORY_GENERAL, general);
@@ -157,7 +157,7 @@ public class SyncConfig {
 				config.put(SyncConfig.CATEGORY_OTHER, other);
 				
 				try {
-					config.writeConfig(new MCCWriter(Files.newBufferedWriter(configPath)));
+					config.writeConfig(new MinecraftConfigWriter(Files.newBufferedWriter(configPath)));
 				} catch (IOException e) {
 					Logger.debug("Failed to write server config file: " + e.getMessage());
 					e.printStackTrace();
@@ -167,32 +167,32 @@ public class SyncConfig {
 			// Client config
 			ArrayList<String> comments = new ArrayList<String>();
 			
-			MCCCategory general = new MCCCategory(SyncConfig.CATEGORY_GENERAL);
+			MinecraftConfigCategory general = new MinecraftConfigCategory(SyncConfig.CATEGORY_GENERAL);
 				comments.add("Set this to true to refuse client mods pushed by the server, [default: false]");
-				general.add(new MCCElement(SyncConfig.CATEGORY_GENERAL, "B", "REFUSE_CLIENT_MODS", "false", comments));
+				general.add(new MinecraftConfigElement(SyncConfig.CATEGORY_GENERAL, "B", "REFUSE_CLIENT_MODS", "false", comments));
 				comments.clear();
 
-			MCCCategory rules = new MCCCategory(SyncConfig.CATEGORY_RULES);
+			MinecraftConfigCategory rules = new MinecraftConfigCategory(SyncConfig.CATEGORY_RULES);
 				comments.add("These configs are included, by default configs are not synced.");
-				rules.add(new MCCElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST", new ArrayList<String>(), comments));
+				rules.add(new MinecraftConfigElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST", new ArrayList<String>(), comments));
 				comments.clear();
 				
 				comments.add("These files are ignored by serversync, add your client mods here to stop serversync deleting them.");
-				rules.add(new MCCElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<String>(), comments));
+				rules.add(new MinecraftConfigElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<String>(), comments));
 				comments.clear();
 			
-			MCCCategory connection = new MCCCategory(SyncConfig.CATEGORY_CONNECTION);
+			MinecraftConfigCategory connection = new MinecraftConfigCategory(SyncConfig.CATEGORY_CONNECTION);
 				comments.add("The IP address of the server [default: 127.0.0.1]");
-				connection.add(new MCCElement(SyncConfig.CATEGORY_CONNECTION, "S", "SERVER_IP", "127.0.0.1", comments));
+				connection.add(new MinecraftConfigElement(SyncConfig.CATEGORY_CONNECTION, "S", "SERVER_IP", "127.0.0.1", comments));
 				comments.clear();
 				
 				comments.add("The port that your server will be serving on [range: 1 ~ 49151, default: 38067]");
-				connection.add(new MCCElement(SyncConfig.CATEGORY_CONNECTION, "I", "SERVER_PORT", "38067", comments));
+				connection.add(new MinecraftConfigElement(SyncConfig.CATEGORY_CONNECTION, "I", "SERVER_PORT", "38067", comments));
 				comments.clear();
 				
-			MCCCategory other = new MCCCategory(SyncConfig.CATEGORY_OTHER);
+			MinecraftConfigCategory other = new MinecraftConfigCategory(SyncConfig.CATEGORY_OTHER);
 				comments.add("# Your locale string");
-				other.add(new MCCElement(SyncConfig.CATEGORY_OTHER, "S", "LOCALE", Locale.getDefault().toString(), comments));
+				other.add(new MinecraftConfigElement(SyncConfig.CATEGORY_OTHER, "S", "LOCALE", Locale.getDefault().toString(), comments));
 				comments.clear();
 				
 			config.put(SyncConfig.CATEGORY_GENERAL, general);
@@ -201,7 +201,7 @@ public class SyncConfig {
 			config.put(SyncConfig.CATEGORY_OTHER, other);
 			
 			try {
-				config.writeConfig(new MCCWriter(Files.newBufferedWriter(configPath)));
+				config.writeConfig(new MinecraftConfigWriter(Files.newBufferedWriter(configPath)));
 			} catch (IOException e) {
 				Logger.debug("Failed to write client config file: " + e.getMessage());
 				e.printStackTrace();
@@ -212,7 +212,7 @@ public class SyncConfig {
 	
 	public boolean writeConfigUpdates() {
 		try {
-			config.writeConfig(new MCCWriter(Files.newBufferedWriter(configPath,StandardOpenOption.TRUNCATE_EXISTING)));
+			config.writeConfig(new MinecraftConfigWriter(Files.newBufferedWriter(configPath,StandardOpenOption.TRUNCATE_EXISTING)));
 		} catch (IOException e) {
 			e.printStackTrace();
 			return false;

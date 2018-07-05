@@ -1,18 +1,18 @@
-package com.superzanti.serversync.util.MCConfigReader;
+package com.superzanti.serversync.util.minecraft.config;
 
 import java.io.IOException;
 import java.util.HashMap;
 
-public class MCCConfig extends HashMap<String,MCCCategory> {
+public class MinecraftConfig extends HashMap<String,MinecraftConfigCategory> {
 	private static final long serialVersionUID = -8812919144959413432L;
 	
-	public void writeConfig(MCCWriter writer) {
+	public void writeConfig(MinecraftConfigWriter writer) {
 		this.forEach((key,category) -> {
 			
 			try {
 				writer.writeOpenCategory(category.getCategoryName());
 				for (int i = 0; i < category.size(); i++) {
-					MCCElement e = category.get(i);
+					MinecraftConfigElement e = category.get(i);
 					writer.writeElement(e);
 					if (i == category.size() - 1) {
 						// Last element
@@ -34,15 +34,15 @@ public class MCCConfig extends HashMap<String,MCCCategory> {
 		}
 	}
 	
-	public void readConfig(MCCReader read) {
-		MCCElement entry;
+	public void readConfig(MinecraftConfigReader read) {
+		MinecraftConfigElement entry;
 		try {
 			this.clear();
 			while((entry = read.readNextElement()) != null) {
 				if (this.containsKey(entry.getCategoryName())) {
 					this.get(entry.getCategoryName()).add(entry);
 				} else {		
-					MCCCategory newCat = new MCCCategory(entry.getCategoryName());
+					MinecraftConfigCategory newCat = new MinecraftConfigCategory(entry.getCategoryName());
 					newCat.add(entry);
 					this.put(entry.getCategoryName(), newCat);
 				}
@@ -60,9 +60,9 @@ public class MCCConfig extends HashMap<String,MCCCategory> {
 		}
 	}
 	
-	public MCCElement getEntryByName(String name) {
-		for (MCCCategory cat : this.values()) {
-			for (MCCElement e : cat) {				
+	public MinecraftConfigElement getEntryByName(String name) {
+		for (MinecraftConfigCategory cat : this.values()) {
+			for (MinecraftConfigElement e : cat) {				
 				if (e.getName().equals(name)) {
 					return e;
 				}

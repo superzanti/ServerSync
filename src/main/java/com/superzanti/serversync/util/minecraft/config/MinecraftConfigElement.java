@@ -1,9 +1,9 @@
-package com.superzanti.serversync.util.MCConfigReader;
+package com.superzanti.serversync.util.minecraft.config;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
-public class MCCElement {
+public class MinecraftConfigElement {
 	private final String category;
 	private Type type;
 	private String typeTag;
@@ -14,7 +14,7 @@ public class MCCElement {
 	public final boolean isArray;
 	public boolean hasComment;
 	
-	public MCCElement(String category,String type,String name,String value, ArrayList<String> elementComments) {
+	public MinecraftConfigElement(String category,String type,String name,String value, ArrayList<String> elementComments) {
 		this.category = category;
 		this.comments = elementComments;
 		this.name = name;
@@ -25,7 +25,7 @@ public class MCCElement {
 		this.values = null;
 	}
 	
-	public MCCElement(String category,String type,String name, ArrayList<String> values, ArrayList<String> elementComments) {
+	public MinecraftConfigElement(String category,String type,String name, ArrayList<String> values, ArrayList<String> elementComments) {
 		this.category = category;
 		this.comments = elementComments;
 		this.hasComment = !comments.isEmpty();

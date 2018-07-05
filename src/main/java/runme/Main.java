@@ -13,12 +13,12 @@ import java.util.ResourceBundle;
 
 import javax.swing.SwingUtilities;
 
-import com.superzanti.serversync.ClientWorker;
-import com.superzanti.serversync.ServerSetup;
 import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.gui.GUI_Client;
 import com.superzanti.serversync.gui.GUI_Client_Mock;
 import com.superzanti.serversync.gui.GUI_Server;
+import com.superzanti.serversync.server.ServerSetup;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.ProgramArguments;
 import com.superzanti.serversync.util.enums.EConfigType;

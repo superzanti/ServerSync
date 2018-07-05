@@ -1,4 +1,4 @@
-package com.superzanti.serversync;
+package com.superzanti.serversync.client;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.superzanti.serversync.filemanager.FileManager;
+import com.superzanti.serversync.server.Server;
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.MinecraftModInformation;
-import com.superzanti.serversync.util.Server;
 import com.superzanti.serversync.util.SyncFile;
 import com.superzanti.serversync.util.enums.EFileMatchingMode;
 import com.superzanti.serversync.util.errors.InvalidSyncFileException;
+import com.superzanti.serversync.util.minecraft.MinecraftModInformation;
 
 import runme.Main;
 

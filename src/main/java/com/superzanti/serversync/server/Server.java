@@ -1,4 +1,4 @@
-package com.superzanti.serversync.util;
+package com.superzanti.serversync.server;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -17,8 +17,11 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 
-import com.superzanti.serversync.ClientWorker;
+import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.gui.FileProgress;
+import com.superzanti.serversync.util.AutoClose;
+import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.SyncFile;
 import com.superzanti.serversync.util.enums.EServerMessage;
 
 import runme.Main;

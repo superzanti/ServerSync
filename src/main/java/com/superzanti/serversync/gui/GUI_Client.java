@@ -19,8 +19,8 @@ import javax.swing.border.SoftBevelBorder;
 import javax.swing.border.TitledBorder;
 
 import com.superzanti.serversync.RefStrings;
-import com.superzanti.serversync.ClientWorker;
 import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.util.Log;
 import com.superzanti.serversync.util.Logger;
 

@@ -1,4 +1,4 @@
-package com.superzanti.serversync.util.MCConfigReader;
+package com.superzanti.serversync.util.minecraft.config;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -9,11 +9,11 @@ import java.util.ArrayList;
  * @author Rheimus
  *
  */
-public class MCCWriter extends BufferedWriter {
+public class MinecraftConfigWriter extends BufferedWriter {
 	
 	public int indentation = 0;
 
-	public MCCWriter(BufferedWriter writer) throws IOException {
+	public MinecraftConfigWriter(BufferedWriter writer) throws IOException {
 		super(writer);
 		this.write("# Configuration file");
 		this.newLines(2);
@@ -45,7 +45,7 @@ public class MCCWriter extends BufferedWriter {
 	 * @param element Element to write
 	 * @throws IOException
 	 */
-	public void writeElement(MCCElement element) throws IOException {
+	public void writeElement(MinecraftConfigElement element) throws IOException {
 		if (element.hasComment) {
 			ArrayList<String> comments = element.getComments();
 			for (String comment : comments) {				

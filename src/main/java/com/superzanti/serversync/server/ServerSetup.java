@@ -1,4 +1,4 @@
-package com.superzanti.serversync;
+package com.superzanti.serversync.server;
 
 import java.io.IOException;
 import java.net.BindException;

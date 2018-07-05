@@ -1,24 +1,24 @@
-package com.superzanti.serversync.util.MCConfigReader;
+package com.superzanti.serversync.util.minecraft.config;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class MCCReader extends BufferedReader {
+public class MinecraftConfigReader extends BufferedReader {
 	
 	//TODO create separate server/client config files
 	//TODO have server send handshake secure codes and remove from clients config
 	
 	public String category;
 	
-	public MCCReader(BufferedReader read) {
+	public MinecraftConfigReader(BufferedReader read) {
 		super(read);
 	}
 	
-	public MCCElement readNextElement() throws IOException {
+	public MinecraftConfigElement readNextElement() throws IOException {
 		String line;
 		ArrayList<String> elementComments = new ArrayList<String>();
-		MCCElement el;
+		MinecraftConfigElement el;
 		while ((line = this.readLine()) != null) {
 			//TODO read and attach comments to elements
 			if (line.contains("#")) {
@@ -42,14 +42,14 @@ public class MCCReader extends BufferedReader {
 				String type = getType(line);
 				String name = getName(line);
 				String value = getValue(line);
-				el = new MCCElement(category,type,name,value,elementComments);
+				el = new MinecraftConfigElement(category,type,name,value,elementComments);
 				elementComments.clear();
 				return el;
 			}
 			if (line.contains(":") && line.contains("<")) {
 				String type = getType(line);
 				String name = getName(line);
-				el = new MCCElement(category,type,name,getValues(),elementComments);
+				el = new MinecraftConfigElement(category,type,name,getValues(),elementComments);
 				elementComments.clear();
 				return el;
 			}
