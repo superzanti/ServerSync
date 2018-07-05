@@ -1,24 +1,15 @@
 package com.superzanti.serversync.util;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonStreamParser;
 import com.superzanti.serversync.util.errors.InvalidSyncFileException;
+import com.superzanti.serversync.util.minecraft.MinecraftModInformation;
 
 /**
  * Holds all relevant information about a synchronizable file, also handles
@@ -144,80 +135,7 @@ public class SyncFile implements Serializable {
 
 	private void populateModInformation() {
 		if (Files.exists(this.getFileAsPath()) && this.isZipJar(this.synchronizableFile.getName())) {
-			InputStream is = null;
-			InputStreamReader read = null;
-			JsonStreamParser parser = null;
-			JarFile packagedMod = null;
-
-			try {
-				ArrayList<String> infoTests = new ArrayList<>(2);
-				infoTests.add("mcmod.info");
-				infoTests.add("neimod.info");
-				packagedMod = new JarFile(this.synchronizableFile);
-				JarEntry modInfo = null;
-
-				for (String test : infoTests) {
-					modInfo = packagedMod.getJarEntry(test);
-
-					if (modInfo != null) {
-						break;
-					}
-				}
-
-				if (modInfo != null) {
-					is = packagedMod.getInputStream(modInfo);
-					read = new InputStreamReader(is);
-					parser = new JsonStreamParser(read);
-
-					while (parser.hasNext()) {
-						JsonElement element = parser.next();
-						if (element.isJsonArray()) {
-							// This will be the opening document array
-							JsonArray jArray = element.getAsJsonArray();
-
-							// Get each array of objects
-							// array 1 {"foo":"bar"}, array 2 {"foo":"bar"}
-							for (JsonElement jObject : jArray) {
-								// This will contain all of the mod info
-								JsonObject info = jObject.getAsJsonObject();
-
-								// Skip conditions /////////////////////////////
-								if (info == null) {
-									continue;
-								}
-
-								if (!info.has("version") || !info.has("name")) {
-									continue;
-								}
-
-								this.minecraftInformation = new MinecraftModInformation(
-										info.get("version").getAsString(), info.get("name").getAsString());
-							}
-						}
-					}
-
-					read.close();
-					is.close();
-					packagedMod.close();
-				}
-
-			} catch (JsonParseException e) {
-				System.out
-						.println("File: " + this.synchronizableFile.getName() + " failed to parse mcmod.info as JSON");
-			} catch (IOException e) {
-				e.printStackTrace();
-			} finally {
-				try {
-					if (read != null)
-						read.close();
-					if (is != null)
-						is.close();
-					if (packagedMod != null)
-						packagedMod.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
+			MinecraftModInformation.fromFile(this.getFileAsPath());
 		} else {
 			System.out.println("File: " + this.synchronizableFile.getName()
 					+ " not recognized as a minecraft mod (not a problem)");
