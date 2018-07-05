@@ -235,6 +235,7 @@ public class ClientWorker implements Runnable {
 			for (SyncFile clientFile : clientFiles) {
 				currentPercent++;
 
+				Logger.log(String.format("Ignore patterns: %s", String.join(", ", Main.CONFIG.FILE_IGNORE_LIST)));
 				if (clientFile.matchesIgnoreListPattern()) {
 					// User created ignore rules
 					Logger.debug(Main.strings.getString("ignoring") + " " + clientFile.getFileName());
