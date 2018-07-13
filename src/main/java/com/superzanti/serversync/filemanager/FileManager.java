@@ -25,6 +25,8 @@ public class FileManager {
 		if (root == null) {
 			root = "";
 		}
+		
+		Logger.debug(String.format("root dir: %s", Paths.get(root).toAbsolutePath().toString()));
 
 		modFilesDirectory = new PathBuilder(root).add("mods").buildPath();
 		configurationFilesDirectory = new PathBuilder(root).add("config").buildPath();

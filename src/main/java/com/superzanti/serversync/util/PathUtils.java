@@ -26,7 +26,7 @@ public class PathUtils {
 	 * @return ServerSync jar file
 	 */
 	public static File getServerSyncFile() {
-		return new java.io.File(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+		return new File(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
 	}
 
 	/**
