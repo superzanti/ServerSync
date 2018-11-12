@@ -49,12 +49,12 @@ public class ServerWorker implements Runnable {
 	private DateFormat dateFormatter;
 	private Timer timeout;
 
-	protected ServerWorker(Socket socket, ServerSocket theServer, EnumMap<EServerMessage, String> comsMessages) {
+	protected ServerWorker(Socket socket, ServerSocket theServer, EnumMap<EServerMessage, String> comsMessages, Timer timeoutScheduler) {
 		clientsocket = socket;
 		messages = comsMessages;
 		clientConnectionStarted = new Date();
 		dateFormatter = DateFormat.getDateTimeInstance();
-		timeout = new Timer();
+		timeout = timeoutScheduler;
 
 		Logger.log("Connection established with " + clientsocket + dateFormatter.format(clientConnectionStarted));
 		Logger.log(ServerSetup.directories.toString());
@@ -74,11 +74,11 @@ public class ServerWorker implements Runnable {
 		while (!clientsocket.isClosed()) {
 			String message = null;
 			try {
-				timeout = new Timer(true);
-				timeout.schedule(new ServerTimeout(this), 60000);
+				ServerTimeout task = new ServerTimeout(this);
+				timeout.schedule(task, 10000);
 				message = (String) ois.readObject();
 				Logger.log("Recieved message from: " + clientsocket.getInetAddress());
-				timeout.cancel();
+				task.cancel();
 				timeout.purge();
 			} catch (SocketException e) {
 				// Client timed out

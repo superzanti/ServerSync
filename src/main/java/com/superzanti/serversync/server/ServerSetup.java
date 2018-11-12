@@ -11,6 +11,7 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.Timer;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -41,6 +42,8 @@ public class ServerSetup implements Runnable {
 	public static ArrayList<SyncFile> configFiles = new ArrayList<>(200);
 	public static ArrayList<SyncFile> clientOnlyFiles = new ArrayList<>(20);
 	public static ArrayList<String> directories = new ArrayList<>(20);
+	
+	private Timer timeoutScheduler = new Timer();
 	
 	public static EnumMap<EServerMessage, String> generateServerMessages() {
 		EnumMap<EServerMessage, String> SERVER_MESSAGES = new EnumMap<>(EServerMessage.class);
@@ -137,8 +140,8 @@ public class ServerSetup implements Runnable {
 					break;
 				}
 				Socket socket = server.accept();
-				ServerWorker sc = new ServerWorker(socket, server, generateServerMessages());
-				Thread clientThread = new Thread(sc);
+				ServerWorker sc = new ServerWorker(socket, server, generateServerMessages(), timeoutScheduler);
+				Thread clientThread = new Thread(sc, "Server client Handler");
 				clientThread.setName("ClientThread - " + socket.getInetAddress());
 				clientThread.start();
 			} catch (IOException e) {

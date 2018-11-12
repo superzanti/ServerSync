@@ -94,7 +94,7 @@ public class Main {
 		commonInit();
 		
 		ServerSetup setup = new ServerSetup();
-		Thread serverThread = new Thread(setup);
+		Thread serverThread = new Thread(setup, "Server client listener");
 		serverThread.start();
 	}
 
@@ -114,7 +114,7 @@ public class Main {
 			clientGUI.setPort(CONFIG.SERVER_PORT);
 			clientGUI.build(CONFIG.LOCALE);
 
-			clientThread = new Thread(new ClientWorker());
+			clientThread = new Thread(new ClientWorker(), "Client processing");
 			clientThread.start();
 			try {
 				clientThread.join();

@@ -33,15 +33,20 @@ public class FileManager {
 		logsDirectory = new PathBuilder(root).add("logs").buildPath();
 	}
 
-	public ArrayList<SyncFile> getModFiles(String directory, List<String> fileMatchPatterns,
-			EFileMatchingMode fileMatchingMode) {
+	public ArrayList<SyncFile> getModFiles(
+		String directory, List<String> fileMatchPatterns,
+		EFileMatchingMode fileMatchingMode
+	) {
 		ArrayList<String> dirs = new ArrayList<>();
 		dirs.add(directory);
 		return getModFiles(dirs, fileMatchPatterns, fileMatchingMode);
 	}
 
-	public ArrayList<SyncFile> getModFiles(List<String> includedDirectories, List<String> fileMatchPatterns,
-			EFileMatchingMode fileMatchingMode) {
+	public ArrayList<SyncFile> getModFiles(
+		List<String> includedDirectories,
+		List<String> fileMatchPatterns,
+		EFileMatchingMode fileMatchingMode
+	) {
 		return includedDirectories.stream()
 				// Check for valid include directories
 				.map(Paths::get).filter(path -> {
@@ -70,9 +75,10 @@ public class FileManager {
 				.collect(Collectors.toCollection(ArrayList::new));
 	}
 
-	public ArrayList<SyncFile> getConfigurationFiles(List<String> fileMatchPatterns,
-			EFileMatchingMode fileMatchingMode) {
-
+	public ArrayList<SyncFile> getConfigurationFiles(
+		List<String> fileMatchPatterns,
+		EFileMatchingMode fileMatchingMode
+	) {
 		ArrayList<Path> configFiles = PathUtils.fileListDeep(configurationFilesDirectory);
 
 		Logger.debug("Found " + configFiles.size() + " files in: config");
