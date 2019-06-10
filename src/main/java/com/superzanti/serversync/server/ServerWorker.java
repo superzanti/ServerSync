@@ -49,7 +49,8 @@ public class ServerWorker implements Runnable {
 	private DateFormat dateFormatter;
 	private Timer timeout;
 
-	protected ServerWorker(Socket socket, ServerSocket theServer, EnumMap<EServerMessage, String> comsMessages, Timer timeoutScheduler) {
+	protected ServerWorker(Socket socket, ServerSocket theServer, EnumMap<EServerMessage, String> comsMessages,
+			Timer timeoutScheduler) {
 		clientsocket = socket;
 		messages = comsMessages;
 		clientConnectionStarted = new Date();
@@ -143,7 +144,7 @@ public class ServerWorker implements Runnable {
 
 				if (message.equals(messages.get(EServerMessage.FILE_GET_LIST))) {
 					Logger.log("Sending servers file list to " + clientsocket);
-					
+
 					oos.writeObject(ServerSetup.standardSyncableFiles);
 					oos.flush();
 					continue;
@@ -252,10 +253,10 @@ public class ServerWorker implements Runnable {
 						int checkLevel = ois.readInt();
 						SyncFile clientFile = (SyncFile) ois.readObject();
 						boolean exists = false;
-						
+
 						if (checkLevel == 3) {
 							for (SyncFile serverFile : ServerSetup.allFiles) {
-								try {									
+								try {
 									if (serverFile.equals(clientFile)) {
 										exists = true;
 									}
@@ -266,7 +267,7 @@ public class ServerWorker implements Runnable {
 							}
 						} else {
 							for (SyncFile serverFile : ServerSetup.standardSyncableFiles) {
-								try {									
+								try {
 									if (serverFile.equals(clientFile)) {
 										exists = true;
 									}
@@ -276,7 +277,7 @@ public class ServerWorker implements Runnable {
 								}
 							}
 						}
-						
+
 						if (exists) {
 							System.out.println(clientFile.getFileName() + " exists");
 							oos.writeBoolean(true);
@@ -307,17 +308,18 @@ public class ServerWorker implements Runnable {
 				break;
 			}
 		}
-		
+
 		Logger.log("Closing connection with: " + clientsocket);
 		teardown();
-		return; // End thread, probably not needed here as it is the terminal point of the thread anyway
+		return; // End thread, probably not needed here as it is the terminal point of the
+				// thread anyway
 	}
-	
+
 	private void teardown() {
 		try {
 			timeout = null;
-			
-			if (!clientsocket.isClosed()) {				
+
+			if (!clientsocket.isClosed()) {
 				clientsocket.close();
 			}
 		} catch (IOException e) {
@@ -328,8 +330,8 @@ public class ServerWorker implements Runnable {
 	public void timeoutShutdown() {
 		try {
 			Logger.log("Client connection timed out, closing " + clientsocket);
-			
-			if (!clientsocket.isClosed()) {				
+
+			if (!clientsocket.isClosed()) {
 				clientsocket.close();
 			}
 		} catch (IOException e) {

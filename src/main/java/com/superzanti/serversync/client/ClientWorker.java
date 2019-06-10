@@ -269,10 +269,12 @@ public class ClientWorker implements Runnable {
 				closeWorker();
 				return;
 			}
-			
+
 			/* CLIENT SPECIFIC MODS */
-			// These are files that do not need to be present on the server to connect and play
-			// These are only added if the user wanting to connect to the server has ServerSync configured to accept them
+			// These are files that do not need to be present on the server to connect and
+			// play
+			// These are only added if the user wanting to connect to the server has
+			// ServerSync configured to accept them
 			if (!Main.CONFIG.REFUSE_CLIENT_MODS) {
 				Logger.log(Main.strings.getString("mods_accepting_clientmods"));
 
@@ -290,7 +292,7 @@ public class ClientWorker implements Runnable {
 			}
 
 			updateFiles(clientFiles, serverFiles);
-			
+
 			deleteFiles(clientFiles, serverFiles);
 
 			// Get a new list of client files as we will have modified them during the
@@ -298,7 +300,7 @@ public class ClientWorker implements Runnable {
 			duplicateCheck(getClientFiles(syncableDirectories));
 
 		}
-		
+
 		closeWorker();
 		Logger.log(Main.strings.getString("update_complete"));
 	}
