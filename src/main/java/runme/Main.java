@@ -11,8 +11,6 @@ import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-import javax.swing.SwingUtilities;
-
 import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.gui.GUI_Client;
@@ -74,16 +72,14 @@ public class Main {
 			}
 		}
 	}
-	
+
 	private static void commonInit() {
 		try {
 			System.out.println("Loading language file: " + CONFIG.LOCALE);
 			strings = ResourceBundle.getBundle("assets.serversync.MessagesBundle", CONFIG.LOCALE);
 		} catch (MissingResourceException e) {
-			SwingUtilities.invokeLater(() -> System.out.println("No language file available for: " + CONFIG.LOCALE +
-					", defaulting to en_US"));
-			strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle",
-					new Locale("en", "US"));
+			System.out.println("No language file available for: " + CONFIG.LOCALE + ", defaulting to en_US");
+			strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", new Locale("en", "US"));
 		}
 	}
 
@@ -92,7 +88,7 @@ public class Main {
 		Logger.setSystemOutput(true);
 		CONFIG = new SyncConfig(EConfigType.SERVER);
 		commonInit();
-		
+
 		ServerSetup setup = new ServerSetup();
 		Thread serverThread = new Thread(setup, "Server client listener");
 		serverThread.start();
@@ -102,7 +98,7 @@ public class Main {
 		new Logger("client");
 		CONFIG = new SyncConfig(EConfigType.CLIENT);
 		commonInit();
-		
+
 		Thread clientThread;
 		if (arguments.syncSilent) {
 			clientGUI = new GUI_Client_Mock();
