@@ -14,10 +14,7 @@ public class Console implements Runnable {
 		this.text = text;
 		try {
 			SwingUtilities.invokeAndWait(this);
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
+		} catch (InvocationTargetException | InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -25,6 +22,6 @@ public class Console implements Runnable {
 	
 	@Override
 	public void run() {
-		Main.updateText(text);
+		Main.clientGUI.updateText(text);
 	}
 }

@@ -1,3 +1,10 @@
+# =========================
+# Github stuff
+# =========================
+issue_template.md
+.github/
+# =========================
+
 *.class
 
 # Mobile Tools for Java (J2ME)
@@ -54,14 +61,18 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 
-######################
-# Eclipse
-######################
+# =========================
+# Working Dir
+# =========================
 *.pydevproject
 .project
 .metadata
 .gradle/
+publish/
+mods/
+config/
 bin/
+out/
 build/
 *.tmp
 *.bak
@@ -71,6 +82,7 @@ build.bat
 local.properties
 .classpath
 .settings/
+.idea/
 .loadpath
 /src/main/resources/rebel.xml
 # External tool builders
