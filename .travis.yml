@@ -3,7 +3,6 @@ install: true
 
 jdk:
   - oraclejdk8
-  - openjdk11
 
 script:
   - ./gradlew build
