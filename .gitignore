@@ -3,6 +3,9 @@
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
+# build tooling
+.travis.yml
+
 # Package Files #
 *.war
 *.ear
