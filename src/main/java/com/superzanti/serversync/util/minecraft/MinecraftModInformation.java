@@ -93,14 +93,22 @@ public class MinecraftModInformation implements Serializable {
 			AutoClose.closeResource(read, is, packagedMod);
 
 			if (modInformation == null) {
-				Logger.debug(String.format("Could not find the desired fields in the mod information file: %s",
-						String.join(",", desiredFields)));
+				Logger.debug(
+					String.format("%s - Could not find the desired fields in the mod information file: %s",
+						path.getFileName().toString(),
+						String.join(",", desiredFields)
+					)
+				);
 				return new MinecraftModInformation("", "");
 			}
 			return modInformation;
 		} else {
-			Logger.log(String.format("Could not find a mod information file that matches: %s",
-					String.join(",", validModInfoFiles)));
+			Logger.log(
+				String.format("%s - Could not find a mod information file that matches: %s",
+					path.getFileName().toString(),
+					String.join(",", validModInfoFiles)
+				)
+			);
 			return null;
 		}
 	}
