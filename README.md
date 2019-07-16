@@ -2,7 +2,7 @@
 
 ServerSync
 =========
-This is an open source mod that allows for easy mod management. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. This method avoids a lot of complaining. As a server admin constantly changing configs/updating mods it can get to be quite a pain pushing these updates. Some users have trouble finding the minecraft folder let alone putting mods in the right place.
+This is an open source utility that allows for easy mod management. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. This method avoids a lot of complaining. As a server admin constantly changing configs/updating mods it can get to be quite a pain pushing these updates. Some users have trouble finding the minecraft folder let alone putting mods in the right place.
 
 Clients will need to run serversync.jar before starting Minecraft to sync with their desired server, sync on connect from within Minecraft is desirable but is currently outside the scope of this project.
 
@@ -21,11 +21,11 @@ Honorable Mentions:
 
 DISCLAIMER:
 -----------
-This mod is only intended for personal use. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to mass distribute other people's mods without explicit permisson.
+This utility is only intended for personal use. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to mass distribute other people's mods without explicit permisson.
 
 Depending on the copyright and/or pattent laws in your area using this mod with other developer's mods for a commercial purpose could be ILLEGAL, check licenses.
 
-This mod allows ANY server running it to put ANY file in your mods folder, such as a virus or a keylogger. So if you are a client please make sure you trust your server administrator and as a good measure make sure to scan your mods folder for malicious content.
+This utility allows ANY server running it to put ANY file in your game folder, such as a virus or a keylogger. So if you are a client please make sure you trust your server administrator and as a good measure make sure to scan your games folders for malicious content.
 
 
 FREQUENTLY ASKED QUESTIONS:
