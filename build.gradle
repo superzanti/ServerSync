@@ -1,15 +1,15 @@
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 buildscript {
     repositories {
         mavenCentral()
         maven {
-      		url "https://plugins.gradle.org/m2/"
-    	}	
+            url "https://plugins.gradle.org/m2/"
+        }
     }
-    
+
     dependencies {
         classpath "com.github.jengelman.gradle.plugins:shadow:1.2.4"
     }
@@ -18,37 +18,38 @@ buildscript {
 apply plugin: 'java'
 apply plugin: "com.github.johnrengelman.shadow"
 
-
-version = ssversion
-group= "com.superzanti.serversync" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = ssname
+group = "com.superzanti.serversync" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 
 configurations {
-	shadow
-	compile.extendsFrom shadow
-}
-	
-dependencies {
-	compile fileTree(dir: 'libs', include: '*.jar')
-	shadow 'com.google.code.gson:gson:2.8.0'
-	shadow 'commons-codec:commons-codec:1.10'
-}
-	
-jar {
-	destinationDir = file("$rootDir/publish")
-	manifest {
-		attributes 'Main-Class': 'runme.Main'
-	}
-		
-	configurations.shadow.each { dep ->
-	    from(project.zipTree(dep)){
-	        exclude 'META-INF', 'META-INF/**'
-	            // you may exclude other things here if you want, or maybe copy the META-INF
-	    }
-	}
+    shadow
+    compile.extendsFrom shadow
 }
 
-processResources
-{
-	//
+dependencies {
+    compile fileTree(dir: 'libs', include: '*.jar')
+    shadow 'com.google.code.gson:gson:2.8.0'
+    shadow 'commons-codec:commons-codec:1.10'
+}
+
+jar {
+    archivesBaseName = ssname
+    version = ssversion
+    destinationDir = file("$rootDir/publish")
+    manifest {
+        attributes 'Main-Class': 'runme.Main'
+    }
+
+    configurations.shadow.each { dep ->
+        from(project.zipTree(dep)) {
+            exclude 'META-INF', 'META-INF/**'
+            // you may exclude other things here if you want, or maybe copy the META-INF
+        }
+    }
+}
+
+clean {
+    def publish = file("$rootDir/publish")
+    if (publish.exists() && publish.canWrite()) {
+        publish.deleteDir()
+    }
 }
