@@ -12,7 +12,6 @@ import com.superzanti.serversync.util.errors.UnknownMessageError;
 import runme.Main;
 
 import java.io.*;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
@@ -27,6 +26,8 @@ import java.util.*;
  * @author superzanti
  */
 public class ServerWorker implements Runnable {
+    public static final int DEFAULT_CLIENT_TIMEOUT_MS = 10000; // 10 seconds
+    public static final int FILE_SYNC_CLIENT_TIMEOUT_MS = 300000; // 5 minutes
 
     private Socket clientsocket;
     private ObjectInputStream ois;
@@ -37,9 +38,10 @@ public class ServerWorker implements Runnable {
     private Date clientConnectionStarted;
     private DateFormat dateFormatter;
     private Timer timeout;
+    private TimerTask timeoutTask;
 
     protected ServerWorker(
-        Socket socket, ServerSocket theServer, EnumMap<EServerMessage, String> comsMessages,
+        Socket socket, EnumMap<EServerMessage, String> comsMessages,
         Timer timeoutScheduler
     ) {
         clientsocket = socket;
@@ -66,18 +68,15 @@ public class ServerWorker implements Runnable {
         while (!clientsocket.isClosed()) {
             String message = null;
             try {
-                ServerTimeout task = new ServerTimeout(this);
-                timeout.schedule(task, 10000);
+                setTimeout(ServerWorker.DEFAULT_CLIENT_TIMEOUT_MS);
                 message = (String) ois.readObject();
-                Logger.log("Recieved message from: " + clientsocket.getInetAddress());
-                task.cancel();
-                timeout.purge();
+                Logger.log(
+                    String.format("Received message: %s, from client: %s", message, clientsocket.getInetAddress()));
             } catch (SocketException e) {
                 // Client timed out
                 break;
             } catch (ClassNotFoundException | IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                Logger.debug(e);
             }
 
             if (message == null) {
@@ -94,15 +93,16 @@ public class ServerWorker implements Runnable {
 
                 if (!messages.containsValue(message)) {
                     try {
-                        Logger.log("Unknown message recieved from: " + clientsocket.getInetAddress());
+                        Logger.log("Unknown message received from: " + clientsocket.getInetAddress());
                         oos.writeObject(new UnknownMessageError(message));
                         oos.flush();
                     } catch (IOException e) {
                         Logger.log("Failed to write error to client " + clientsocket);
-                        e.printStackTrace();
+                        Logger.debug(e);
                     }
-                    timeout = new Timer();
-                    timeout.schedule(new ServerTimeout(this), 5000);
+
+                    // There should not be unknown messages being sent to ServerSync, disconnect from the client.
+                    setTimeout(1);
                     continue;
                 }
 
@@ -304,6 +304,18 @@ public class ServerWorker implements Runnable {
         teardown();
         return; // End thread, probably not needed here as it is the terminal point of the
         // thread anyway
+    }
+
+    private void setTimeout(int durationMs) {
+        if (timeoutTask != null) {
+            timeoutTask.cancel();
+            timeout.purge();
+        }
+        timeoutTask = new ServerTimeout(this);
+        timeout.schedule(timeoutTask, durationMs);
+        Logger.debug(String.format("Reset timeout for client: %s, with a timeout of: %s", clientsocket.getInetAddress(),
+                                   durationMs
+        ));
     }
 
     private void teardown() {
