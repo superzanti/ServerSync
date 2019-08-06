@@ -1,24 +1,15 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '5.1.0'
+    id 'java'
+    id 'application'
+}
+
 repositories {
     mavenCentral()
+    jcenter()
 }
 
-buildscript {
-    repositories {
-        mavenCentral()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-    }
-
-    dependencies {
-        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.4"
-    }
-}
-
-apply plugin: 'java'
-apply plugin: "com.github.johnrengelman.shadow"
-
-group = "com.superzanti.serversync" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+group = "com.superzanti.serversync"
 
 configurations {
     shadow
@@ -26,24 +17,43 @@ configurations {
 }
 
 dependencies {
+    // Use JUnit Jupiter API for testing.
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.4.2'
+    // Use JUnit Jupiter Engine for testing.
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
+
     compile fileTree(dir: 'libs', include: '*.jar')
     shadow 'com.google.code.gson:gson:2.8.0'
     shadow 'commons-codec:commons-codec:1.10'
 }
 
+application {
+    mainClassName = 'com.superzanti.serversync.ServerSync'
+}
+
+test {
+    useJUnitPlatform()
+}
+
 jar {
     archivesBaseName = ssname
-    version = ssversion
-    destinationDir = file("$rootDir/publish")
-    manifest {
-        attributes 'Main-Class': 'runme.Main'
-    }
+    archiveClassifier = ssversion
+    destinationDirectory = file("$rootDir/publish")
 
-    configurations.shadow.each { dep ->
-        from(project.zipTree(dep)) {
-            exclude 'META-INF', 'META-INF/**'
-            // you may exclude other things here if you want, or maybe copy the META-INF
-        }
+    manifest {
+        attributes 'Main-Class': 'com.superzanti.serversync.ServerSync'
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    archivesBaseName = ssname
+    archiveClassifier = ssversion
+    destinationDirectory = file("$rootDir/publish")
+    minimize()
+
+    dependencies {
+        exclude 'forge*.jar'
     }
 }
 
