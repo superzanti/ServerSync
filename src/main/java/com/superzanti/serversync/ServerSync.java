@@ -1,16 +1,3 @@
-package runme;
-
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Locale;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-
 import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.gui.GUI_Client;
@@ -21,7 +8,14 @@ import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.ProgramArguments;
 import com.superzanti.serversync.util.enums.EConfigType;
 
-public class Main {
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+
+public class ServerSync {
 
 	/* AWT EVENT DISPATCHER THREAD */
 
