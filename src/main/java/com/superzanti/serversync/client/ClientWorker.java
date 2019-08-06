@@ -1,5 +1,6 @@
 package com.superzanti.serversync.client;
 
+import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.filemanager.FileManager;
 import com.superzanti.serversync.server.Server;
 import com.superzanti.serversync.util.Logger;
@@ -7,7 +8,6 @@ import com.superzanti.serversync.util.SyncFile;
 import com.superzanti.serversync.util.enums.EFileMatchingMode;
 import com.superzanti.serversync.util.errors.InvalidSyncFileException;
 import com.superzanti.serversync.util.minecraft.MinecraftModInformation;
-import runme.Main;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -61,18 +61,18 @@ public class ClientWorker implements Runnable {
         }
 
         if (!updateHappened && !errorInUpdates) {
-            Logger.log(Main.strings.getString("update_not_needed"));
-            Main.clientGUI.updateProgress(100);
+            Logger.log(ServerSync.strings.getString("update_not_needed"));
+            ServerSync.clientGUI.updateProgress(100);
         } else {
-            Logger.debug(Main.strings.getString("update_happened"));
-            Main.clientGUI.updateProgress(100);
+            Logger.debug(ServerSync.strings.getString("update_happened"));
+            ServerSync.clientGUI.updateProgress(100);
         }
 
         if (errorInUpdates) {
-            Logger.error(Main.strings.getString("update_error"));
+            Logger.error(ServerSync.strings.getString("update_error"));
         }
 
-        Main.clientGUI.enableSyncButton();
+        ServerSync.clientGUI.enableSyncButton();
     }
 
     private List<SyncFile> getClientFiles(ArrayList<String> directories) {
@@ -94,7 +94,7 @@ public class ClientWorker implements Runnable {
 
         if (addConfigFiles) {
             ArrayList<SyncFile> configurationFiles = fileManager
-                .getConfigurationFiles(Main.CONFIG.CONFIG_INCLUDE_LIST, EFileMatchingMode.INCLUDE);
+                .getConfigurationFiles(ServerSync.CONFIG.CONFIG_INCLUDE_LIST, EFileMatchingMode.INCLUDE);
             if (configurationFiles.size() > 0) {
                 clientFiles.addAll(configurationFiles);
             } else {
@@ -105,8 +105,8 @@ public class ClientWorker implements Runnable {
     }
 
     private void updateFiles(List<SyncFile> clientFiles, List<SyncFile> serverFiles) {
-        Logger.log("<------> " + Main.strings.getString("update_start") + " <------>");
-        Logger.debug(Main.strings.getString("ignoring") + " " + Main.CONFIG.FILE_IGNORE_LIST);
+        Logger.log("<------> " + ServerSync.strings.getString("update_start") + " <------>");
+        Logger.debug(ServerSync.strings.getString("ignoring") + " " + ServerSync.CONFIG.FILE_IGNORE_LIST);
 
         int currentProgress = 0;
         int maxProgress = serverFiles.size();
@@ -117,7 +117,7 @@ public class ClientWorker implements Runnable {
                 // TODO link this to a config value
                 clientFile = SyncFile.ClientOnlySyncFile(serverFile.getClientSidePath());
                 ignoredClientSideFiles.add(clientFile);
-                Logger.log(Main.strings.getString("mods_clientmod_added") + ": " + clientFile.getFileName());
+                Logger.log(ServerSync.strings.getString("mods_clientmod_added") + ": " + clientFile.getFileName());
             } else {
                 clientFile = SyncFile.StandardSyncFile(serverFile.getFileAsPath());
             }
@@ -129,7 +129,7 @@ public class ClientWorker implements Runnable {
                     if (!clientFile.equals(serverFile)) {
                         server.updateFile(serverFile, clientFile);
                     } else {
-                        Logger.log(clientFile.getFileName() + " " + Main.strings.getString("up_to_date"));
+                        Logger.log(clientFile.getFileName() + " " + ServerSync.strings.getString("up_to_date"));
                     }
                 } catch (InvalidSyncFileException e) {
                     // TODO stub invalid file handling
@@ -139,33 +139,33 @@ public class ClientWorker implements Runnable {
                 // Ignore support for client only files, users may wish to not allow some mods
                 // out of personal preference
                 if (serverFile.isClientSideOnlyFile && serverFile.matchesIgnoreListPattern()) {
-                    Logger.log("<>" + Main.strings.getString("ignoring") + " " + serverFile.getFileName());
+                    Logger.log("<>" + ServerSync.strings.getString("ignoring") + " " + serverFile.getFileName());
                 } else {
-                    Logger.debug(serverFile.getFileName() + " " + Main.strings.getString("does_not_exist"));
+                    Logger.debug(serverFile.getFileName() + " " + ServerSync.strings.getString("does_not_exist"));
                     server.updateFile(serverFile, clientFile);
                 }
             }
 
-            Main.clientGUI.updateProgress((int) (++currentProgress / maxProgress));
+            ServerSync.clientGUI.updateProgress((int) (++currentProgress / maxProgress));
         }
     }
 
     private void deleteFiles(List<SyncFile> clientFiles, List<SyncFile> serverFiles) {
-        Logger.log("<------> " + Main.strings.getString("delete_start") + " <------>");
-        Logger.log(String.format("Ignore patterns: %s", String.join(", ", Main.CONFIG.FILE_IGNORE_LIST)));
+        Logger.log("<------> " + ServerSync.strings.getString("delete_start") + " <------>");
+        Logger.log(String.format("Ignore patterns: %s", String.join(", ", ServerSync.CONFIG.FILE_IGNORE_LIST)));
         int currentProgress = 0;
         int maxProgress = clientFiles.size();
 
         for (SyncFile clientFile : clientFiles) {
             if (clientFile.matchesIgnoreListPattern()) {
                 // User created ignore rules
-                Logger.debug(Main.strings.getString("ignoring") + " " + clientFile.getFileName());
+                Logger.debug(ServerSync.strings.getString("ignoring") + " " + clientFile.getFileName());
             } else {
-                Logger.debug(Main.strings.getString("client_check") + " " + clientFile.getFileName());
+                Logger.debug(ServerSync.strings.getString("client_check") + " " + clientFile.getFileName());
 
                 if (!serverFiles.contains(clientFile)) {
                     if (clientFile.delete()) {
-                        Logger.log("<>" + clientFile.getFileName() + " " + Main.strings.getString("delete_success"));
+                        Logger.log("<>" + clientFile.getFileName() + " " + ServerSync.strings.getString("delete_success"));
                         Path parentDirectory = clientFile.getClientSidePath().getParent();
 
                         if (parentDirectory != null && Files.isDirectory(parentDirectory)
@@ -184,7 +184,7 @@ public class ClientWorker implements Runnable {
                     updateHappened = true;
                 }
 
-                Main.clientGUI.updateProgress((int) (++currentProgress / maxProgress));
+                ServerSync.clientGUI.updateProgress((int) (++currentProgress / maxProgress));
             }
         }
     }
@@ -220,10 +220,10 @@ public class ClientWorker implements Runnable {
     public void run() {
         updateHappened = false;
 
-        Main.clientGUI.disableSyncButton();
+        ServerSync.clientGUI.disableSyncButton();
         Logger.getLog().clearUserFacingLog();
 
-        server = new Server(this, Main.CONFIG.SERVER_IP, Main.CONFIG.SERVER_PORT);
+        server = new Server(this, ServerSync.CONFIG.SERVER_IP, ServerSync.CONFIG.SERVER_PORT);
 
         if (!server.connect()) {
             errorInUpdates = true;
@@ -239,7 +239,7 @@ public class ClientWorker implements Runnable {
         }
 
         if (syncableDirectories.isEmpty()) {
-            Logger.log(Main.strings.getString("no_syncable_directories"));
+            Logger.log(ServerSync.strings.getString("no_syncable_directories"));
             finished = true;
             closeWorker();
             return;
@@ -255,10 +255,10 @@ public class ClientWorker implements Runnable {
         /* MAIN PROCESSING CHUNK */
         if (updateNeeded) {
             updateHappened = true;
-            Logger.log(Main.strings.getString("mods_incompatable"));
+            Logger.log(ServerSync.strings.getString("mods_incompatable"));
             Logger.log("<------> " + "Getting files" + " <------>");
 
-            Logger.log(Main.strings.getString("mods_get"));
+            Logger.log(ServerSync.strings.getString("mods_get"));
             ArrayList<SyncFile> serverFiles = server.getFiles();
 
             if (serverFiles == null) {
@@ -279,9 +279,9 @@ public class ClientWorker implements Runnable {
             // These are files that do not need to be present on the server to connect and
             // play
             // These are only added if the user wanting to connect to the server has
-            // ServerSync configured to accept them
-            if (!Main.CONFIG.REFUSE_CLIENT_MODS) {
-                Logger.log(Main.strings.getString("mods_accepting_clientmods"));
+            // com.superzanti.serversync.ServerSync configured to accept them
+            if (!ServerSync.CONFIG.REFUSE_CLIENT_MODS) {
+                Logger.log(ServerSync.strings.getString("mods_accepting_clientmods"));
 
                 ArrayList<SyncFile> serverClientOnlyMods = server.getClientOnlyFiles();
 
@@ -293,7 +293,7 @@ public class ClientWorker implements Runnable {
                     serverFiles.addAll(serverClientOnlyMods);
                 }
             } else {
-                Logger.log(Main.strings.getString("mods_refusing_clientmods"));
+                Logger.log(ServerSync.strings.getString("mods_refusing_clientmods"));
             }
 
             updateFiles(clientFiles, serverFiles);
@@ -307,7 +307,7 @@ public class ClientWorker implements Runnable {
         }
 
         closeWorker();
-        Logger.log(Main.strings.getString("update_complete"));
+        Logger.log(ServerSync.strings.getString("update_complete"));
     }
 
 }

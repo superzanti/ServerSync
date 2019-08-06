@@ -2,7 +2,7 @@ package com.superzanti.serversync.util;
 
 import java.nio.file.Path;
 
-import runme.Main;
+import com.superzanti.serversync.ServerSync;
 
 /**
  * Shortcut to match against configs <i>ignore</i> list
@@ -13,7 +13,7 @@ import runme.Main;
 public class FileIgnoreMatcher extends GlobPathMatcher {
 	@Override
 	public boolean matches(Path path) {
-		for (String pattern : Main.CONFIG.FILE_IGNORE_LIST) {
+		for (String pattern : ServerSync.CONFIG.FILE_IGNORE_LIST) {
 			super.setPattern(pattern);
 			
 			if (super.matches(path)) {

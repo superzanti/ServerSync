@@ -1,4 +1,5 @@
-import com.superzanti.serversync.SyncConfig;
+package com.superzanti.serversync;
+
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.gui.GUI_Client;
 import com.superzanti.serversync.gui.GUI_Client_Mock;

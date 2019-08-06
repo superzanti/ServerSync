@@ -19,12 +19,11 @@ import javax.swing.border.SoftBevelBorder;
 import javax.swing.border.TitledBorder;
 
 import com.superzanti.serversync.RefStrings;
+import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.util.Log;
 import com.superzanti.serversync.util.Logger;
-
-import runme.Main;
 
 public class GUI_Client extends JFrame {
 
@@ -60,7 +59,7 @@ public class GUI_Client extends JFrame {
 		SoftBevelBorder TF_border = new SoftBevelBorder(BevelBorder.LOWERED, new Color(64, 64, 64),
 				new Color(192, 192, 192), new Color(64, 64, 64), new Color(0, 0, 0));
 
-		setTitle(Main.APPLICATION_TITLE);
+		setTitle(ServerSync.APPLICATION_TITLE);
 		getContentPane().setBackground(new Color(0, 0, 0));
 		setResizable(false);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -202,8 +201,8 @@ public class GUI_Client extends JFrame {
 				}
 				
 				if (!error) {
-					Main.CONFIG.SERVER_IP = ip;
-					Main.CONFIG.SERVER_PORT = port;
+					ServerSync.CONFIG.SERVER_IP = ip;
+					ServerSync.CONFIG.SERVER_PORT = port;
 					updateText("Starting update process...");
 					new Thread(new ClientWorker()).start();
 				}
@@ -220,12 +219,12 @@ public class GUI_Client extends JFrame {
 	}
 
 	private void internationalize() {
-		setTitle(Main.strings.getString("title") + " - " + RefStrings.VERSION);
-		ipLabel.setText(Main.strings.getString("server_address"));
-		portLabel.setText(Main.strings.getString("server_port"));
-		B_sync.setText(Main.strings.getString("go_button"));
-		B_sync.setToolTipText(Main.strings.getString("button_tooltip"));
-		TA_border_title.setTitle(Main.strings.getString("console_title"));
+		setTitle(ServerSync.strings.getString("title") + " - " + RefStrings.VERSION);
+		ipLabel.setText(ServerSync.strings.getString("server_address"));
+		portLabel.setText(ServerSync.strings.getString("server_port"));
+		B_sync.setText(ServerSync.strings.getString("go_button"));
+		B_sync.setToolTipText(ServerSync.strings.getString("button_tooltip"));
+		TA_border_title.setTitle(ServerSync.strings.getString("console_title"));
 		TA_info.repaint();
 	}
 

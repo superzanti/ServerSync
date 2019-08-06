@@ -2,7 +2,7 @@ package com.superzanti.serversync.util;
 
 import java.nio.file.Path;
 
-import runme.Main;
+import com.superzanti.serversync.ServerSync;
 
 /**
  * Shortcut to match against configs <i>incldue</i> list
@@ -13,7 +13,7 @@ import runme.Main;
 public class FileIncludeMatcher extends GlobPathMatcher {
 	@Override
 	public boolean matches(Path path) {
-		for (String pattern : Main.CONFIG.CONFIG_INCLUDE_LIST) {
+		for (String pattern : ServerSync.CONFIG.CONFIG_INCLUDE_LIST) {
 			super.setPattern("config/" + pattern);
 
 			if (super.matches(path)) {

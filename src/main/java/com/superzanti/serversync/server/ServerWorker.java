@@ -1,5 +1,6 @@
 package com.superzanti.serversync.server;
 
+import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.util.FileHash;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.ServerTimeout;
@@ -9,7 +10,6 @@ import com.superzanti.serversync.util.enums.EServerMessage;
 import com.superzanti.serversync.util.errors.InvalidSyncFileException;
 import com.superzanti.serversync.util.errors.MessageError;
 import com.superzanti.serversync.util.errors.UnknownMessageError;
-import runme.Main;
 
 import java.io.*;
 import java.net.Socket;
@@ -84,7 +84,7 @@ public class ServerWorker implements Runnable {
             }
 
             try {
-                if (message.equals(Main.HANDSHAKE)) {
+                if (message.equals(ServerSync.HANDSHAKE)) {
                     Logger.log("Sending coms messages");
                     oos.writeObject(messages);
                     oos.flush();
@@ -101,14 +101,31 @@ public class ServerWorker implements Runnable {
                         Logger.debug(e);
                     }
 
-                    // There should not be unknown messages being sent to ServerSync, disconnect from the client.
-                    setTimeout(1);
+                    // There should not be unknown messages being sent to com.superzanti.serversync.ServerSync, disconnect from the client.
+                    break;
+                }
+
+                if (message.equals(messages.get(EServerMessage.FILES_NEEDING_UPDATES))) {
+                    // Accept a map of <Path,FileHash> representing the clients files
+                    // Path - Localized path to the file
+                    // Check said list for different files or missing files
+                    // Push back a list of files needing updates/sync
+                    // Considerations: client only mods will need to map their path to the servers 'clientmods' dir
+                    Logger.log("Checking clients files for required updates");
+                    try {
+                        @SuppressWarnings("unchecked cast")
+                        Map<String, String> clientFiles = (Map<String, String>) ois.readObject();
+                        Map<String, String> serverFiles = new HashMap<>(0);
+                    } catch (ClassNotFoundException e) {
+                        // Should never happen as our client and server are built from the same code
+                        Logger.debug(e);
+                    }
                     continue;
                 }
 
                 if (message.equals(messages.get(EServerMessage.INFO_LAST_UPDATE))) {
                     Logger.log("Sending last updated timestamp");
-                    oos.writeObject(Main.CONFIG.LAST_UPDATE);
+                    oos.writeObject(ServerSync.CONFIG.LAST_UPDATE);
                     oos.flush();
                     continue;
                 }
@@ -125,7 +142,7 @@ public class ServerWorker implements Runnable {
                     }
                     Logger.log("Sending list of syncable mods");
 
-                    serverFileNames.removeAll(new ArrayList<>(Main.CONFIG.FILE_IGNORE_LIST));
+                    serverFileNames.removeAll(new ArrayList<>(ServerSync.CONFIG.FILE_IGNORE_LIST));
 
                     Logger.log("Syncable mods are: " + serverFileNames.toString());
                     oos.writeObject(serverFileNames);
@@ -174,7 +191,7 @@ public class ServerWorker implements Runnable {
 
                 // Main file update message
                 if (message.equals(messages.get(EServerMessage.UPDATE))) {
-
+                    setTimeout(ServerWorker.FILE_SYNC_CLIENT_TIMEOUT_MS);
                     SyncFile file;
                     try {
                         // TODO update this to NIO
@@ -214,8 +231,8 @@ public class ServerWorker implements Runnable {
                 if (message.equals(messages.get(EServerMessage.FILE_GET_CONFIG))) {
                     Logger.log("Sending config info to client...");
                     HashMap<String, List<String>> rules = new HashMap<>();
-                    rules.put("ignore", Main.CONFIG.FILE_IGNORE_LIST);
-                    rules.put("include", Main.CONFIG.CONFIG_INCLUDE_LIST);
+                    rules.put("ignore", ServerSync.CONFIG.FILE_IGNORE_LIST);
+                    rules.put("include", ServerSync.CONFIG.CONFIG_INCLUDE_LIST);
                     // TODO add security info in transfer
                     oos.writeObject(rules);
                     oos.flush();
@@ -287,7 +304,7 @@ public class ServerWorker implements Runnable {
                     continue;
                 }
             } catch (SocketException e) {
-                Logger.log("Client " + clientsocket + " colsed by timeout");
+                Logger.log("Client " + clientsocket + " closed by timeout");
                 break;
             } catch (IOException e) {
                 Logger.log("Failed to write to " + clientsocket + " client stream");
@@ -296,6 +313,9 @@ public class ServerWorker implements Runnable {
             }
 
             if (message.equals(messages.get(EServerMessage.EXIT))) {
+                Logger.log(String.format("Client requested exit, sync process complete for: %s",
+                                         clientsocket.getInetAddress()
+                ));
                 break;
             }
         }
@@ -306,20 +326,27 @@ public class ServerWorker implements Runnable {
         // thread anyway
     }
 
-    private void setTimeout(int durationMs) {
+    private void clearTimeout() {
         if (timeoutTask != null) {
             timeoutTask.cancel();
             timeout.purge();
         }
+    }
+
+    private void setTimeout(int durationMs) {
+        clearTimeout();
         timeoutTask = new ServerTimeout(this);
         timeout.schedule(timeoutTask, durationMs);
-        Logger.debug(String.format("Reset timeout for client: %s, with a timeout of: %s", clientsocket.getInetAddress(),
-                                   durationMs
+        Logger.debug(String.format(
+            "Reset timeout for client: %s, with a timeout of: %s",
+            clientsocket.getInetAddress(),
+            durationMs
         ));
     }
 
     private void teardown() {
         try {
+            clearTimeout();
             timeout = null;
 
             if (!clientsocket.isClosed()) {

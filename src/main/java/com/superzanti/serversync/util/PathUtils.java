@@ -1,6 +1,6 @@
 package com.superzanti.serversync.util;
 
-import runme.Main;
+import com.superzanti.serversync.ServerSync;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,13 +19,13 @@ import java.util.stream.Stream;
  */
 public class PathUtils {
     /**
-     * Uses Java reflection magic and ServerSync's {@linkplain Main} class to get
+     * Uses Java reflection magic and com.superzanti.serversync.ServerSync's {@linkplain ServerSync} class to get
      * jar file as {@linkplain File} object.
      *
-     * @return ServerSync jar file
+     * @return com.superzanti.serversync.ServerSync jar file
      */
     public static File getServerSyncFile() {
-        return new File(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+        return new File(ServerSync.class.getProtectionDomain().getCodeSource().getLocation().getPath());
     }
 
     /**
@@ -53,7 +53,7 @@ public class PathUtils {
             return builder.toString();
         }
 
-        // ASSUMPTION: As users are instructed to put ServerSync in the Minecraft
+        // ASSUMPTION: As users are instructed to put com.superzanti.serversync.ServerSync in the Minecraft
         // directory we can assume that the current directory is where serversync is
         // supposed to be, as we are asking for the Minecraft directory it should be
         // handled elsewhere when the directory can not be found

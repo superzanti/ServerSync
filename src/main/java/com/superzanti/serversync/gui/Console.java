@@ -4,7 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.SwingUtilities;
 
-import runme.Main;
+import com.superzanti.serversync.ServerSync;
 
 public class Console implements Runnable {
 
@@ -22,6 +22,6 @@ public class Console implements Runnable {
 	
 	@Override
 	public void run() {
-		Main.clientGUI.updateText(text);
+		ServerSync.clientGUI.updateText(text);
 	}
 }

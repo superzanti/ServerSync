@@ -4,7 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.SwingUtilities;
 
-import runme.Main;
+import com.superzanti.serversync.ServerSync;
 
 public class FileProgress implements Runnable {
 	
@@ -25,13 +25,13 @@ public class FileProgress implements Runnable {
 	}
 	
 	public void fileFinished() {
-		Main.clientGUI.updateFileProgress(null, 0);
+		ServerSync.clientGUI.updateFileProgress(null, 0);
 	}
 
 	@Override
 	public void run() {
 		if (sb != null) {
-			Main.clientGUI.updateFileProgress(sb.toString(),progress);
+			ServerSync.clientGUI.updateFileProgress(sb.toString(), progress);
 		}
 	}
 
