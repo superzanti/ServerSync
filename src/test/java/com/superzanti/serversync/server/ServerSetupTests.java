@@ -26,12 +26,6 @@ public class ServerSetupTests {
     @DisplayName("Construction")
     void construction() {
         ServerSetup setup = new ServerSetup();
-
-        assertNotNull(ServerSetup.allFiles);
-        assertNotNull(ServerSetup.clientOnlyFiles);
-        assertNotNull(ServerSetup.configFiles);
-        assertNotNull(ServerSetup.directories);
-        assertNotNull(ServerSetup.standardFiles);
     }
 
     @Test

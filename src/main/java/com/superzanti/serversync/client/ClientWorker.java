@@ -3,21 +3,32 @@ package com.superzanti.serversync.client;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.filemanager.FileManager;
 import com.superzanti.serversync.server.Server;
+import com.superzanti.serversync.util.GlobPathMatcher;
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.SyncFile;
-import com.superzanti.serversync.util.enums.EFileMatchingMode;
-import com.superzanti.serversync.util.errors.InvalidSyncFileException;
-import com.superzanti.serversync.util.minecraft.MinecraftModInformation;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
- * Deals with all of the synchronizing for the client, this works without
- * starting minecraft
+ * The sync process for clients.
+ * - Query for file differences
+ * - Update different files
+ * - Delete files that are not present on the server
+ * <p>
+ * Caveats:
+ * - Client can configure to ignore files from deletion (e.g. Optifine, NEET and other such client side mods)
+ * <p>
+ * Responsibility:
+ * The client is responsible for fetching the state it is meant to be in and either pulling what it needs from the
+ * server or removing excess.
  *
  * @author Rheimus
  */
@@ -25,30 +36,70 @@ public class ClientWorker implements Runnable {
 
     private boolean errorInUpdates = false;
     private boolean updateHappened = false;
-    private boolean finished = false;
 
     private Server server;
+    private List<String> managedDirectories = new ArrayList<>(0);
 
-    private List<SyncFile> ignoredClientSideFiles;
     private FileManager fileManager = new FileManager();
 
-    public ClientWorker() {
-        ignoredClientSideFiles = new ArrayList<>(20);
-        errorInUpdates = false;
+    @Override
+    public void run() {
         updateHappened = false;
-        finished = false;
-    }
 
-    public boolean getErrors() {
-        return errorInUpdates;
-    }
+        ServerSync.clientGUI.disableSyncButton();
+        Logger.getLog().clearUserFacingLog();
 
-    public boolean getUpdates() {
-        return updateHappened;
-    }
+        server = new Server(this, ServerSync.CONFIG.SERVER_IP, ServerSync.CONFIG.SERVER_PORT);
 
-    public boolean isFinished() {
-        return finished;
+        if (!server.connect()) {
+            errorInUpdates = true;
+            closeWorker();
+            return;
+        }
+
+        try {
+            managedDirectories = getServerManagedDirectories();
+
+            // UPDATE
+            managedDirectories.forEach(path -> {
+                try {
+                    Files.createDirectories(Paths.get(path));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            Map<String, String> remainingFiles = updateFiles(getClientState());
+
+            // DELETE
+            deleteFiles(remainingFiles);
+
+            // UNEXPECTED FAILURES
+            if (remainingFiles.containsValue("retry")) {
+                Logger.log(remainingFiles.toString());
+                Logger.log("Some files failed to sync, retrying once more");
+                remainingFiles = updateFiles(getClientState());
+
+                if (remainingFiles.containsValue("retry")) {
+                    Logger.log(remainingFiles.toString());
+                    Logger.error("Some files failed to sync on second pass, something is very broken :(");
+                    errorInUpdates = true;
+                }
+            }
+
+            // CLEANUP
+            FileManager.removeEmptyDirectories(
+                managedDirectories.stream().map(Paths::get).collect(Collectors.toList()),
+                (dir) -> {
+                    Logger.log(String.format("<C> Removed empty directory: %s", dir.toString()));
+                }
+            );
+        } catch (IOException e) {
+            Logger.debug(e);
+        }
+
+        updateHappened = true;
+        closeWorker();
+        Logger.log(ServerSync.strings.getString("update_complete"));
     }
 
     private void closeWorker() {
@@ -75,239 +126,82 @@ public class ClientWorker implements Runnable {
         ServerSync.clientGUI.enableSyncButton();
     }
 
-    private List<SyncFile> getClientFiles(ArrayList<String> directories) {
-        boolean addConfigFiles = true;
-
-        for (String directory : directories) {
-            // Currently servers can add the config directory to the included dirs list
-            // this essentially switches the included configs from whitelist to blacklist
-            // TODO make this system simpler
-            if (directory.equals("config")) {
-                addConfigFiles = false;
-            }
-        }
-
-        List<SyncFile> clientFiles = fileManager.getModFiles(
-            directories,
-            EFileMatchingMode.INGORE
-        );
-
-        if (addConfigFiles) {
-            ArrayList<SyncFile> configurationFiles = fileManager
-                .getConfigurationFiles(ServerSync.CONFIG.CONFIG_INCLUDE_LIST, EFileMatchingMode.INCLUDE);
-            if (configurationFiles.size() > 0) {
-                clientFiles.addAll(configurationFiles);
-            } else {
-                Logger.debug("Found no configuration files.");
-            }
-        }
-        return clientFiles;
+    private List<String> getServerManagedDirectories() {
+        return server.fetchManagedDirectories();
     }
 
-    private void updateFiles(List<SyncFile> clientFiles, List<SyncFile> serverFiles) {
+    /**
+     * The sate of the client from the perspective of what the server wants to manage.
+     * e.g. If the server wants to manage 'mods', 'config' and 'my-cool-extras' then this will return the content
+     * of the clients 'mods', 'config' and 'my-cool-extras' directories.
+     *
+     * @throws IOException when files on the client could not be accessed.
+     */
+    private Map<String, String> getClientState() throws IOException {
+        return fileManager.getDiffableFilesFromDirectories(managedDirectories);
+    }
+
+    private Map<String, String> updateFiles(Map<String, String> clientFiles) {
         Logger.log("<------> " + ServerSync.strings.getString("update_start") + " <------>");
         Logger.debug(ServerSync.strings.getString("ignoring") + " " + ServerSync.CONFIG.FILE_IGNORE_LIST);
 
-        int currentProgress = 0;
-        int maxProgress = serverFiles.size();
+        // Progress tracking setup
+        AtomicInteger currentProgress = new AtomicInteger();
+        int maxProgress = server.fetchNumberOfServerManagedFiles();
+        if (maxProgress == 0) {
+            Logger.log("Server has no files to sync?");
+            return new HashMap<>(0);
+        }
+        if (maxProgress == -1) {
+            Logger.debug("Failed to get the number of files managed by the server");
+        }
+        //----
 
-        for (SyncFile serverFile : serverFiles) {
-            SyncFile clientFile;
-            if (serverFile.isClientSideOnlyFile) {
-                // TODO link this to a config value
-                clientFile = SyncFile.ClientOnlySyncFile(serverFile.getClientSidePath());
-                ignoredClientSideFiles.add(clientFile);
-                Logger.log(ServerSync.strings.getString("mods_clientmod_added") + ": " + clientFile.getFileName());
-            } else {
-                clientFile = SyncFile.StandardSyncFile(serverFile.getFileAsPath());
+        // Update files if needed, return files that remain after testing against the servers state
+        // these will be the files the the client contains but the server does not.
+        return server.syncFiles(
+            clientFiles,
+            () -> {
+                ServerSync.clientGUI.updateProgress(
+                    (int) (currentProgress.incrementAndGet() / maxProgress)
+                );
             }
+        );
+    }
 
-            boolean exists = Files.exists(clientFile.getFileAsPath());
+    private void deleteFile(String path) {
+        Path file = Paths.get(path);
 
-            if (exists) {
-                try {
-                    if (!clientFile.equals(serverFile)) {
-                        server.updateFile(serverFile, clientFile);
-                    } else {
-                        Logger.log(clientFile.getFileName() + " " + ServerSync.strings.getString("up_to_date"));
-                    }
-                } catch (InvalidSyncFileException e) {
-                    // TODO stub invalid file handling
-                    Logger.debug(e);
-                }
+        if (GlobPathMatcher.matches(file, ServerSync.CONFIG.FILE_IGNORE_LIST)) {
+            Logger.log(String.format("<I> %s %s", ServerSync.strings.getString("ignoring"), path));
+            return;
+        }
+
+        try {
+            if (Files.deleteIfExists(file)) {
+                Logger.log(String.format("<D> %s %s", path, ServerSync.strings.getString("delete_success")));
             } else {
-                // Ignore support for client only files, users may wish to not allow some mods
-                // out of personal preference
-                if (serverFile.isClientSideOnlyFile && serverFile.matchesIgnoreListPattern()) {
-                    Logger.log("<>" + ServerSync.strings.getString("ignoring") + " " + serverFile.getFileName());
-                } else {
-                    Logger.debug(serverFile.getFileName() + " " + ServerSync.strings.getString("does_not_exist"));
-                    server.updateFile(serverFile, clientFile);
-                }
+                Logger.log("!!! failed to delete: " + path + " !!!");
             }
-
-            ServerSync.clientGUI.updateProgress((int) (++currentProgress / maxProgress));
+        } catch (IOException e) {
+            Logger.debug(e);
         }
     }
 
-    private void deleteFiles(List<SyncFile> clientFiles, List<SyncFile> serverFiles) {
+    private void deleteFiles(Map<String, String> files) {
         Logger.log("<------> " + ServerSync.strings.getString("delete_start") + " <------>");
+        if (files.size() == 0) {
+            Logger.log("No files to delete.");
+            return;
+        }
+
         Logger.log(String.format("Ignore patterns: %s", String.join(", ", ServerSync.CONFIG.FILE_IGNORE_LIST)));
-        int currentProgress = 0;
-        int maxProgress = clientFiles.size();
+        files
+            .entrySet()
+            .stream()
+            .filter(e -> "delete".equals(e.getValue()))
+            .forEach(e -> deleteFile(e.getKey()));
 
-        for (SyncFile clientFile : clientFiles) {
-            if (clientFile.matchesIgnoreListPattern()) {
-                // User created ignore rules
-                Logger.debug(ServerSync.strings.getString("ignoring") + " " + clientFile.getFileName());
-            } else {
-                Logger.debug(ServerSync.strings.getString("client_check") + " " + clientFile.getFileName());
-
-                if (!serverFiles.contains(clientFile)) {
-                    if (clientFile.delete()) {
-                        Logger.log("<>" + clientFile.getFileName() + " " + ServerSync.strings.getString("delete_success"));
-                        Path parentDirectory = clientFile.getClientSidePath().getParent();
-
-                        if (parentDirectory != null && Files.isDirectory(parentDirectory)
-                            && !parentDirectory.getFileName().toString().matches("mods|minecraft")) {
-                            try {
-                                Files.delete(parentDirectory);
-                            } catch (IOException e) {
-                                // Don't actually care if this fails, this either means there are files
-                                // left in the directory so we don't want to delete it
-                                // or some other failure to delete has happened, eg permissions
-                            }
-                        }
-                    } else {
-                        Logger.log("!!! failed to delete: " + clientFile.getFileName() + " !!!");
-                    }
-                    updateHappened = true;
-                }
-
-                ServerSync.clientGUI.updateProgress((int) (++currentProgress / maxProgress));
-            }
-        }
+        Logger.debug(files.toString());
     }
-
-    private void duplicateCheck(List<SyncFile> clientFiles) {
-        // ENHANCE: User dialog to pick a file to keep?
-        ArrayList<String> modNames = new ArrayList<>(200);
-        ArrayList<String> modHashes = new ArrayList<>(200);
-        ArrayList<SyncFile> dupes = new ArrayList<>(10);
-
-        for (SyncFile clientFile : clientFiles) {
-            MinecraftModInformation modInfo = clientFile.getModInformation();
-            if (modInfo != null) {
-                if (modNames.contains(modInfo.name)) {
-                    Logger.log("<!> Potential duplicate: " + clientFile.getFileName() + " - " + modInfo.name);
-                    dupes.add(clientFile);
-                } else {
-                    modNames.add(modInfo.name);
-                }
-            } else {
-                String hash = clientFile.getFileHash();
-                if (modHashes.contains(hash)) {
-                    Logger.log("<!> Potential duplicate: " + clientFile.getFileName() + " - " + hash);
-                    dupes.add(clientFile);
-                } else {
-                    modHashes.add(hash);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void run() {
-        updateHappened = false;
-
-        ServerSync.clientGUI.disableSyncButton();
-        Logger.getLog().clearUserFacingLog();
-
-        server = new Server(this, ServerSync.CONFIG.SERVER_IP, ServerSync.CONFIG.SERVER_PORT);
-
-        if (!server.connect()) {
-            errorInUpdates = true;
-            this.closeWorker();
-            return;
-        }
-
-        ArrayList<String> syncableDirectories = server.getSyncableDirectories();
-        if (syncableDirectories == null) {
-            errorInUpdates = true;
-            closeWorker();
-            return;
-        }
-
-        if (syncableDirectories.isEmpty()) {
-            Logger.log(ServerSync.strings.getString("no_syncable_directories"));
-            finished = true;
-            closeWorker();
-            return;
-        }
-
-        List<SyncFile> clientFiles = getClientFiles(syncableDirectories);
-
-        Logger.debug("Checking Server.isUpdateNeeded()");
-        Logger.debug(clientFiles.toString());
-        boolean updateNeeded = server.isUpdateNeeded(clientFiles);
-        updateNeeded = true; // TODO TEMP
-
-        /* MAIN PROCESSING CHUNK */
-        if (updateNeeded) {
-            updateHappened = true;
-            Logger.log(ServerSync.strings.getString("mods_incompatable"));
-            Logger.log("<------> " + "Getting files" + " <------>");
-
-            Logger.log(ServerSync.strings.getString("mods_get"));
-            ArrayList<SyncFile> serverFiles = server.getFiles();
-
-            if (serverFiles == null) {
-                Logger.log("Failed to get files from server, check detailed log in minecraft/logs");
-                errorInUpdates = true;
-                closeWorker();
-                return;
-            }
-
-            if (serverFiles.isEmpty()) {
-                Logger.log("Server has no syncable files");
-                finished = true;
-                closeWorker();
-                return;
-            }
-
-            /* CLIENT SPECIFIC MODS */
-            // These are files that do not need to be present on the server to connect and
-            // play
-            // These are only added if the user wanting to connect to the server has
-            // com.superzanti.serversync.ServerSync configured to accept them
-            if (!ServerSync.CONFIG.REFUSE_CLIENT_MODS) {
-                Logger.log(ServerSync.strings.getString("mods_accepting_clientmods"));
-
-                ArrayList<SyncFile> serverClientOnlyMods = server.getClientOnlyFiles();
-
-                if (serverClientOnlyMods == null) {
-                    // TODO add to TDB
-                    Logger.log("Failed to access servers client only mods");
-                    errorInUpdates = true;
-                } else {
-                    serverFiles.addAll(serverClientOnlyMods);
-                }
-            } else {
-                Logger.log(ServerSync.strings.getString("mods_refusing_clientmods"));
-            }
-
-            updateFiles(clientFiles, serverFiles);
-
-            deleteFiles(clientFiles, serverFiles);
-
-            // Get a new list of client files as we will have modified them during the
-            // previous phases
-            duplicateCheck(getClientFiles(syncableDirectories));
-
-        }
-
-        closeWorker();
-        Logger.log(ServerSync.strings.getString("update_complete"));
-    }
-
 }

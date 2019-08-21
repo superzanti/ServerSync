@@ -1,20 +1,24 @@
 package com.superzanti.serversync.filemanager;
 
-import com.superzanti.serversync.util.*;
-import com.superzanti.serversync.util.enums.EFileMatchingMode;
+import com.superzanti.serversync.server.Function;
+import com.superzanti.serversync.util.FileHash;
+import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.PathBuilder;
+import com.superzanti.serversync.util.PathUtils;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class FileManager {
-    public final Path configurationFilesDirectory;
-    public final Path modFilesDirectory;
-    public final Path clientSpecificFilesDirectory;
+    public static final String clientOnlyFilesDirectoryName = "clientmods";
+
+    public final Path rootPath;
+    public final Path clientOnlyFilesDirectory;
     public final Path logsDirectory;
 
     public FileManager() {
@@ -23,100 +27,82 @@ public class FileManager {
         if (root == null) {
             root = "";
         }
-
         Logger.debug(String.format("root dir: %s", Paths.get(root).toAbsolutePath().toString()));
+        rootPath = Paths.get(root);
 
-        clientSpecificFilesDirectory = new PathBuilder(root).add("clientmods").buildPath();
-        modFilesDirectory = new PathBuilder(root).add("mods").buildPath();
-        configurationFilesDirectory = new PathBuilder(root).add("config").buildPath();
+        clientOnlyFilesDirectory = new PathBuilder(root).add(FileManager.clientOnlyFilesDirectoryName).buildPath();
         logsDirectory = new PathBuilder(root).add("logs").buildPath();
     }
 
-    public ArrayList<SyncFile> getModFiles(
-        List<String> includedDirectories,
-        EFileMatchingMode fileMatchingMode
-    ) {
-        return includedDirectories
-            .stream()
-            .map(Paths::get)
-            .filter(path -> {
-                // Check for valid include directories
-                if (!Files.exists(path)) {
-                    Logger.debug(String.format("Could not find directory: %s", path.toString()));
-                    return false;
-                }
-                if (!Files.isDirectory(path)) {
-                    Logger.debug(String.format("Included directory (%s) was not a directory!", path.getFileName()));
-                    return false;
-                }
-                return true;
-            })
+    // New version of sync process
 
-            .map(dir -> {
-                // Get files from valid directories
-                try {
-                    return PathUtils.fileListDeep(dir);
-                } catch (IOException e) {
-                    Logger.debug(e);
-                    Logger.error("Failed to access files from directory: " + dir.getFileName());
-                }
-                return new ArrayList<Path>(0);
-            })
-            .flatMap(ArrayList::stream)
-            .filter(file -> {
-                if (file == null) {
-                    return false;
-                }
-                // Filter out user ignored files
-                if (fileMatchingMode == EFileMatchingMode.NONE) {
-                    return true;
-                }
-                return FileMatcher.shouldIncludeFile(file, fileMatchingMode);
-            })
-            // Create sync files for the remaining valid list
-            .map(SyncFile::StandardSyncFile)
-            .collect(Collectors.toCollection(ArrayList::new));
-    }
-
-    public ArrayList<SyncFile> getClientOnlyFiles() {
-        ArrayList<Path> clientSpecificFiles;
-        try {
-            clientSpecificFiles = PathUtils.fileListDeep(clientSpecificFilesDirectory);
-            return clientSpecificFiles.stream()
-                                      .map(SyncFile::ClientOnlySyncFile)
-                                      .collect(Collectors.toCollection(ArrayList::new));
-        } catch (IOException e) {
-            Logger.error("Failed to find any client specific files (clientmods)");
-        }
-        return new ArrayList<>(0);
-    }
-
-    public ArrayList<SyncFile> getConfigurationFiles(
-        List<String> fileMatchPatterns,
-        EFileMatchingMode fileMatchingMode
-    ) {
-        try {
-            ArrayList<Path> configFiles = PathUtils.fileListDeep(configurationFilesDirectory);
-
-            Logger.debug("Found " + configFiles.size() + " files in: config");
-
-            if (fileMatchPatterns != null) {
-                Logger.debug("File matching patterns present");
-                List<Path> filteredFiles = FileMatcher.filter(configFiles, fileMatchingMode);
-
-                Logger.debug(String.format("Configs to sync: %s", filteredFiles.stream()
-                                                                               .map(Path::getFileName)
-                                                                               .map(Path::toString)
-                                                                               .collect(Collectors.joining(", "))));
-
-                return filteredFiles.stream().map(SyncFile::ConfigSyncFile)
-                                    .collect(Collectors.toCollection(ArrayList::new));
+    /**
+     * Get all of the **files** present in the list of directories as a diffable map for file comparison.
+     *
+     * @param includedDirectories The list of directories to search
+     * @return The files contained in the directories
+     * @throws IOException when a configured directory is not a directory or does not exist.
+     */
+    public Map<String, String> getDiffableFilesFromDirectories(List<String> includedDirectories) throws IOException {
+        // Check for invalid directory configuration
+        List<Path> dirs = new ArrayList<>();
+        for (String includedDirectory : includedDirectories) {
+            Path dir = Paths.get(includedDirectory);
+            if (!Files.exists(dir)) {
+                Logger.debug(String.format("Configured directory: %s does not exist.", dir));
+                throw new IOException("File does not exist");
             }
 
-            return configFiles.stream().map(SyncFile::ConfigSyncFile).collect(Collectors.toCollection(ArrayList::new));
-        } catch (IOException e) {
-            Logger.error("Failed to access configuration files.");
+            if (!Files.isDirectory(dir)) {
+                Logger.debug(String.format("Configured directory: %s is not a directory.", dir));
+                throw new IOException("File is not a directory");
+            }
+
+            // Might as well build the list during this check
+            dirs.add(dir);
         }
-        return new ArrayList<>(0);
+
+        List<Path> allFiles = dirs.stream().flatMap(dir -> {
+            try {
+                return Files.walk(dir).filter(dirPath -> !Files.isDirectory(dirPath));
+            } catch (IOException e) {
+                Logger.debug(String.format("Failed to access files in the directory: %s", dir));
+                Logger.debug(e);
+            }
+            return null;
+        }).collect(Collectors.toList());
+
+        if (allFiles.stream().anyMatch(Objects::isNull)) {
+            throw new IOException("Some files could not be accessed");
+        }
+
+        //TODO add file size to this map
+        return allFiles.stream().collect(Collectors.toMap(Path::toString, FileHash::hashFile));
+    }
+
+    public static void removeEmptyDirectories(List<Path> directories, Function<Path> emptyDirectoryCallback) {
+        directories.forEach(path -> {
+            try {
+                Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        if (exc == null) {
+                            try {
+                                Files.delete(dir);
+
+                                if (emptyDirectoryCallback != null) {
+                                    emptyDirectoryCallback.f(dir);
+                                }
+                            } catch (DirectoryNotEmptyException dne) {
+                                // expected
+                            }
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            } catch (IOException e) {
+                Logger.debug(e);
+            }
+        });
     }
 }

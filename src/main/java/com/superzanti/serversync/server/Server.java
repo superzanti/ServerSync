@@ -5,14 +5,24 @@ import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.gui.FileProgress;
 import com.superzanti.serversync.util.AutoClose;
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.SyncFile;
+import com.superzanti.serversync.util.enums.EBinaryAnswer;
 import com.superzanti.serversync.util.enums.EServerMessage;
 
 import java.io.*;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.nio.file.Paths;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+
 
 /**
  * Interacts with a server running serversync
@@ -85,35 +95,165 @@ public class Server {
         return true;
     }
 
-    /**
-     * Gets the set of directories that this server wishes to sync
-     *
-     * @return A List of syncable directories or null if directories could not be
-     * accessed
-     */
-    @SuppressWarnings("unchecked")
-    public ArrayList<String> getSyncableDirectories() {
-        String message = SCOMS.get(EServerMessage.UPDATE_GET_SYNCABLE_DIRECTORIES);
+    public List<String> fetchManagedDirectories() {
+        Logger.debug("Fetching managed directories from server");
+        String message = SCOMS.get(EServerMessage.GET_MANAGED_DIRECTORIES);
+
         try {
             oos.writeObject(message);
             oos.flush();
+
+            @SuppressWarnings("unchecked")
+            List<String> directories = (List<String>) ois.readObject();
+            return directories;
         } catch (IOException e) {
-            Logger.debug("Failed to write object (" + message + ") to output stream");
-            // TODO handle retrys / stream sanitation
+            Logger.debug("Failed to write object (" + message + ") to client output stream");
+        } catch (ClassCastException | ClassNotFoundException e) {
+            Logger.debug("Unexpected object read from input stream");
+            Logger.debug(e);
+        }
+        return null;
+    }
+
+    public int fetchNumberOfServerManagedFiles() {
+        Logger.debug("Fetching number of managed files from server");
+        String message = SCOMS.get(EServerMessage.GET_NUMBER_OF_MANAGED_FILES);
+        try {
+            oos.writeObject(message);
+            oos.flush();
+
+            return ois.readInt();
+        } catch (IOException e) {
+            Logger.debug(e);
+        }
+        return -1;
+    }
+
+    public Map<String, String> syncFiles(Map<String, String> clientFiles, VoidFunction guiUpdate) {
+        // Server: Do you have this file?
+        // - String: path
+        // - String: hash
+        // Client: yes | no (bit)
+        // Server (yes) - skip to next file
+        // Server (no) - send file
+        Map<String, String> clientFilesCopy = new HashMap<>(clientFiles);
+        boolean didSyncFiles = false;
+        try {
+            String message = SCOMS.get(EServerMessage.SYNC_FILES);
+            oos.writeObject(message);
+            oos.flush();
+
+            // While I have more files to process...
+            while (ois.readBoolean()) {
+                // Server: Do you have this file?
+                String path = ois.readUTF();
+                String hash = ois.readUTF();
+
+                // Does the file exist on the client && does the hash match
+                if (clientFiles.containsKey(path) && hash.equals(clientFiles.get(path))) {
+                    // Client: Yes I do!
+                    clientFilesCopy.remove(path);
+                    oos.writeInt(EBinaryAnswer.YES.getValue());
+                    oos.flush();
+                } else {
+                    didSyncFiles = true;
+                    // Client: No I don't!
+                    oos.writeInt(EBinaryAnswer.NO.getValue());
+                    oos.flush();
+
+                    // Server: Here is the file.
+                    long fileSize = ois.readLong();
+                    if (updateFile(path, fileSize)) {
+                        clientFilesCopy.remove(path);
+                    } else {
+                        Logger.error(String.format("Failed to update file: %s", path));
+                        clientFilesCopy.replace(path, "retry");
+                    }
+                }
+                guiUpdate.f();
+            }
+
+            if (!didSyncFiles) {
+                Logger.log("All files match the server.");
+            }
+
+            // Return list of remaining files to deal with
+            return clientFilesCopy
+                .entrySet()
+                .stream()
+                .map(entry -> {
+                    if ("retry".equals(entry.getValue())) {
+                        return entry;
+                    }
+                    entry.setValue("delete");
+                    return entry;
+                })
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        } catch( IOException e) {
+            Logger.debug(e);
+        }
+        return null;
+    }
+
+    private boolean updateFile(String path, long size) {
+        FileProgress GUIUpdater = new FileProgress();
+
+        Path clientFile = Paths.get(path);
+        try {
+            Files.createDirectories(clientFile.getParent());
+        } catch (IOException e) {
+            Logger.debug("Could not create parent directories for: " + clientFile.toString());
+            Logger.debug(e);
         }
 
-        ArrayList<String> dirs = null;
+        if (Files.exists(clientFile)) {
+            try {
+                Files.delete(clientFile);
+                Files.createFile(clientFile);
+            } catch (IOException e) {
+                Logger.debug("Failed to delete file: " + clientFile.getFileName().toString());
+                Logger.debug(e);
+            }
+        }
 
         try {
-            dirs = (ArrayList<String>) ois.readObject();
-            return dirs;
-        } catch (ClassNotFoundException e) {
-            Logger.debug("Failed to read class of streamed object: " + e.getMessage());
+            Logger.debug("Attempting to write file (" + clientFile.toString() + ")");
+            OutputStream wr = Files.newOutputStream(clientFile);
+
+            byte[] outBuffer = new byte[clientSocket.getReceiveBufferSize()];
+
+            int bytesReceived;
+            long totalBytesReceived = 0L;
+
+            while ((bytesReceived = ois.read(outBuffer)) > 0) {
+                totalBytesReceived += bytesReceived;
+
+                wr.write(outBuffer, 0, bytesReceived);
+                GUIUpdater.updateProgress((int) Math.ceil(totalBytesReceived / size * 100), clientFile.getFileName().toString());
+
+                if (totalBytesReceived == size) {
+                    break;
+                }
+            }
+
+            // TODO test out empty files
+            //                Logger.debug("Empty file: " + clientFile.getFileName());
+            wr.flush();
+            wr.close();
+
+            GUIUpdater.fileFinished();
+            Logger.debug("Finished writing file" + clientFile.toString());
+        } catch (FileNotFoundException e) {
+            Logger.debug("Failed to create file (" + clientFile.toString() + "): " + e.getMessage());
+            Logger.debug(e);
+            return false;
         } catch (IOException e) {
-            Logger.debug("Failed to access input stream for syncable directories: " + e.getMessage());
+            Logger.debug(e);
+            return false;
         }
 
-        return dirs;
+        Logger.log(ServerSync.strings.getString("update_success") + ": " + clientFile.toString());
+        return true;
     }
 
     /**
@@ -152,291 +292,6 @@ public class Server {
             return false;
         }
         Logger.debug(ServerSync.strings.getString("debug_server_close_success"));
-        return true;
-    }
-
-    @SuppressWarnings("unchecked")
-    public boolean isUpdateNeeded(List<SyncFile> clientMods) {
-        String message = SCOMS.get(EServerMessage.UPDATE_NEEDED);
-        try {
-            // TODO check last updated information, maybe
-            System.out.println("Sending update check to server");
-            oos.writeObject(message);
-            oos.flush();
-            if (ServerSync.CONFIG.REFUSE_CLIENT_MODS) {
-                oos.writeInt(2);
-            } else {
-                oos.writeInt(3);
-            }
-            oos.flush();
-
-            // List of mod names
-            ArrayList<String> serverModNames = (ArrayList<String>) ois.readObject();
-            ArrayList<String> clientModNames = SyncFile.listModNames(clientMods);
-
-            Logger.debug(ServerSync.strings.getString("info_syncable_client") + ": " + clientModNames.toString());
-            Logger.debug(ServerSync.strings.getString("info_syncable_server") + ": " + serverModNames.toString());
-
-            ArrayList<String> _SMNC = (ArrayList<String>) serverModNames.clone();
-            ArrayList<String> _CMNC = (ArrayList<String>) clientModNames.clone();
-
-            _SMNC.removeAll(clientModNames);
-            _CMNC.removeAll(serverModNames);
-            Logger.debug("Server: " + _SMNC + " | Client: " + _CMNC);
-
-            if (_SMNC.size() == 0 && _CMNC.size() == 0) {
-                return false;
-            }
-        } catch (Exception e) {
-            Logger.debug(ServerSync.strings.getString("update_failed") + ": " + e.getMessage());
-            return false;
-        }
-
-        Logger.debug("reached end of Server.isUpdateNeeded()");
-        return true;
-    }
-
-    /**
-     * Gets all mods from the server
-     *
-     * @return List of SyncFiles or null if files could not be read
-     */
-    @SuppressWarnings("unchecked")
-    public ArrayList<SyncFile> getFiles() {
-        String message = SCOMS.get(EServerMessage.FILE_GET_LIST);
-        try {
-            oos.writeObject(message);
-            oos.flush();
-        } catch (IOException e) {
-            Logger.debug(e);
-        }
-
-        try {
-            ArrayList<SyncFile> serverMods = (ArrayList<SyncFile>) ois.readObject();
-            Logger.debug(ServerSync.strings.getString("debug_files_server_tree"));
-            return serverMods;
-        } catch (ClassNotFoundException e) {
-            Logger.debug("Failed to read class: " + e.getMessage());
-        } catch (IOException e) {
-            Logger.debug(e);
-        }
-
-        return null;
-    }
-
-    /**
-     * Gets all client-only mods from the server
-     *
-     * @return List of SyncFiles or null if file access fails
-     */
-    @SuppressWarnings("unchecked")
-    public ArrayList<SyncFile> getClientOnlyFiles() {
-        String message = SCOMS.get(EServerMessage.UPDATE_GET_CLIENT_ONLY_FILES);
-        try {
-            oos.writeObject(message);
-            oos.flush();
-        } catch (IOException e) {
-            Logger.debug(e);
-        }
-
-        try {
-            ArrayList<SyncFile> serverMods = (ArrayList<SyncFile>) ois.readObject();
-            Logger.debug(ServerSync.strings.getString("debug_files_client_only"));
-
-            return serverMods;
-        } catch (ClassNotFoundException | IOException e) {
-            Logger.debug(e);
-        }
-
-        return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    public boolean getConfig() {
-        String message = SCOMS.get(EServerMessage.FILE_GET_CONFIG);
-        try {
-            oos.writeObject(message);
-            oos.flush();
-        } catch (IOException e) {
-            Logger.debug(e);
-        }
-
-        try {
-            HashMap<String, List<String>> rules = (HashMap<String, List<String>>) ois.readObject();
-            ArrayList<String> ignored = new ArrayList<>(rules.get("ignore"));
-            ArrayList<String> included = new ArrayList<>(rules.get("include"));
-
-            ArrayList<String> myIgnored = new ArrayList<>(ServerSync.CONFIG.FILE_IGNORE_LIST);
-            ArrayList<String> myIncluded = new ArrayList<>(ServerSync.CONFIG.CONFIG_INCLUDE_LIST);
-
-            ignored.removeAll(myIgnored);
-            included.removeAll(myIncluded);
-
-            if (!ignored.isEmpty() || !included.isEmpty()) {
-                Logger.log(ServerSync.strings.getString("info_config_desync"));
-                ServerSync.CONFIG.FILE_IGNORE_LIST.addAll(ignored);
-                ServerSync.CONFIG.CONFIG_INCLUDE_LIST.addAll(included);
-                ServerSync.CONFIG.writeConfigUpdates();
-            }
-            return true;
-        } catch (ClassNotFoundException | IOException e) {
-            Logger.debug(e);
-            return false;
-        }
-    }
-
-    public boolean modExists(SyncFile mod) {
-        String message = SCOMS.get(EServerMessage.FILE_EXISTS);
-        try {
-            oos.writeObject(message);
-            oos.flush();
-            if (ServerSync.CONFIG.REFUSE_CLIENT_MODS) {
-                oos.writeInt(2);
-            } else {
-                oos.writeInt(3);
-            }
-            oos.flush();
-        } catch (IOException e) {
-            Logger.debug(e);
-            return false;
-        }
-
-        try {
-            oos.writeObject(mod);
-            oos.flush();
-        } catch (IOException e) {
-            Logger.debug(mod.getFileName());
-            Logger.debug(e);
-            return false;
-        }
-
-        try {
-            return ois.readBoolean();
-        } catch (IOException e) {
-            Logger.debug(e);
-            return false;
-        }
-    }
-
-    /**
-     * Sends request to server for the file stored at filePath and updates the
-     * current file with the returned data
-     */
-    public boolean updateFile(SyncFile serverFile, SyncFile clientFile) {
-        String message = SCOMS.get(EServerMessage.INFO_GET_FILESIZE);
-        try {
-            Logger.debug("Fetching file size from server");
-            oos.writeObject(message);
-            oos.flush();
-        } catch (IOException e) {
-            Logger.outputError(message);
-            return false;
-        }
-
-        try {
-            Logger.debug("Sending file path to server");
-            oos.writeObject(serverFile);
-            oos.flush();
-        } catch (IOException e) {
-            Logger.outputError(serverFile);
-            return false;
-        }
-
-        // TODO update to NIO
-
-        long numberOfBytesToRecieve = 0L;
-        FileProgress GUIUpdater = new FileProgress();
-
-        try {
-            numberOfBytesToRecieve = ois.readLong();
-        } catch (IOException e) {
-            Logger.debug(ServerSync.strings.getString("debug_files_size_failed"));
-            Logger.debug(e);
-            return false;
-        }
-
-        message = SCOMS.get(EServerMessage.UPDATE);
-        try {
-            oos.writeObject(message);
-            oos.flush();
-        } catch (IOException e) {
-            Logger.debug(message);
-            Logger.debug(e);
-            return false;
-        }
-
-        try {
-            oos.writeObject(serverFile);
-            oos.flush();
-        } catch (IOException e) {
-            Logger.outputError(serverFile);
-            Logger.debug(e);
-            return false;
-        }
-
-        Path pFile = clientFile.getFileAsPath();
-        try {
-            Files.createDirectories(pFile.getParent());
-        } catch (IOException e) {
-            Logger.debug("Could not create parent directories for: " + clientFile.getFileName());
-            Logger.debug(e);
-        }
-
-        if (Files.exists(pFile)) {
-            try {
-                Files.delete(pFile);
-                Files.createFile(pFile);
-            } catch (IOException e) {
-                Logger.debug("Failed to delete file: " + pFile.getFileName().toString());
-                Logger.debug(e);
-            }
-        }
-
-        try {
-            // TODO NIO this
-            Logger.debug("Attempting to write file (" + clientFile + ")");
-            FileOutputStream wr = new FileOutputStream(clientFile.getFile());
-
-            byte[] outBuffer = new byte[clientSocket.getReceiveBufferSize()];
-            int bytesReceived = 0;
-            long bytesRecievedSoFar = 0L;
-
-            double factor = 0;
-
-            if (ois.readBoolean()) {
-                // Not empty file
-                while ((bytesReceived = ois.read(outBuffer)) > 0) {
-                    bytesRecievedSoFar += bytesReceived;
-                    factor = (double) bytesRecievedSoFar / numberOfBytesToRecieve;
-
-                    wr.write(outBuffer, 0, bytesReceived);
-                    GUIUpdater.updateProgress((int) Math.ceil(factor * 100), clientFile.getFileName());
-                    if (factor == 1) {
-                        break;
-                    }
-                }
-            } else {
-                Logger.debug("Empty file: " + clientFile.getFileName());
-            }
-
-            GUIUpdater.fileFinished();
-            wr.flush();
-            wr.close();
-            Logger.debug("Finished writing file" + clientFile.getFileName());
-        } catch (FileNotFoundException e) {
-            Logger.debug("Failed to create file (" + clientFile + "): " + e.getMessage());
-            Logger.debug(e);
-            return false;
-        } catch (SocketException e) {
-            Logger.log(e.getMessage());
-            Logger.debug(e);
-            return false;
-        } catch (IOException e) {
-            Logger.debug(e);
-            return false;
-        }
-
-        Logger.log(ServerSync.strings.getString("update_success") + ": " + clientFile.getFileAsPath().toString());
         return true;
     }
 }

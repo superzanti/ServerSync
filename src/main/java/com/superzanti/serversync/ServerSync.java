@@ -9,117 +9,88 @@ import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.ProgramArguments;
 import com.superzanti.serversync.util.enums.EConfigType;
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 public class ServerSync {
 
-	/* AWT EVENT DISPATCHER THREAD */
+    /* AWT EVENT DISPATCHER THREAD */
 
-	public static final String APPLICATION_TITLE = "Serversync";
-	public static final String HANDSHAKE = "HANDSHAKE";
+    public static final String APPLICATION_TITLE = "Serversync";
+    public static final String HANDSHAKE = "HANDSHAKE";
 
-	public static GUI_Client clientGUI;
-	public static GUI_Server serverGUI;
+    public static GUI_Client clientGUI;
+    public static GUI_Server serverGUI;
 
-	public static ResourceBundle strings;
+    public static ResourceBundle strings;
 
-	public static SyncConfig CONFIG;
+    public static SyncConfig CONFIG;
 
-	public static ProgramArguments arguments;
+    public static ProgramArguments arguments;
 
-	public static void main(String[] args) {
-		arguments = new ProgramArguments(args);
+    public static void main(String[] args) {
+        arguments = new ProgramArguments(args);
 
-		if (arguments.isServer) {
-			runInServerMode();
-		} else {
-			runInClientMode();
-		}
+        if (arguments.isServer) {
+            runInServerMode();
+        } else {
+            runInClientMode();
+        }
+    }
 
-		// Only for testing, this cleans up old sync files
-		if (arguments.cleanup) {
-			System.out.println("cleaning up test files");
-			System.out.println(Paths.get("").toAbsolutePath().toString());
-			try {
-				Path modsDir = Paths.get("mods");
-				if (Files.exists(modsDir)) {
-					Files.walkFileTree(modsDir, new SimpleFileVisitor<Path>() {
-						@Override
-						public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-							Files.delete(file);
-							return FileVisitResult.CONTINUE;
-						}
+    private static void commonInit() {
+        try {
+            System.out.println("Loading language file: " + CONFIG.LOCALE);
+            strings = ResourceBundle.getBundle("assets.serversync.MessagesBundle", CONFIG.LOCALE);
+        } catch (MissingResourceException e) {
+            System.out.println("No language file available for: " + CONFIG.LOCALE + ", defaulting to en_US");
+            strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", new Locale("en", "US"));
+        }
+    }
 
-						@Override
-						public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-							Files.delete(dir);
-							return FileVisitResult.CONTINUE;
-						}
-					});
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
+    private static void runInServerMode() {
+        new Logger("server");
+        Logger.setSystemOutput(true);
+        CONFIG = new SyncConfig(EConfigType.SERVER);
+        commonInit();
 
-	private static void commonInit() {
-		try {
-			System.out.println("Loading language file: " + CONFIG.LOCALE);
-			strings = ResourceBundle.getBundle("assets.serversync.MessagesBundle", CONFIG.LOCALE);
-		} catch (MissingResourceException e) {
-			System.out.println("No language file available for: " + CONFIG.LOCALE + ", defaulting to en_US");
-			strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", new Locale("en", "US"));
-		}
-	}
+        ServerSetup setup = new ServerSetup();
+        Thread serverThread = new Thread(setup, "Server client listener");
+        serverThread.start();
+    }
 
-	private static void runInServerMode() {
-		new Logger("server");
-		Logger.setSystemOutput(true);
-		CONFIG = new SyncConfig(EConfigType.SERVER);
-		commonInit();
+    private static void runInClientMode() {
+        new Logger("client");
+        CONFIG = new SyncConfig(EConfigType.CLIENT);
+        commonInit();
 
-		ServerSetup setup = new ServerSetup();
-		Thread serverThread = new Thread(setup, "Server client listener");
-		serverThread.start();
-	}
+        Thread clientThread;
+        if (arguments.syncSilent) {
+            clientGUI = new GUI_Client_Mock();
+            new Thread(new ClientWorker()).start();
+        } else if (arguments.syncProgressOnly) {
+            // TODO setup a progress only version of the GUI
+            clientGUI = new GUI_Client();
+            clientGUI.setIPAddress(CONFIG.SERVER_IP);
+            clientGUI.setPort(CONFIG.SERVER_PORT);
+            clientGUI.build(CONFIG.LOCALE);
 
-	private static void runInClientMode() {
-		new Logger("client");
-		CONFIG = new SyncConfig(EConfigType.CLIENT);
-		commonInit();
-
-		Thread clientThread;
-		if (arguments.syncSilent) {
-			clientGUI = new GUI_Client_Mock();
-			new Thread(new ClientWorker()).start();
-		} else if (arguments.syncProgressOnly) {
-			// TODO setup a progress only version of the GUI
-			clientGUI = new GUI_Client();
-			clientGUI.setIPAddress(CONFIG.SERVER_IP);
-			clientGUI.setPort(CONFIG.SERVER_PORT);
-			clientGUI.build(CONFIG.LOCALE);
-
-			clientThread = new Thread(new ClientWorker(), "Client processing");
-			clientThread.start();
-			try {
-				clientThread.join();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				System.exit(1);
-			}
-			System.exit(0);
-		} else {
-			clientGUI = new GUI_Client();
-			clientGUI.setIPAddress(CONFIG.SERVER_IP);
-			clientGUI.setPort(CONFIG.SERVER_PORT);
-			clientGUI.build(CONFIG.LOCALE);
-		}
-	}
+            clientThread = new Thread(new ClientWorker(), "Client processing");
+            clientThread.start();
+            try {
+                clientThread.join();
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                System.exit(1);
+            }
+            System.exit(0);
+        } else {
+            clientGUI = new GUI_Client();
+            clientGUI.setIPAddress(CONFIG.SERVER_IP);
+            clientGUI.setPort(CONFIG.SERVER_PORT);
+            clientGUI.build(CONFIG.LOCALE);
+        }
+    }
 }
