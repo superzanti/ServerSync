@@ -35,6 +35,7 @@ public class ServerSetup implements Runnable {
         EnumMap<EServerMessage, String> SERVER_MESSAGES = new EnumMap<>(EServerMessage.class);
 
         for (EServerMessage msg : EServerMessage.values()) {
+            // What is this doing? who knows but its fun!
             double rng = Math.random() * 1000d;
             String hashKey = DigestUtils.sha1Hex(msg.toString() + rng);
 

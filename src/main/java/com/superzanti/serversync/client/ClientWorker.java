@@ -19,16 +19,13 @@ import java.util.stream.Collectors;
 
 /**
  * The sync process for clients.
- * - Query for file differences
- * - Update different files
- * - Delete files that are not present on the server
+ * - Get my state
+ * - Stream server state and pop files from my state that are dealt with
+ * - Delete files that are not present on the server (remaining)
  * <p>
  * Caveats:
  * - Client can configure to ignore files from deletion (e.g. Optifine, NEET and other such client side mods)
  * <p>
- * Responsibility:
- * The client is responsible for fetching the state it is meant to be in and either pulling what it needs from the
- * server or removing excess.
  *
  * @author Rheimus
  */
@@ -49,7 +46,7 @@ public class ClientWorker implements Runnable {
         ServerSync.clientGUI.disableSyncButton();
         Logger.getLog().clearUserFacingLog();
 
-        server = new Server(this, ServerSync.CONFIG.SERVER_IP, ServerSync.CONFIG.SERVER_PORT);
+        server = new Server(ServerSync.CONFIG.SERVER_IP, ServerSync.CONFIG.SERVER_PORT);
 
         if (!server.connect()) {
             errorInUpdates = true;

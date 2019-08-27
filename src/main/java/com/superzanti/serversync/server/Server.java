@@ -1,7 +1,7 @@
 package com.superzanti.serversync.server;
 
 import com.superzanti.serversync.ServerSync;
-import com.superzanti.serversync.client.ClientWorker;
+import com.superzanti.serversync.filemanager.FileManager;
 import com.superzanti.serversync.gui.FileProgress;
 import com.superzanti.serversync.util.AutoClose;
 import com.superzanti.serversync.util.Logger;
@@ -30,22 +30,21 @@ import java.util.stream.Collectors;
  * @author Rheimus
  */
 public class Server {
-
-    public final String IP_ADDRESS;
-    public final int PORT;
+    private final String IP_ADDRESS;
+    private final int PORT;
     private ObjectOutputStream oos = null;
     private ObjectInputStream ois = null;
     private Socket clientSocket = null;
-    private InetAddress host = null;
     private EnumMap<EServerMessage, String> SCOMS;
 
-    public Server(ClientWorker caller, String ip, int port) {
+    public Server(String ip, int port) {
         IP_ADDRESS = ip;
         PORT = port;
     }
 
     @SuppressWarnings("unchecked")
     public boolean connect() {
+        InetAddress host;
         try {
             host = InetAddress.getByName(IP_ADDRESS);
         } catch (UnknownHostException e) {
@@ -148,6 +147,20 @@ public class Server {
                 // Server: Do you have this file?
                 String path = ois.readUTF();
                 String hash = ois.readUTF();
+
+                if (isClientOnlyFile(path)) {
+                    // TODO make the destination server configurable
+                    path = path.replaceFirst(FileManager.clientOnlyFilesDirectoryName, "mods");
+
+                    if (ServerSync.CONFIG.REFUSE_CLIENT_MODS) {
+                        // Skip this file essentially, possibly worth making a specific answer for client refused
+                        // could be interesting for analytics.
+                        clientFilesCopy.remove(path);
+                        Logger.log(String.format("<R> Refused client mod: %s", path));
+                        oos.writeInt(EBinaryAnswer.YES.getValue());
+                        oos.flush();
+                    }
+                }
 
                 // Does the file exist on the client && does the hash match
                 if (clientFiles.containsKey(path) && hash.equals(clientFiles.get(path))) {
@@ -293,5 +306,9 @@ public class Server {
         }
         Logger.debug(ServerSync.strings.getString("debug_server_close_success"));
         return true;
+    }
+
+    private boolean isClientOnlyFile(String path) {
+        return path.startsWith(FileManager.clientOnlyFilesDirectoryName);
     }
 }
