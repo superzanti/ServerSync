@@ -57,6 +57,7 @@ public class ClientWorker implements Runnable {
         try {
             managedDirectories = getServerManagedDirectories();
 
+            Logger.log(String.format("Building file list for directories: %s", managedDirectories));
             // UPDATE
             managedDirectories.forEach(path -> {
                 try {
