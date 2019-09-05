@@ -53,6 +53,10 @@ public class ServerSetup implements Runnable {
             Logger.log("Starting scan for managed files: " + dateFormatter.format(new Date()));
             Logger.debug(String.format("Ignore patterns: %s", String.join(", ", ServerSync.CONFIG.FILE_IGNORE_LIST)));
 
+            for (String managedDirectory : managedDirectories) {
+                Files.createDirectories(Paths.get(managedDirectory));
+            }
+
             Map<String, String> managedFiles = fileManager
                 .getDiffableFilesFromDirectories(managedDirectories);
 

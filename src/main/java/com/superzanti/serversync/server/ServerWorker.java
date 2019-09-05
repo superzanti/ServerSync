@@ -1,12 +1,15 @@
 package com.superzanti.serversync.server;
 
 import com.superzanti.serversync.ServerSync;
-import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.LoggerNG;
 import com.superzanti.serversync.util.enums.EBinaryAnswer;
 import com.superzanti.serversync.util.enums.EServerMessage;
 import com.superzanti.serversync.util.errors.UnknownMessageError;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
@@ -36,6 +39,8 @@ public class ServerWorker implements Runnable {
 
     private Timer timeout;
     private TimerTask timeoutTask;
+    
+    private LoggerNG logger;
 
     ServerWorker(
         Socket socket,
@@ -44,6 +49,7 @@ public class ServerWorker implements Runnable {
         List<String> managedDirectories,
         Map<String, String> serverFiles
     ) {
+        logger = new LoggerNG(String.format("server-connection-from-%s", socket.getInetAddress().toString().replaceAll("[/\\.:@?|\\*\"]","-")));
         clientSocket = socket;
         messages = comsMessages;
         directories = managedDirectories;
@@ -52,7 +58,7 @@ public class ServerWorker implements Runnable {
         Date clientConnectionStarted = new Date();
         DateFormat dateFormatter = DateFormat.getDateTimeInstance();
 
-        Logger.log("Connection established with " + clientSocket + dateFormatter.format(clientConnectionStarted));
+        logger.log("Connection established with " + clientSocket + dateFormatter.format(clientConnectionStarted));
     }
 
     @Override
@@ -61,7 +67,7 @@ public class ServerWorker implements Runnable {
             ois = new ObjectInputStream(clientSocket.getInputStream());
             oos = new ObjectOutputStream(clientSocket.getOutputStream());
         } catch (IOException e) {
-            Logger.log("Failed to create client streams");
+            logger.log("Failed to create client streams");
             e.printStackTrace();
         }
 
@@ -70,17 +76,17 @@ public class ServerWorker implements Runnable {
             try {
                 setTimeout(ServerWorker.DEFAULT_CLIENT_TIMEOUT_MS);
                 message = (String) ois.readObject();
-                Logger.log(
+                logger.log(
                     String.format("Received message: %s, from client: %s", message, clientSocket.getInetAddress()));
             } catch (SocketException e) {
                 // Client timed out
                 break;
             } catch (ClassNotFoundException | IOException e) {
-                Logger.debug(e);
+                logger.debug(e);
             }
 
             if (message == null) {
-                Logger.debug("Received null message, this should not happen.");
+                logger.debug("Received null message, this should not happen.");
                 continue;
             }
 
@@ -88,7 +94,7 @@ public class ServerWorker implements Runnable {
                 // <---->
                 // always called first
                 if (message.equals(ServerSync.HANDSHAKE)) {
-                    Logger.log("Sending coms messages");
+                    logger.log("Sending coms messages");
                     oos.writeObject(messages);
                     oos.flush();
                     continue;
@@ -98,12 +104,12 @@ public class ServerWorker implements Runnable {
                 // fallback if I don't know what this message is
                 if (!messages.containsValue(message)) {
                     try {
-                        Logger.log("Unknown message received from: " + clientSocket.getInetAddress());
+                        logger.log("Unknown message received from: " + clientSocket.getInetAddress());
                         oos.writeObject(new UnknownMessageError(message));
                         oos.flush();
                     } catch (IOException e) {
-                        Logger.log("Failed to write error to client " + clientSocket);
-                        Logger.debug(e);
+                        logger.log("Failed to write error to client " + clientSocket);
+                        logger.debug(e);
                     }
 
                     // There should not be unknown messages being sent to ServerSync, disconnect from the client.
@@ -133,8 +139,8 @@ public class ServerWorker implements Runnable {
                                     transferFile(entry.getKey());
                                 }
                             } catch (IOException ex) {
-                                Logger.debug(ex);
-                                Logger.log(String.format("Encountered error during sync with %s, killing sync process", clientSocket.getInetAddress()));
+                                logger.debug(ex);
+                                logger.log(String.format("Encountered error during sync with %s, killing sync process", clientSocket.getInetAddress()));
                                 break;
                             }
                         }
@@ -160,17 +166,17 @@ public class ServerWorker implements Runnable {
                     oos.flush();
                 }
             } catch (SocketException e) {
-                Logger.log("Client " + clientSocket + " closed by timeout");
+                logger.log("Client " + clientSocket + " closed by timeout");
                 break;
             } catch (IOException e) {
-                Logger.log("Failed to write to " + clientSocket + " client stream");
+                logger.log("Failed to write to " + clientSocket + " client stream");
                 e.printStackTrace();
                 break;
             }
 
             // <---->
             if (matchMessage(message, EServerMessage.EXIT)) {
-                Logger.log(String.format(
+                logger.log(String.format(
                     "Client requested exit, sync process complete for: %s",
                     clientSocket.getInetAddress()
                 ));
@@ -178,7 +184,7 @@ public class ServerWorker implements Runnable {
             }
         }
 
-        Logger.log("Closing connection with: " + clientSocket);
+        logger.log("Closing connection with: " + clientSocket);
         teardown();
     }
 
@@ -190,12 +196,12 @@ public class ServerWorker implements Runnable {
         // Not checking if the file exists as this is coming from a list of
         // files that we already know exist.
 
-        Logger.log("Writing " + file.toString() + " to client " + clientSocket.getInetAddress() + "...");
+        logger.log("Writing " + file.toString() + " to client " + clientSocket.getInetAddress() + "...");
         InputStream fis = Files.newInputStream(file);
 
         // -- Size, for client GUI progress tracking
         long size = Files.size(file);
-        Logger.debug(String.format("File size is: %d", size));
+        logger.debug(String.format("File size is: %d", size));
         oos.writeLong(size);
         oos.flush();
         // --
@@ -209,7 +215,7 @@ public class ServerWorker implements Runnable {
         fis.close();
         oos.flush();
 
-        Logger.log(String.format(
+        logger.log(String.format(
             "Finished writing: %s, to client: %s",
             file.toString(),
             clientSocket.getInetAddress()
@@ -231,7 +237,7 @@ public class ServerWorker implements Runnable {
         clearTimeout();
         timeoutTask = new ServerTimeout(this);
         timeout.schedule(timeoutTask, durationMs);
-        Logger.debug(String.format(
+        logger.debug(String.format(
             "Reset timeout for client: %s, with a timeout of: %s",
             clientSocket.getInetAddress(),
             durationMs
@@ -253,7 +259,7 @@ public class ServerWorker implements Runnable {
 
     public void timeoutShutdown() {
         try {
-            Logger.log("Client connection timed out, closing " + clientSocket);
+            logger.log("Client connection timed out, closing " + clientSocket);
 
             if (!clientSocket.isClosed()) {
                 clientSocket.close();
