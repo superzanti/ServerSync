@@ -26,8 +26,8 @@ import java.util.*;
  * @author superzanti
  */
 public class ServerWorker implements Runnable {
-    private static final int DEFAULT_CLIENT_TIMEOUT_MS = 10000; // 10 seconds
-    private static final int FILE_SYNC_CLIENT_TIMEOUT_MS = 300000; // 5 minutes
+    private static final int DEFAULT_CLIENT_TIMEOUT_MS = 120000; // 2 minutes
+    private static final int FILE_SYNC_CLIENT_TIMEOUT_MS = 600000; // 10 minutes
 
     private Socket clientSocket;
     private ObjectInputStream ois;
