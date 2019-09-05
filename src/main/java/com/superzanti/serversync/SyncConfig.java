@@ -42,7 +42,7 @@ public class SyncConfig {
     private static final String CATEGORY_CONNECTION = "serverconnection";
     private static final String CATEGORY_OTHER = "misc";
 
-    private MinecraftConfig config;
+    private FriendlyConfig config;
 
     private Path configPath;
     public final EConfigType configType;
@@ -74,7 +74,7 @@ public class SyncConfig {
         FILE_IGNORE_LIST.add("**/serversync-*.cfg");
 
         configType = type;
-        config = new MinecraftConfig();
+        config = new FriendlyConfig();
         if (configType == EConfigType.SERVER) {
             configPath = Paths.get(CONFIG_LOCATION + File.separator + "serversync-server.cfg");
         } else {
@@ -99,7 +99,7 @@ public class SyncConfig {
 
     private void readExistingConfiguration() {
         try {
-            config.readConfig(new MinecraftConfigReader(Files.newBufferedReader(configPath)));
+            config.readConfig(new FriendlyConfigReader(Files.newBufferedReader(configPath)));
         } catch (IOException e) {
             Logger.debug("Failed to read config file: " + e.getMessage());
             e.printStackTrace();
@@ -122,24 +122,24 @@ public class SyncConfig {
             ArrayList<String> comments = new ArrayList<String>();
             ArrayList<String> defaultValueList = new ArrayList<>();
 
-            MinecraftConfigCategory general = new MinecraftConfigCategory(SyncConfig.CATEGORY_GENERAL);
+            FriendlyConfigCategory general = new FriendlyConfigCategory(SyncConfig.CATEGORY_GENERAL);
             comments
                 .add("# set true to push client side mods from clientmods directory, set on server [default: false]");
             general.add(
-                new MinecraftConfigElement(SyncConfig.CATEGORY_GENERAL, "B", "PUSH_CLIENT_MODS", "false", comments));
+                new FriendlyConfigElement(SyncConfig.CATEGORY_GENERAL, "B", "PUSH_CLIENT_MODS", "false", comments));
             comments.clear();
 
-            MinecraftConfigCategory rules = new MinecraftConfigCategory(SyncConfig.CATEGORY_RULES);
+            FriendlyConfigCategory rules = new FriendlyConfigCategory(SyncConfig.CATEGORY_RULES);
             comments.add("# These configs are included, by default configs are not synced");
-            rules.add(new MinecraftConfigElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST",
-                                                 new ArrayList<String>(), comments
+            rules.add(new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST",
+                                                new ArrayList<String>(), comments
             ));
             comments.clear();
 
             defaultValueList.add("mods");
             comments.add("# These directories are included, by default mods and configs are included");
-            rules.add(new MinecraftConfigElement(SyncConfig.CATEGORY_RULES, "S", "DIRECTORY_INCLUDE_LIST",
-                                                 new ArrayList<String>(defaultValueList), comments
+            rules.add(new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "DIRECTORY_INCLUDE_LIST",
+                                                new ArrayList<String>(defaultValueList), comments
             ));
             comments.clear();
             defaultValueList.clear();
@@ -147,22 +147,22 @@ public class SyncConfig {
             comments.add(
                 "# These files are ignored by serversync, list auto updates with mods added to the clientmods directory");
             rules.add(
-                new MinecraftConfigElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<String>(),
-                                           comments
+                new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<String>(),
+                                          comments
                 ));
             comments.clear();
 
-            MinecraftConfigCategory serverConnection = new MinecraftConfigCategory(SyncConfig.CATEGORY_CONNECTION);
+            FriendlyConfigCategory serverConnection = new FriendlyConfigCategory(SyncConfig.CATEGORY_CONNECTION);
             comments.add("# The port that your server will be serving on [range: 1 ~ 49151, default: 38067]");
             serverConnection
-                .add(new MinecraftConfigElement(SyncConfig.CATEGORY_CONNECTION, "I", "SERVER_PORT", "38067", comments));
+                .add(new FriendlyConfigElement(SyncConfig.CATEGORY_CONNECTION, "I", "SERVER_PORT", "38067", comments));
             comments.clear();
 
-            MinecraftConfigCategory other = new MinecraftConfigCategory(SyncConfig.CATEGORY_OTHER);
+            FriendlyConfigCategory other = new FriendlyConfigCategory(SyncConfig.CATEGORY_OTHER);
             comments.add("# Your locale string");
             other.add(
-                new MinecraftConfigElement(SyncConfig.CATEGORY_OTHER, "S", "LOCALE", Locale.getDefault().toString(),
-                                           comments
+                new FriendlyConfigElement(SyncConfig.CATEGORY_OTHER, "S", "LOCALE", Locale.getDefault().toString(),
+                                          comments
                 ));
             comments.clear();
 
@@ -172,7 +172,7 @@ public class SyncConfig {
             config.put(SyncConfig.CATEGORY_OTHER, other);
 
             try {
-                config.writeConfig(new MinecraftConfigWriter(Files.newBufferedWriter(configPath)));
+                config.writeConfig(new FriendlyConfigWriter(Files.newBufferedWriter(configPath)));
             } catch (IOException e) {
                 Logger.debug("Failed to write server config file: " + e.getMessage());
                 e.printStackTrace();
@@ -182,43 +182,43 @@ public class SyncConfig {
             // Client config
             ArrayList<String> comments = new ArrayList<String>();
 
-            MinecraftConfigCategory general = new MinecraftConfigCategory(SyncConfig.CATEGORY_GENERAL);
+            FriendlyConfigCategory general = new FriendlyConfigCategory(SyncConfig.CATEGORY_GENERAL);
             comments.add("Set this to true to refuse client mods pushed by the server, [default: false]");
             general.add(
-                new MinecraftConfigElement(SyncConfig.CATEGORY_GENERAL, "B", "REFUSE_CLIENT_MODS", "false", comments));
+                new FriendlyConfigElement(SyncConfig.CATEGORY_GENERAL, "B", "REFUSE_CLIENT_MODS", "false", comments));
             comments.clear();
 
-            MinecraftConfigCategory rules = new MinecraftConfigCategory(SyncConfig.CATEGORY_RULES);
+            FriendlyConfigCategory rules = new FriendlyConfigCategory(SyncConfig.CATEGORY_RULES);
             comments.add("These configs are included, by default configs are not synced.");
-            rules.add(new MinecraftConfigElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST",
-                                                 new ArrayList<String>(), comments
+            rules.add(new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST",
+                                                new ArrayList<String>(), comments
             ));
             comments.clear();
 
             comments.add(
                 "These files are ignored by serversync, add your client mods here to stop serversync deleting them.");
             rules.add(
-                new MinecraftConfigElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<String>(),
-                                           comments
+                new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<String>(),
+                                          comments
                 ));
             comments.clear();
 
-            MinecraftConfigCategory connection = new MinecraftConfigCategory(SyncConfig.CATEGORY_CONNECTION);
+            FriendlyConfigCategory connection = new FriendlyConfigCategory(SyncConfig.CATEGORY_CONNECTION);
             comments.add("The IP address of the server [default: 127.0.0.1]");
             connection.add(
-                new MinecraftConfigElement(SyncConfig.CATEGORY_CONNECTION, "S", "SERVER_IP", "127.0.0.1", comments));
+                new FriendlyConfigElement(SyncConfig.CATEGORY_CONNECTION, "S", "SERVER_IP", "127.0.0.1", comments));
             comments.clear();
 
             comments.add("The port that your server will be serving on [range: 1 ~ 49151, default: 38067]");
             connection
-                .add(new MinecraftConfigElement(SyncConfig.CATEGORY_CONNECTION, "I", "SERVER_PORT", "38067", comments));
+                .add(new FriendlyConfigElement(SyncConfig.CATEGORY_CONNECTION, "I", "SERVER_PORT", "38067", comments));
             comments.clear();
 
-            MinecraftConfigCategory other = new MinecraftConfigCategory(SyncConfig.CATEGORY_OTHER);
+            FriendlyConfigCategory other = new FriendlyConfigCategory(SyncConfig.CATEGORY_OTHER);
             comments.add("# Your locale string");
             other.add(
-                new MinecraftConfigElement(SyncConfig.CATEGORY_OTHER, "S", "LOCALE", Locale.getDefault().toString(),
-                                           comments
+                new FriendlyConfigElement(SyncConfig.CATEGORY_OTHER, "S", "LOCALE", Locale.getDefault().toString(),
+                                          comments
                 ));
             comments.clear();
 
@@ -228,7 +228,7 @@ public class SyncConfig {
             config.put(SyncConfig.CATEGORY_OTHER, other);
 
             try {
-                config.writeConfig(new MinecraftConfigWriter(Files.newBufferedWriter(configPath)));
+                config.writeConfig(new FriendlyConfigWriter(Files.newBufferedWriter(configPath)));
             } catch (IOException e) {
                 Logger.debug("Failed to write client config file: " + e.getMessage());
                 e.printStackTrace();
@@ -240,7 +240,7 @@ public class SyncConfig {
     public boolean writeConfigUpdates() {
         try {
             config.writeConfig(
-                new MinecraftConfigWriter(Files.newBufferedWriter(configPath, StandardOpenOption.TRUNCATE_EXISTING)));
+                new FriendlyConfigWriter(Files.newBufferedWriter(configPath, StandardOpenOption.TRUNCATE_EXISTING)));
         } catch (IOException e) {
             e.printStackTrace();
             return false;

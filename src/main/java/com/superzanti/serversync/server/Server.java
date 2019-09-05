@@ -64,9 +64,9 @@ public class Server {
             return false;
         }
 
-        // write to socket using ObjectOutputStream
         Logger.debug(ServerSync.strings.getString("debug_IO_streams"));
         try {
+            clientSocket.setPerformancePreferences(0, 1, 2);
             oos = new ObjectOutputStream(clientSocket.getOutputStream());
             ois = new ObjectInputStream(clientSocket.getInputStream());
         } catch (IOException e) {
@@ -229,6 +229,15 @@ public class Server {
             }
         }
 
+        if (size == 0) {
+            try {
+                Files.createFile(clientFile);
+                return true;
+            } catch (IOException e) {
+                Logger.debug("Failed to write 0 size file.");
+            }
+        }
+
         try {
             Logger.debug("Attempting to write file (" + clientFile.toString() + ")");
             OutputStream wr = Files.newOutputStream(clientFile);
@@ -237,12 +246,11 @@ public class Server {
 
             int bytesReceived;
             long totalBytesReceived = 0L;
-
             while ((bytesReceived = ois.read(outBuffer)) > 0) {
                 totalBytesReceived += bytesReceived;
 
                 wr.write(outBuffer, 0, bytesReceived);
-                GUIUpdater.updateProgress((int) Math.ceil(totalBytesReceived / size * 100), clientFile.getFileName().toString());
+                GUIUpdater.updateProgress((int) Math.ceil((float) totalBytesReceived / size * 100), clientFile.getFileName().toString());
 
                 if (totalBytesReceived == size) {
                     break;
