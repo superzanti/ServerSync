@@ -6,10 +6,7 @@ import com.superzanti.serversync.util.enums.EBinaryAnswer;
 import com.superzanti.serversync.util.enums.EServerMessage;
 import com.superzanti.serversync.util.errors.UnknownMessageError;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
@@ -63,7 +60,6 @@ public class ServerWorker implements Runnable {
         try {
             ois = new ObjectInputStream(clientSocket.getInputStream());
             oos = new ObjectOutputStream(clientSocket.getOutputStream());
-            oos.flush();
         } catch (IOException e) {
             Logger.log("Failed to create client streams");
             e.printStackTrace();
@@ -124,21 +120,24 @@ public class ServerWorker implements Runnable {
                     // -- (yes) - skip to next file
                     // -- (no) - send filesize -> send file
                     if (files.size() > 0) {
-                        files.forEach((path, hash) -> {
+                        for (Map.Entry<String, String> entry :  files.entrySet()) {
                             try {
                                 oos.writeBoolean(true); // There are files left
-                                oos.writeUTF(path);
-                                oos.writeUTF(hash);
+                                oos.writeUTF(entry.getKey()); // The path
+                                oos.writeUTF(entry.getValue()); // The hash
                                 oos.flush();
+
 
                                 // Client: Nope, don't have it joe!
                                 if (EBinaryAnswer.NO.getValue() == ois.readInt()) {
-                                    transferFile(path);
+                                    transferFile(entry.getKey());
                                 }
                             } catch (IOException ex) {
                                 Logger.debug(ex);
+                                Logger.log(String.format("Encountered error during sync with %s, killing sync process", clientSocket.getInetAddress()));
+                                break;
                             }
-                        });
+                        }
                         oos.writeBoolean(false); // No files left
                     } else {
                         oos.writeBoolean(false); // No files at all?
