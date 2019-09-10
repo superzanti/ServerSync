@@ -180,7 +180,7 @@ public class Server {
                         clientFilesCopy.remove(path);
                     } else {
                         Logger.error(String.format("Failed to update file: %s", path));
-                        clientFilesCopy.replace(path, "retry");
+                        clientFilesCopy.put(path, "retry");
                     }
                 }
                 guiUpdate.f();
@@ -219,22 +219,32 @@ public class Server {
             Logger.debug(e);
         }
 
-        if (Files.exists(clientFile)) {
+        if (size == 0 && Files.notExists(clientFile)) {
+            Logger.debug(String.format("Found a 0 byte file, writing an empty file to: %s", path));
             try {
-                Files.delete(clientFile);
-                Files.createFile(clientFile);
-            } catch (IOException e) {
-                Logger.debug("Failed to delete file: " + clientFile.getFileName().toString());
-                Logger.debug(e);
-            }
-        }
-
-        if (size == 0) {
-            try {
+                Files.createDirectories(clientFile.getParent());
                 Files.createFile(clientFile);
                 return true;
             } catch (IOException e) {
                 Logger.debug("Failed to write 0 size file.");
+                return false;
+            }
+        }
+
+        if (Files.exists(clientFile)) {
+            try {
+                Files.delete(clientFile);
+                Files.createFile(clientFile);
+
+                // Zero size files do not need to continue
+                // The server will not send any bytes through the socket
+                if (size == 0) {
+                    return true;
+                }
+            } catch (IOException e) {
+                Logger.debug("Failed to delete file: " + clientFile.getFileName().toString());
+                Logger.debug(e);
+                return false;
             }
         }
 
@@ -256,9 +266,6 @@ public class Server {
                     break;
                 }
             }
-
-            // TODO test out empty files
-            //                Logger.debug("Empty file: " + clientFile.getFileName());
             wr.flush();
             wr.close();
 

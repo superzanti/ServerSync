@@ -73,8 +73,14 @@ public class ClientWorker implements Runnable {
 
             // UNEXPECTED FAILURES
             if (remainingFiles.containsValue("retry")) {
-                Logger.log(remainingFiles.toString());
-                Logger.log("Some files failed to sync, retrying once more");
+                Logger.log("Some files failed to sync!");
+                remainingFiles.forEach((file, action) -> {
+                    if ("retry".equals(action)) {
+                        Logger.log(file);
+                    }
+                });
+                Logger.log("Retrying sync...");
+
                 remainingFiles = updateFiles(getClientState());
 
                 if (remainingFiles.containsValue("retry")) {
