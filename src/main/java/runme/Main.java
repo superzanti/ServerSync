@@ -76,7 +76,7 @@ public class Main {
 	private static void commonInit() {
 		try {
 			System.out.println("Loading language file: " + CONFIG.LOCALE);
-			strings = ResourceBundle.getBundle("assets.serversync.MessagesBundle", CONFIG.LOCALE);
+			strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", CONFIG.LOCALE);
 		} catch (MissingResourceException e) {
 			System.out.println("No language file available for: " + CONFIG.LOCALE + ", defaulting to en_US");
 			strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", new Locale("en", "US"));
