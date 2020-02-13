@@ -19,16 +19,6 @@ import java.util.stream.Stream;
  */
 public class PathUtils {
     /**
-     * Uses Java reflection magic and com.superzanti.serversync.ServerSync's {@linkplain ServerSync} class to get
-     * jar file as {@linkplain File} object.
-     *
-     * @return com.superzanti.serversync.ServerSync jar file
-     */
-    public static File getServerSyncFile() {
-        return new File(ServerSync.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-    }
-
-    /**
      * Tries to guess Minecraft directory intelligently.
      *
      * @return Minecraft directory location as {@link Path} object
@@ -60,10 +50,6 @@ public class PathUtils {
         return null;
     }
 
-    private static List<String> getPathParts(String path) {
-        return Arrays.asList(path.split("[\\\\/]"));
-    }
-
     public static File[] fileList(String directory) {
         File contents = new File(directory);
         return contents.listFiles();
@@ -88,5 +74,19 @@ public class PathUtils {
         }
         ds.close();
         return dirList;
+    }
+
+    private static List<String> getPathParts(String path) {
+        return Arrays.asList(path.split("[\\\\/]"));
+    }
+
+    /**
+     * Uses Java reflection magic and com.superzanti.serversync.ServerSync's {@linkplain ServerSync} class to get
+     * jar file as {@linkplain File} object.
+     *
+     * @return com.superzanti.serversync.ServerSync jar file
+     */
+    private static File getServerSyncFile() {
+        return new File(ServerSync.class.getProtectionDomain().getCodeSource().getLocation().getPath());
     }
 }

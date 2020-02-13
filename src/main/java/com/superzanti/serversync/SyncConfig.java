@@ -3,6 +3,7 @@ package com.superzanti.serversync;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EConfigDefaults;
 import com.superzanti.serversync.util.enums.EConfigType;
+import com.superzanti.serversync.util.enums.EServerMode;
 import com.superzanti.serversync.util.minecraft.config.*;
 
 import java.io.File;
@@ -49,7 +50,7 @@ public class SyncConfig {
     // COMMON //////////////////////////////
     public String SERVER_IP;
     public String LAST_UPDATE;
-    public List<String> FILE_IGNORE_LIST = new ArrayList<String>();
+    public List<String> FILE_IGNORE_LIST = new ArrayList<>();
     public List<String> CONFIG_INCLUDE_LIST;
     public Locale LOCALE;
     ////////////////////////////////////////
@@ -65,6 +66,8 @@ public class SyncConfig {
     ////////////////////////////////////////
 
     public static boolean pullServerConfig = true;
+
+    private static SyncConfig singleton;
 
     public SyncConfig(EConfigType type) {
         // Adding ServerSyncs internal files to the ignored list by default
@@ -97,6 +100,18 @@ public class SyncConfig {
         init();
     }
 
+    public static SyncConfig getConfig() {
+        if (SyncConfig.singleton == null) {
+            if (ServerSync.MODE == EServerMode.SERVER) {
+                SyncConfig.singleton = new SyncConfig(EConfigType.SERVER);
+            }
+            if (ServerSync.MODE == EServerMode.CLIENT) {
+                SyncConfig.singleton = new SyncConfig(EConfigType.CLIENT);
+            }
+        }
+        return SyncConfig.singleton;
+    }
+
     private void readExistingConfiguration() {
         try {
             config.readConfig(new FriendlyConfigReader(Files.newBufferedReader(configPath)));
@@ -119,7 +134,7 @@ public class SyncConfig {
             PUSH_CLIENT_MODS = Boolean.parseBoolean(defaults.get(EConfigDefaults.PUSH_CLIENT_MODS));
             LAST_UPDATE = defaults.get(EConfigDefaults.LAST_UPDATE);
 
-            ArrayList<String> comments = new ArrayList<String>();
+            ArrayList<String> comments = new ArrayList<>();
             ArrayList<String> defaultValueList = new ArrayList<>();
 
             FriendlyConfigCategory general = new FriendlyConfigCategory(SyncConfig.CATEGORY_GENERAL);
@@ -132,14 +147,14 @@ public class SyncConfig {
             FriendlyConfigCategory rules = new FriendlyConfigCategory(SyncConfig.CATEGORY_RULES);
             comments.add("# These configs are included, by default configs are not synced");
             rules.add(new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST",
-                                                new ArrayList<String>(), comments
+                                                new ArrayList<>(), comments
             ));
             comments.clear();
 
             defaultValueList.add("mods");
             comments.add("# These directories are included, by default mods and configs are included");
             rules.add(new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "DIRECTORY_INCLUDE_LIST",
-                                                new ArrayList<String>(defaultValueList), comments
+                                                new ArrayList<>(defaultValueList), comments
             ));
             comments.clear();
             defaultValueList.clear();
@@ -147,7 +162,7 @@ public class SyncConfig {
             comments.add(
                 "# These files are ignored by serversync, list auto updates with mods added to the clientmods directory");
             rules.add(
-                new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<String>(),
+                new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<>(),
                                           comments
                 ));
             comments.clear();
@@ -180,7 +195,7 @@ public class SyncConfig {
 
         } else {
             // Client config
-            ArrayList<String> comments = new ArrayList<String>();
+            ArrayList<String> comments = new ArrayList<>();
 
             FriendlyConfigCategory general = new FriendlyConfigCategory(SyncConfig.CATEGORY_GENERAL);
             comments.add("Set this to true to refuse client mods pushed by the server, [default: false]");
@@ -191,14 +206,14 @@ public class SyncConfig {
             FriendlyConfigCategory rules = new FriendlyConfigCategory(SyncConfig.CATEGORY_RULES);
             comments.add("These configs are included, by default configs are not synced.");
             rules.add(new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST",
-                                                new ArrayList<String>(), comments
+                                                new ArrayList<>(), comments
             ));
             comments.clear();
 
             comments.add(
                 "These files are ignored by serversync, add your client mods here to stop serversync deleting them.");
             rules.add(
-                new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<String>(),
+                new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<>(),
                                           comments
                 ));
             comments.clear();

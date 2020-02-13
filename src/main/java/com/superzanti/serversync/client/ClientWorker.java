@@ -1,6 +1,7 @@
 package com.superzanti.serversync.client;
 
 import com.superzanti.serversync.ServerSync;
+import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.filemanager.FileManager;
 import com.superzanti.serversync.server.Server;
 import com.superzanti.serversync.util.GlobPathMatcher;
@@ -37,6 +38,7 @@ public class ClientWorker implements Runnable {
     private Server server;
     private List<String> managedDirectories = new ArrayList<>(0);
 
+    private SyncConfig config = SyncConfig.getConfig();
     private FileManager fileManager = new FileManager();
 
     @Override
@@ -46,7 +48,7 @@ public class ClientWorker implements Runnable {
         ServerSync.clientGUI.disableSyncButton();
         Logger.getLog().clearUserFacingLog();
 
-        server = new Server(ServerSync.CONFIG.SERVER_IP, ServerSync.CONFIG.SERVER_PORT);
+        server = new Server(config.SERVER_IP, config.SERVER_PORT);
 
         if (!server.connect()) {
             errorInUpdates = true;
@@ -93,9 +95,7 @@ public class ClientWorker implements Runnable {
             // CLEANUP
             FileManager.removeEmptyDirectories(
                 managedDirectories.stream().map(Paths::get).collect(Collectors.toList()),
-                (dir) -> {
-                    Logger.log(String.format("<C> Removed empty directory: %s", dir.toString()));
-                }
+                (dir) -> Logger.log(String.format("<C> Removed empty directory: %s", dir.toString()))
             );
         } catch (IOException e) {
             Logger.debug(e);
@@ -147,7 +147,7 @@ public class ClientWorker implements Runnable {
 
     private Map<String, String> updateFiles(Map<String, String> clientFiles) {
         Logger.log("<------> " + ServerSync.strings.getString("update_start") + " <------>");
-        Logger.debug(ServerSync.strings.getString("ignoring") + " " + ServerSync.CONFIG.FILE_IGNORE_LIST);
+        Logger.debug(ServerSync.strings.getString("ignoring") + " " + config.FILE_IGNORE_LIST);
 
         // Progress tracking setup
         AtomicInteger currentProgress = new AtomicInteger();
@@ -165,18 +165,16 @@ public class ClientWorker implements Runnable {
         // these will be the files the the client contains but the server does not.
         return server.syncFiles(
             clientFiles,
-            () -> {
-                ServerSync.clientGUI.updateProgress(
-                    (int) (currentProgress.incrementAndGet() / maxProgress)
-                );
-            }
+            () -> ServerSync.clientGUI.updateProgress(
+                (int) (currentProgress.incrementAndGet() / maxProgress)
+            )
         );
     }
 
     private void deleteFile(String path) {
         Path file = Paths.get(path);
 
-        if (GlobPathMatcher.matches(file, ServerSync.CONFIG.FILE_IGNORE_LIST)) {
+        if (GlobPathMatcher.matches(file, config.FILE_IGNORE_LIST)) {
             Logger.log(String.format("<I> %s %s", ServerSync.strings.getString("ignoring"), path));
             return;
         }
@@ -199,7 +197,7 @@ public class ClientWorker implements Runnable {
             return;
         }
 
-        Logger.log(String.format("Ignore patterns: %s", String.join(", ", ServerSync.CONFIG.FILE_IGNORE_LIST)));
+        Logger.log(String.format("Ignore patterns: %s", String.join(", ", config.FILE_IGNORE_LIST)));
         files
             .entrySet()
             .stream()

@@ -149,6 +149,7 @@ public class ServerWorker implements Runnable {
                         oos.writeBoolean(false); // No files at all?
                     }
                     oos.flush();
+                    continue;
                 }
 
                 // <---->
@@ -157,6 +158,7 @@ public class ServerWorker implements Runnable {
                 if (matchMessage(message, EServerMessage.GET_MANAGED_DIRECTORIES)) {
                     oos.writeObject(directories);
                     oos.flush();
+                    continue;
                 }
 
                 // <---->
@@ -164,6 +166,7 @@ public class ServerWorker implements Runnable {
                 if (matchMessage(message, EServerMessage.GET_NUMBER_OF_MANAGED_FILES)) {
                     oos.writeInt(files.size());
                     oos.flush();
+                    continue;
                 }
             } catch (SocketException e) {
                 logger.log("Client " + clientSocket + " closed by timeout");

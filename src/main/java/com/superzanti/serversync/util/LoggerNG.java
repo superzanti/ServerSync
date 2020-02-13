@@ -10,9 +10,9 @@ import java.util.Arrays;
 public class LoggerNG {
     public static final String FULL_LOG = "full";
     public static final String USER_LOG = "user";
-    public static final String TAG_DEBUG = "DEBUG:";
-    public static final String TAG_ERROR = "ERROR:";
-    public static final String TAG_LOG = "LOG:";
+    private static final String TAG_DEBUG = "DEBUG:";
+    private static final String TAG_ERROR = "ERROR:";
+    private static final String TAG_LOG = "LOG:";
 
     private Log LOG;
 

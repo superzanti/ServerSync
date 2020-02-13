@@ -3,23 +3,27 @@ package com.superzanti.serversync.server;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.enums.EConfigType;
+import com.superzanti.serversync.util.enums.EServerMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public class ServerSetupTests {
+    private SyncConfig config;
+
     @BeforeEach
     void init() {
+        ServerSync.MODE = EServerMode.SERVER;
         Logger logger = new Logger("testing");
-        ServerSync.CONFIG = new SyncConfig(EConfigType.COMMON);
-        ServerSync.CONFIG.DIRECTORY_INCLUDE_LIST = new ArrayList<>();
-        ServerSync.CONFIG.PUSH_CLIENT_MODS = false;
+        config = SyncConfig.getConfig();
+        config.DIRECTORY_INCLUDE_LIST = new ArrayList<>();
+        config.PUSH_CLIENT_MODS = false;
     }
 
     @Test
@@ -31,12 +35,12 @@ public class ServerSetupTests {
     @Test
     @DisplayName("Questions")
     void shouldPushClientOnlyFiles() {
-        ServerSync.CONFIG.PUSH_CLIENT_MODS = false;
+        config.PUSH_CLIENT_MODS = false;
         ServerSetup setup = new ServerSetup();
 
         assertFalse(setup.shouldPushClientOnlyFiles());
 
-        ServerSync.CONFIG.PUSH_CLIENT_MODS = true;
+        config.PUSH_CLIENT_MODS = true;
         setup = new ServerSetup();
 
         assertTrue(setup.shouldPushClientOnlyFiles());

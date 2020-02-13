@@ -90,7 +90,7 @@ public class FriendlyConfigElement {
     }
 
     public boolean getBoolean() {
-        return Boolean.valueOf(value);
+        return Boolean.parseBoolean(value);
     }
 
     public String getName() {

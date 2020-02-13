@@ -1,6 +1,7 @@
 package com.superzanti.serversync.server;
 
 import com.superzanti.serversync.ServerSync;
+import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.filemanager.FileManager;
 import com.superzanti.serversync.gui.FileProgress;
 import com.superzanti.serversync.util.AutoClose;
@@ -23,7 +24,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 
-
 /**
  * Interacts with a server running serversync
  *
@@ -32,12 +32,16 @@ import java.util.stream.Collectors;
 public class Server {
     private final String IP_ADDRESS;
     private final int PORT;
+    private final Map<String, String> criticalFailureMap;
     private ObjectOutputStream oos = null;
     private ObjectInputStream ois = null;
     private Socket clientSocket = null;
     private EnumMap<EServerMessage, String> SCOMS;
+    private SyncConfig config = SyncConfig.getConfig();
 
     public Server(String ip, int port) {
+        criticalFailureMap = new HashMap<>();
+        criticalFailureMap.put("critical-failure", "retry");
         IP_ADDRESS = ip;
         PORT = port;
     }
@@ -137,12 +141,18 @@ public class Server {
         // Server (no) - send file
         Map<String, String> clientFilesCopy = new HashMap<>(clientFiles);
         boolean didSyncFiles = false;
+        String message = SCOMS.get(EServerMessage.SYNC_FILES);
+
         try {
-            String message = SCOMS.get(EServerMessage.SYNC_FILES);
             oos.writeObject(message);
             oos.flush();
+        } catch (IOException e) {
+            Logger.debug("Failed to send coms message to server: SYNC_FILES");
+            Logger.debug(e);
+        }
 
-            // While I have more files to process...
+        // While I have more files to process...
+        try {
             while (ois.readBoolean()) {
                 // Server: Do you have this file?
                 String path = ois.readUTF();
@@ -152,7 +162,7 @@ public class Server {
                     // TODO make the destination server configurable
                     path = path.replaceFirst(FileManager.clientOnlyFilesDirectoryName, "mods");
 
-                    if (ServerSync.CONFIG.REFUSE_CLIENT_MODS) {
+                    if (config.REFUSE_CLIENT_MODS) {
                         // Skip this file essentially, possibly worth making a specific answer for client refused
                         // could be interesting for analytics.
                         clientFilesCopy.remove(path);
@@ -185,27 +195,28 @@ public class Server {
                 }
                 guiUpdate.f();
             }
-
-            if (!didSyncFiles) {
-                Logger.log("All files match the server.");
-            }
-
-            // Return list of remaining files to deal with
-            return clientFilesCopy
-                .entrySet()
-                .stream()
-                .map(entry -> {
-                    if ("retry".equals(entry.getValue())) {
-                        return entry;
-                    }
-                    entry.setValue("delete");
-                    return entry;
-                })
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        } catch( IOException e) {
+        } catch (IOException e) {
+            Logger.error("Critical failure during sync process!");
             Logger.debug(e);
+            return criticalFailureMap;
         }
-        return null;
+
+        if (!didSyncFiles) {
+            Logger.log("All files match the server.");
+        }
+
+        // Return list of remaining files to deal with
+        return clientFilesCopy
+            .entrySet()
+            .stream()
+            .map(entry -> {
+                if ("retry".equals(entry.getValue())) {
+                    return entry;
+                }
+                entry.setValue("delete");
+                return entry;
+            })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private boolean updateFile(String path, long size) {
@@ -260,7 +271,9 @@ public class Server {
                 totalBytesReceived += bytesReceived;
 
                 wr.write(outBuffer, 0, bytesReceived);
-                GUIUpdater.updateProgress((int) Math.ceil((float) totalBytesReceived / size * 100), clientFile.getFileName().toString());
+                GUIUpdater.updateProgress((int) Math.ceil((float) totalBytesReceived / size * 100),
+                                          clientFile.getFileName().toString()
+                );
 
                 if (totalBytesReceived == size) {
                     break;

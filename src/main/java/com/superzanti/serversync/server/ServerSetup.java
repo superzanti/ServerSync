@@ -1,6 +1,6 @@
 package com.superzanti.serversync.server;
 
-import com.superzanti.serversync.ServerSync;
+import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.filemanager.FileManager;
 import com.superzanti.serversync.util.GlobPathMatcher;
 import com.superzanti.serversync.util.Logger;
@@ -27,9 +27,11 @@ import java.util.stream.Collectors;
 public class ServerSetup implements Runnable {
     private static final int SEND_BUFFER_SIZE = 1024 * 8;
 
+    private SyncConfig config = SyncConfig.getConfig();
+
     private Timer timeoutScheduler = new Timer();
     private Map<String, String> serverFiles = new HashMap<>(200);
-    private List<String> managedDirectories = new ArrayList<>(ServerSync.CONFIG.DIRECTORY_INCLUDE_LIST);
+    private List<String> managedDirectories = new ArrayList<>(config.DIRECTORY_INCLUDE_LIST);
 
     private static EnumMap<EServerMessage, String> generateServerMessages() {
         EnumMap<EServerMessage, String> SERVER_MESSAGES = new EnumMap<>(EServerMessage.class);
@@ -51,7 +53,7 @@ public class ServerSetup implements Runnable {
 
         try {
             Logger.log("Starting scan for managed files: " + dateFormatter.format(new Date()));
-            Logger.debug(String.format("Ignore patterns: %s", String.join(", ", ServerSync.CONFIG.FILE_IGNORE_LIST)));
+            Logger.debug(String.format("Ignore patterns: %s", String.join(", ", config.FILE_IGNORE_LIST)));
 
             for (String managedDirectory : managedDirectories) {
                 Files.createDirectories(Paths.get(managedDirectory));
@@ -68,7 +70,7 @@ public class ServerSetup implements Runnable {
                 .filter(entry -> {
                     Path file = Paths.get(entry.getKey());
                     return !GlobPathMatcher
-                        .matches(file, ServerSync.CONFIG.FILE_IGNORE_LIST);
+                        .matches(file, config.FILE_IGNORE_LIST);
                 })
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
@@ -113,9 +115,9 @@ public class ServerSetup implements Runnable {
         Logger.debug("Creating new server socket");
         ServerSocket server;
         try {
-            server = new ServerSocket(ServerSync.CONFIG.SERVER_PORT);
+            server = new ServerSocket(config.SERVER_PORT);
         } catch (BindException e) {
-            Logger.error("Socket already bound at: " + ServerSync.CONFIG.SERVER_PORT);
+            Logger.error("Socket already bound at: " + config.SERVER_PORT);
             return;
         } catch (IOException e) {
             e.printStackTrace();
@@ -147,6 +149,6 @@ public class ServerSetup implements Runnable {
 
 
     public boolean shouldPushClientOnlyFiles() {
-        return ServerSync.CONFIG.PUSH_CLIENT_MODS;
+        return config.PUSH_CLIENT_MODS;
     }
 }

@@ -17,7 +17,7 @@ public class FriendlyConfigReader extends BufferedReader {
 
     public FriendlyConfigElement readNextElement() throws IOException {
         String line;
-        ArrayList<String> elementComments = new ArrayList<String>();
+        ArrayList<String> elementComments = new ArrayList<>();
         FriendlyConfigElement el;
         while ((line = this.readLine()) != null) {
             //TODO read and attach comments to elements
@@ -58,7 +58,7 @@ public class FriendlyConfigReader extends BufferedReader {
     }
 
     private ArrayList<String> getValues() throws IOException {
-        ArrayList<String> temp = new ArrayList<String>();
+        ArrayList<String> temp = new ArrayList<>();
         String line;
         while (true) {
             line = this.readLine();
