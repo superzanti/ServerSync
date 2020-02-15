@@ -166,7 +166,7 @@ public class ClientWorker implements Runnable {
         return server.syncFiles(
             clientFiles,
             () -> ServerSync.clientGUI.updateProgress(
-                (int) (currentProgress.incrementAndGet() / maxProgress)
+                currentProgress.incrementAndGet() / maxProgress
             )
         );
     }

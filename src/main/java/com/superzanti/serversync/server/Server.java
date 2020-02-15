@@ -9,6 +9,7 @@ import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EBinaryAnswer;
 import com.superzanti.serversync.util.enums.EServerMessage;
 
+import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
