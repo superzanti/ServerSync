@@ -7,7 +7,6 @@ import com.superzanti.serversync.util.PathBuilder;
 import com.superzanti.serversync.util.PathUtils;
 
 import java.io.IOException;
-import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

@@ -7,9 +7,6 @@ import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.util.Log;
 import com.superzanti.serversync.util.Logger;
 
-import javax.swing.*;
-import javax.swing.border.*;
-import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Locale;

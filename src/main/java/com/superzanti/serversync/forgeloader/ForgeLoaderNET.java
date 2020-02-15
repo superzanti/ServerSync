@@ -1,7 +1,6 @@
 package com.superzanti.serversync.forgeloader;
 
 import com.superzanti.serversync.RefStrings;
-
 import com.superzanti.serversync.ServerSync;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;

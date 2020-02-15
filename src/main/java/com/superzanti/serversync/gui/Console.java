@@ -2,7 +2,6 @@ package com.superzanti.serversync.gui;
 
 import com.superzanti.serversync.ServerSync;
 
-import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 
 public class Console implements Runnable {
