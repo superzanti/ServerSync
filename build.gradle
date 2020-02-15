@@ -58,8 +58,12 @@ shadowJar {
 }
 
 clean {
-    def publish = file("$rootDir/publish")
-    if (publish.exists() && publish.canWrite()) {
-        publish.deleteDir()
+    def cleanupFiles = ["publish", "config", "logs", "mods"]
+
+    for (name in cleanupFiles) {
+        def f = file("$rootDir/$name")
+        if (f.exists() && f.canWrite()) {
+            f.deleteDir()
+        }
     }
 }
