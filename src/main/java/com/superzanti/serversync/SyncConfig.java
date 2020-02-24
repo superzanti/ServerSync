@@ -71,7 +71,9 @@ public class SyncConfig {
 	public static boolean pullServerConfig = true;
 	
 	public SyncConfig(EConfigType type) {
-		this.FILE_IGNORE_LIST.add("serversync-*.jar");
+		this.FILE_IGNORE_LIST.add("**/serversync-*.jar");
+		this.FILE_IGNORE_LIST.add("config/serversync/**");
+
 		configType = type;
 		config = new MinecraftConfig();
 		if (configType == EConfigType.SERVER) {			
