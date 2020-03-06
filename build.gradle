@@ -41,7 +41,7 @@ jar {
     destinationDirectory = file("$rootDir/publish")
 
     manifest {
-        attributes 'Main-Class': 'com.superzanti.serversync.ServerSync'
+        attributes 'Main-Class': 'com.superzanti.serversync.ServerSync', 'Implementation-Version': ssversion
     }
 }
 

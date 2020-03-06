@@ -2,6 +2,7 @@ package com.superzanti.serversync.client;
 
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.filemanager.FileManager;
 import com.superzanti.serversync.server.Server;
 import com.superzanti.serversync.util.GlobPathMatcher;
@@ -56,21 +57,21 @@ public class ClientWorker implements Runnable {
             return;
         }
 
-        try {
-            managedDirectories = getServerManagedDirectories();
+        managedDirectories = getServerManagedDirectories();
 
-            Logger.log(String.format("Building file list for directories: %s", managedDirectories));
-            // UPDATE
-            managedDirectories.forEach(path -> {
-                try {
-                    Files.createDirectories(Paths.get(path));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-            Map<String, String> remainingFiles = updateFiles(getClientState());
+        Logger.log(String.format("Building file list for directories: %s", managedDirectories));
+        // UPDATE
+        managedDirectories.forEach(path -> {
+            try {
+                Files.createDirectories(Paths.get(path));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        Map<String, String> remainingFiles = updateFiles(getClientState());
 
-            // DELETE
+        // DELETE
+        if (remainingFiles != null) {
             deleteFiles(remainingFiles);
 
             // UNEXPECTED FAILURES
@@ -91,15 +92,13 @@ public class ClientWorker implements Runnable {
                     errorInUpdates = true;
                 }
             }
-
-            // CLEANUP
-            FileManager.removeEmptyDirectories(
-                managedDirectories.stream().map(Paths::get).collect(Collectors.toList()),
-                (dir) -> Logger.log(String.format("<C> Removed empty directory: %s", dir.toString()))
-            );
-        } catch (IOException e) {
-            Logger.debug(e);
         }
+
+        // CLEANUP
+        FileManager.removeEmptyDirectories(
+            managedDirectories.stream().map(Paths::get).collect(Collectors.toList()),
+            (dir) -> Logger.log(String.format("<C> Removed empty directory: %s", dir.toString()))
+        );
 
         updateHappened = true;
         closeWorker();
@@ -138,14 +137,24 @@ public class ClientWorker implements Runnable {
      * The sate of the client from the perspective of what the server wants to manage.
      * e.g. If the server wants to manage 'mods', 'config' and 'my-cool-extras' then this will return the content
      * of the clients 'mods', 'config' and 'my-cool-extras' directories.
-     *
-     * @throws IOException when files on the client could not be accessed.
      */
-    private Map<String, String> getClientState() throws IOException {
-        return fileManager.getDiffableFilesFromDirectories(managedDirectories);
+    private List<Path> getClientState() {
+        return managedDirectories
+            .stream()
+            .filter(dir -> !IgnoredFilesMatcher.matches(Paths.get(dir)))
+            .map(Paths::get)
+            .flatMap(dir -> {
+                try {
+                    return Files.walk(dir).filter(path -> !Files.isDirectory(path));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            })
+            .collect(Collectors.toList());
     }
 
-    private Map<String, String> updateFiles(Map<String, String> clientFiles) {
+    private Map<String, String> updateFiles(List<Path> clientFiles) {
         Logger.log("<------> " + ServerSync.strings.getString("update_start") + " <------>");
         Logger.debug(ServerSync.strings.getString("ignoring") + " " + config.FILE_IGNORE_LIST);
 
