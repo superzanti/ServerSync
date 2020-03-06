@@ -1,8 +1,8 @@
 package com.superzanti.serversync.util.errors;
 
-import java.io.Serializable;
-
 import com.superzanti.serversync.util.enums.EErrorType;
+
+import java.io.Serializable;
 
 public class MessageError implements Serializable {
 	/**

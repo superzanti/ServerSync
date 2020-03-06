@@ -68,9 +68,6 @@ $RECYCLE.BIN/
 .project
 .metadata
 .gradle/
-publish/
-mods/
-config/
 bin/
 out/
 build/
@@ -95,3 +92,7 @@ local.properties
 .buildpath
 /run/
 /logs/
+/config/
+/clientmods/
+/mods/
+/publish/

@@ -1,8 +1,6 @@
-package com.superzanti.serversync.util;
+package com.superzanti.serversync.server;
 
 import java.util.TimerTask;
-
-import com.superzanti.serversync.server.ServerWorker;
 
 /**
  * Generic timeout for disconnecting unresponsive clients

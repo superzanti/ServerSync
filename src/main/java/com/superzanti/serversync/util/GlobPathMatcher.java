@@ -4,33 +4,27 @@ import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.util.List;
 
 /**
  * Just a wrapper for using glob pattern matching, make sure to set a pattern to match against
- * @author Rheimus
  *
+ * @author Rheimus
  */
-public class GlobPathMatcher implements PathMatcher {
-	
-	protected String mPattern;
-	
-	public void setPattern(String pattern) {
-		if (File.separator.equals("\\")) {			
-			this.mPattern = pattern.replaceAll("[/\\\\]", "\\\\\\\\"); // Gross
-		} else {
-			this.mPattern = pattern.replaceAll("[/\\\\]", File.separator);
-		}
-	}
-	
-	@Override
-	public boolean matches(Path path) {
-		if (this.mPattern == null) {
-			System.err.println("Glob pattern not set, did you mean to do this?");
-			return false;
-		}
-		
-		PathMatcher globMatcher = FileSystems.getDefault().getPathMatcher("glob:" + this.mPattern);
-		return globMatcher.matches(path);
-	}
-	
+public class GlobPathMatcher {
+    private static String sanitizePattern(String pattern) {
+        if (File.separator.equals("\\")) {
+            return pattern.replaceAll("[/\\\\]", "\\\\\\\\"); // Gross
+        } else {
+            return pattern.replaceAll("[/\\\\]", File.separator);
+        }
+    }
+
+    public static boolean matches(Path path, List<String> patterns) {
+        return patterns.stream().anyMatch(pattern -> {
+            String sanitizedPattern = sanitizePattern(pattern);
+            PathMatcher globMatcher = FileSystems.getDefault().getPathMatcher("glob:" + sanitizedPattern);
+            return globMatcher.matches(path);
+        });
+    }
 }
