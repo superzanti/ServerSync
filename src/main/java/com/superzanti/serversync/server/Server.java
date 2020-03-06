@@ -2,9 +2,11 @@ package com.superzanti.serversync.server;
 
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.filemanager.FileManager;
 import com.superzanti.serversync.gui.FileProgress;
 import com.superzanti.serversync.util.AutoClose;
+import com.superzanti.serversync.util.FileHash;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EBinaryAnswer;
 import com.superzanti.serversync.util.enums.EServerMessage;
@@ -32,7 +34,6 @@ import java.util.stream.Collectors;
 public class Server {
     private final String IP_ADDRESS;
     private final int PORT;
-    private final Map<String, String> criticalFailureMap;
     private ObjectOutputStream oos = null;
     private ObjectInputStream ois = null;
     private Socket clientSocket = null;
@@ -40,8 +41,6 @@ public class Server {
     private SyncConfig config = SyncConfig.getConfig();
 
     public Server(String ip, int port) {
-        criticalFailureMap = new HashMap<>();
-        criticalFailureMap.put("critical-failure", "retry");
         IP_ADDRESS = ip;
         PORT = port;
     }
@@ -132,16 +131,17 @@ public class Server {
         return -1;
     }
 
-    public Map<String, String> syncFiles(Map<String, String> clientFiles, VoidFunction guiUpdate) {
+    public Map<String, String> syncFiles(List<Path> clientFiles, VoidFunction guiUpdate) {
         // Server: Do you have this file?
         // - String: path
         // - String: hash
         // Client: yes | no (bit)
         // Server (yes) - skip to next file
         // Server (no) - send file
-        Map<String, String> clientFilesCopy = new HashMap<>(clientFiles);
-        boolean didSyncFiles = false;
+        Map<String, String> leftoverFiles = new HashMap<>();
+        List<String> clientPaths = clientFiles.stream().map(Path::toString).collect(Collectors.toList());
         String message = SCOMS.get(EServerMessage.SYNC_FILES);
+        boolean didSyncFiles = false;
 
         try {
             oos.writeObject(message);
@@ -159,38 +159,47 @@ public class Server {
                 String hash = ois.readUTF();
 
                 if (isClientOnlyFile(path)) {
-                    // TODO make the destination server configurable
-                    path = path.replaceFirst(FileManager.clientOnlyFilesDirectoryName, "mods");
-
                     if (config.REFUSE_CLIENT_MODS) {
                         // Skip this file essentially, possibly worth making a specific answer for client refused
                         // could be interesting for analytics.
-                        clientFilesCopy.remove(path);
+                        clientPaths.remove(path);
                         Logger.log(String.format("<R> Refused client mod: %s", path));
-                        oos.writeInt(EBinaryAnswer.YES.getValue());
-                        oos.flush();
+                        respond(EBinaryAnswer.YES);
+                        guiUpdate.f();
+                        continue;
+                    } else {
+                        // TODO make the destination server configurable
+                        path = path.replaceFirst(FileManager.clientOnlyFilesDirectoryName, "mods");
                     }
                 }
 
+                Path clientFile = Paths.get(path);
+
+                if (IgnoredFilesMatcher.matches(clientFile)) {
+                    Logger.debug(String.format("File: %s, set to ignore by the client.", path));
+                    clientPaths.remove(path);
+                    respond(EBinaryAnswer.YES);
+                    guiUpdate.f();
+                    continue;
+                }
+
                 // Does the file exist on the client && does the hash match
-                if (clientFiles.containsKey(path) && hash.equals(clientFiles.get(path))) {
+                if (clientPaths.contains(path) && hash.equals(FileHash.hashFile(clientFile))) {
                     // Client: Yes I do!
-                    clientFilesCopy.remove(path);
-                    oos.writeInt(EBinaryAnswer.YES.getValue());
-                    oos.flush();
+                    clientPaths.remove(path);
+                    respond(EBinaryAnswer.YES);
                 } else {
                     didSyncFiles = true;
                     // Client: No I don't!
-                    oos.writeInt(EBinaryAnswer.NO.getValue());
-                    oos.flush();
+                    respond(EBinaryAnswer.NO);
 
                     // Server: Here is the file.
                     long fileSize = ois.readLong();
                     if (updateFile(path, fileSize)) {
-                        clientFilesCopy.remove(path);
+                        clientPaths.remove(path);
                     } else {
                         Logger.error(String.format("Failed to update file: %s", path));
-                        clientFilesCopy.put(path, "retry");
+                        leftoverFiles.put(path, "retry");
                     }
                 }
                 guiUpdate.f();
@@ -198,7 +207,7 @@ public class Server {
         } catch (IOException e) {
             Logger.error("Critical failure during sync process!");
             Logger.debug(e);
-            return criticalFailureMap;
+            return null;
         }
 
         if (!didSyncFiles) {
@@ -206,17 +215,11 @@ public class Server {
         }
 
         // Return list of remaining files to deal with
-        return clientFilesCopy
-            .entrySet()
-            .stream()
-            .map(entry -> {
-                if ("retry".equals(entry.getValue())) {
-                    return entry;
-                }
-                entry.setValue("delete");
-                return entry;
-            })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        clientPaths.forEach(remainingPath -> {
+            leftoverFiles.put(remainingPath, "delete");
+        });
+
+        return leftoverFiles;
     }
 
     private boolean updateFile(String path, long size) {
@@ -271,8 +274,9 @@ public class Server {
                 totalBytesReceived += bytesReceived;
 
                 wr.write(outBuffer, 0, bytesReceived);
-                GUIUpdater.updateProgress((int) Math.ceil((float) totalBytesReceived / size * 100),
-                                          clientFile.getFileName().toString()
+                GUIUpdater.updateProgress(
+                    (int) Math.ceil((float) totalBytesReceived / size * 100),
+                    clientFile.getFileName().toString()
                 );
 
                 if (totalBytesReceived == size) {
@@ -334,6 +338,11 @@ public class Server {
         }
         Logger.debug(ServerSync.strings.getString("debug_server_close_success"));
         return true;
+    }
+
+    private void respond(EBinaryAnswer answer) throws IOException {
+        oos.writeInt(answer.getValue());
+        oos.flush();
     }
 
     private boolean isClientOnlyFile(String path) {
