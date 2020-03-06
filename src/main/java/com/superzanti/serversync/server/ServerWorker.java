@@ -1,342 +1,274 @@
 package com.superzanti.serversync.server;
 
-import java.io.File;
-import java.io.FileInputStream;
+import com.superzanti.serversync.ServerSync;
+import com.superzanti.serversync.util.LoggerNG;
+import com.superzanti.serversync.util.enums.EBinaryAnswer;
+import com.superzanti.serversync.util.enums.EServerMessage;
+import com.superzanti.serversync.util.errors.UnknownMessageError;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Timer;
-
-import com.superzanti.serversync.util.FileHash;
-import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.ServerTimeout;
-import com.superzanti.serversync.util.SyncFile;
-import com.superzanti.serversync.util.enums.EErrorType;
-import com.superzanti.serversync.util.enums.EServerMessage;
-import com.superzanti.serversync.util.errors.InvalidSyncFileException;
-import com.superzanti.serversync.util.errors.MessageError;
-import com.superzanti.serversync.util.errors.UnknownMessageError;
-
-import runme.Main;
+import java.util.*;
 
 /**
  * This worker handles requests from the client continuously until told to exit
  * using SECURE_EXIT These workers are assigned per socket connection i.e. one
  * per client
- * 
+ *
  * @author superzanti
  */
 public class ServerWorker implements Runnable {
+    private static final int DEFAULT_CLIENT_TIMEOUT_MS = 120000; // 2 minutes
+    private static final int FILE_SYNC_CLIENT_TIMEOUT_MS = 600000; // 10 minutes
 
-	private Socket clientsocket;
-	private ObjectInputStream ois;
-	private ObjectOutputStream oos;
+    private Socket clientSocket;
+    private ObjectInputStream ois;
+    private ObjectOutputStream oos;
 
-	private EnumMap<EServerMessage, String> messages;
+    private EnumMap<EServerMessage, String> messages;
+    private List<String> directories;
+    private Map<String, String> files;
 
-	private Date clientConnectionStarted;
-	private DateFormat dateFormatter;
-	private Timer timeout;
+    private Timer timeout;
+    private TimerTask timeoutTask;
+    
+    private LoggerNG logger;
 
-	protected ServerWorker(Socket socket, ServerSocket theServer, EnumMap<EServerMessage, String> comsMessages,
-			Timer timeoutScheduler) {
-		clientsocket = socket;
-		messages = comsMessages;
-		clientConnectionStarted = new Date();
-		dateFormatter = DateFormat.getDateTimeInstance();
-		timeout = timeoutScheduler;
+    ServerWorker(
+        Socket socket,
+        EnumMap<EServerMessage, String> comsMessages,
+        Timer timeoutScheduler,
+        List<String> managedDirectories,
+        Map<String, String> serverFiles
+    ) {
+        logger = new LoggerNG(String.format("server-connection-from-%s", socket.getInetAddress().toString().replaceAll("[/\\.:@?|\\*\"]","-")));
+        clientSocket = socket;
+        messages = comsMessages;
+        directories = managedDirectories;
+        files = serverFiles;
+        timeout = timeoutScheduler;
+        Date clientConnectionStarted = new Date();
+        DateFormat dateFormatter = DateFormat.getDateTimeInstance();
 
-		Logger.log("Connection established with " + clientsocket + dateFormatter.format(clientConnectionStarted));
-		Logger.log(ServerSetup.directories.toString());
-	}
+        logger.log("Connection established with " + clientSocket + dateFormatter.format(clientConnectionStarted));
+    }
 
-	@Override
-	public void run() {
-		try {
-			ois = new ObjectInputStream(clientsocket.getInputStream());
-			oos = new ObjectOutputStream(clientsocket.getOutputStream());
-			oos.flush();
-		} catch (IOException e) {
-			Logger.log("Failed to create client streams");
-			e.printStackTrace();
-		}
+    @Override
+    public void run() {
+        try {
+            ois = new ObjectInputStream(clientSocket.getInputStream());
+            oos = new ObjectOutputStream(clientSocket.getOutputStream());
+        } catch (IOException e) {
+            logger.log("Failed to create client streams");
+            e.printStackTrace();
+        }
 
-		while (!clientsocket.isClosed()) {
-			String message = null;
-			try {
-				ServerTimeout task = new ServerTimeout(this);
-				timeout.schedule(task, 10000);
-				message = (String) ois.readObject();
-				Logger.log("Recieved message from: " + clientsocket.getInetAddress());
-				task.cancel();
-				timeout.purge();
-			} catch (SocketException e) {
-				// Client timed out
-				break;
-			} catch (ClassNotFoundException | IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+        while (!clientSocket.isClosed()) {
+            String message = null;
+            try {
+                setTimeout(ServerWorker.DEFAULT_CLIENT_TIMEOUT_MS);
+                message = (String) ois.readObject();
+                logger.log(
+                    String.format("Received message: %s, from client: %s", message, clientSocket.getInetAddress()));
+            } catch (SocketException e) {
+                // Client timed out
+                break;
+            } catch (ClassNotFoundException | IOException e) {
+                logger.debug(e);
+            }
 
-			if (message == null) {
-				continue;
-			}
+            if (message == null) {
+                logger.debug("Received null message, this should not happen.");
+                continue;
+            }
 
-			try {
-				if (message.equals(Main.HANDSHAKE)) {
-					Logger.log("Sending coms messages");
-					oos.writeObject(messages);
-					oos.flush();
-					continue;
-				}
+            try {
+                // <---->
+                // always called first
+                if (message.equals(ServerSync.HANDSHAKE)) {
+                    logger.log("Sending coms messages");
+                    oos.writeObject(messages);
+                    oos.flush();
+                    continue;
+                }
 
-				if (!messages.containsValue(message)) {
-					try {
-						Logger.log("Unknown message recieved from: " + clientsocket.getInetAddress());
-						oos.writeObject(new UnknownMessageError(message));
-						oos.flush();
-					} catch (IOException e) {
-						Logger.log("Failed to write error to client " + clientsocket);
-						e.printStackTrace();
-					}
-					timeout = new Timer();
-					timeout.schedule(new ServerTimeout(this), 5000);
-					continue;
-				}
+                // <---->
+                // fallback if I don't know what this message is
+                if (!messages.containsValue(message)) {
+                    try {
+                        logger.log("Unknown message received from: " + clientSocket.getInetAddress());
+                        oos.writeObject(new UnknownMessageError(message));
+                        oos.flush();
+                    } catch (IOException e) {
+                        logger.log("Failed to write error to client " + clientSocket);
+                        logger.debug(e);
+                    }
 
-				if (message.equals(messages.get(EServerMessage.INFO_LAST_UPDATE))) {
-					Logger.log("Sending last updated timestamp");
-					oos.writeObject(Main.CONFIG.LAST_UPDATE);
-					oos.flush();
-					continue;
-				}
+                    // There should not be unknown messages being sent to ServerSync, disconnect from the client.
+                    break;
+                }
 
-				if (message.equals(messages.get(EServerMessage.UPDATE_NEEDED))) {
-					int checkLevel = ois.readInt();
-					ArrayList<String> serverFileNames = new ArrayList<>(200);
-					if (checkLevel == 3) {
-						Logger.log("Client Requested a list of all files");
-						serverFileNames.addAll(SyncFile.listModNames(ServerSetup.allFiles));
-					} else {
-						Logger.log("Client is refusing client only files, sending standard file list");
-						serverFileNames.addAll(SyncFile.listModNames(ServerSetup.standardSyncableFiles));
-					}
-					Logger.log("Sending list of syncable mods");
+                // <---->
+                // the actual file sync
+                if (matchMessage(message, EServerMessage.SYNC_FILES)) {
+                    // Server: Do you have this file?
+                    // - String: path
+                    // - String: hash
+                    // Client: yes | no
+                    // -- (yes) - skip to next file
+                    // -- (no) - send filesize -> send file
+                    if (files.size() > 0) {
+                        for (Map.Entry<String, String> entry :  files.entrySet()) {
+                            try {
+                                oos.writeBoolean(true); // There are files left
+                                oos.writeUTF(entry.getKey()); // The path
+                                oos.writeUTF(entry.getValue()); // The hash
+                                oos.flush();
 
-					serverFileNames.removeAll(new ArrayList<>(Main.CONFIG.FILE_IGNORE_LIST));
 
-					Logger.log("Syncable mods are: " + serverFileNames.toString());
-					oos.writeObject(serverFileNames);
-					oos.flush();
-					continue;
-				}
+                                // Client: Nope, don't have it joe!
+                                if (EBinaryAnswer.NO.getValue() == ois.readInt()) {
+                                    transferFile(entry.getKey());
+                                }
+                            } catch (IOException ex) {
+                                logger.debug(ex);
+                                logger.log(String.format("Encountered error during sync with %s, killing sync process", clientSocket.getInetAddress()));
+                                break;
+                            }
+                        }
+                        oos.writeBoolean(false); // No files left
+                    } else {
+                        oos.writeBoolean(false); // No files at all?
+                    }
+                    oos.flush();
+                    continue;
+                }
 
-				if (message.equals(messages.get(EServerMessage.FILE_GET_LIST))) {
-					Logger.log("Sending servers file list to " + clientsocket);
+                // <---->
+                // the directories that I am managing / sync'ing
+                // needed by the client to know what it should delete
+                if (matchMessage(message, EServerMessage.GET_MANAGED_DIRECTORIES)) {
+                    oos.writeObject(directories);
+                    oos.flush();
+                    continue;
+                }
 
-					oos.writeObject(ServerSetup.standardSyncableFiles);
-					oos.flush();
-					continue;
-				}
+                // <---->
+                // how many files are managed by the server?
+                if (matchMessage(message, EServerMessage.GET_NUMBER_OF_MANAGED_FILES)) {
+                    oos.writeInt(files.size());
+                    oos.flush();
+                    continue;
+                }
+            } catch (SocketException e) {
+                logger.log("Client " + clientSocket + " closed by timeout");
+                break;
+            } catch (IOException e) {
+                logger.log("Failed to write to " + clientSocket + " client stream");
+                e.printStackTrace();
+                break;
+            }
 
-				if (message.equals(messages.get(EServerMessage.UPDATE_GET_SYNCABLE_DIRECTORIES))) {
-					Logger.log("Sending list of syncable directories: " + ServerSetup.directories);
-					oos.writeObject(ServerSetup.directories);
-					oos.flush();
-					continue;
-				}
+            // <---->
+            if (matchMessage(message, EServerMessage.EXIT)) {
+                logger.log(String.format(
+                    "Client requested exit, sync process complete for: %s",
+                    clientSocket.getInetAddress()
+                ));
+                break;
+            }
+        }
 
-				if (message.equals(messages.get(EServerMessage.FILE_COMPARE))) {
-					Logger.log("Comparing clients file against server " + clientsocket);
-					File theFile;
-					try {
-						theFile = (File) ois.readObject();
-						String serverChecksum = FileHash.hashString(theFile);
-						oos.writeObject(serverChecksum);
-						oos.flush();
-					} catch (ClassNotFoundException e) {
-						Logger.log("Failed to read object from client " + clientsocket);
-						e.printStackTrace();
-						oos.writeObject(new MessageError("Failed to read file", EErrorType.STREAM_ACCESS));
-						oos.flush();
-					}
-					continue;
-				}
+        logger.log("Closing connection with: " + clientSocket);
+        teardown();
+    }
 
-				if (message.equals(messages.get(EServerMessage.UPDATE_GET_CLIENT_ONLY_FILES))) {
-					Logger.log("Sending client only file list");
-					oos.writeObject(ServerSetup.clientOnlyFiles);
-					oos.flush();
-					continue;
-				}
+    private void transferFile(String path) throws IOException {
+        setTimeout(ServerWorker.FILE_SYNC_CLIENT_TIMEOUT_MS);
 
-				// Main file update message
-				if (message.equals(messages.get(EServerMessage.UPDATE))) {
+        Path file = Paths.get(path);
 
-					SyncFile file;
-					try {
-						// TODO update this to NIO
-						file = (SyncFile) ois.readObject();
-						File f = file.getFile();
-						Logger.log("Writing " + f + " to client " + clientsocket + "...");
-						byte[] buff = new byte[clientsocket.getSendBufferSize()];
-						int bytesRead = 0;
-						InputStream in = new FileInputStream(f);
-						if ((bytesRead = in.read(buff)) == -1) {
-							// End of file
-							oos.writeBoolean(false);
-						} else {
-							oos.writeBoolean(true);
-							oos.write(buff, 0, bytesRead);
+        // Not checking if the file exists as this is coming from a list of
+        // files that we already know exist.
 
-							while ((bytesRead = in.read(buff)) > 0) {
-								// oos.writeObject("BLOB");
-								oos.write(buff, 0, bytesRead);
-							}
-						}
-						in.close();
-						oos.flush();
-						// oos.writeObject("EOF");
-						Logger.log("Finished writing file to client " + clientsocket);
+        logger.log("Writing " + file.toString() + " to client " + clientSocket.getInetAddress() + "...");
+        InputStream fis = Files.newInputStream(file);
 
-					} catch (ClassNotFoundException e) {
-						Logger.log("Failed to read object from client " + clientsocket);
-						e.printStackTrace();
-						oos.flush();
-						oos.writeObject(new MessageError("Failed to read filePath", EErrorType.STREAM_ACCESS));
-						oos.flush();
-					}
-					continue;
-				}
+        // -- Size, for client GUI progress tracking
+        long size = Files.size(file);
+        logger.debug(String.format("File size is: %d", size));
+        oos.writeLong(size);
+        oos.flush();
+        // --
 
-				if (message.equals(messages.get(EServerMessage.FILE_GET_CONFIG))) {
-					Logger.log("Sending config info to client...");
-					HashMap<String, List<String>> rules = new HashMap<>();
-					rules.put("ignore", Main.CONFIG.FILE_IGNORE_LIST);
-					rules.put("include", Main.CONFIG.CONFIG_INCLUDE_LIST);
-					// TODO add security info in transfer
-					oos.writeObject(rules);
-					oos.flush();
-					continue;
-				}
+        int bytesRead;
+        byte[] buffer = new byte[clientSocket.getSendBufferSize()];
+        while ((bytesRead = fis.read(buffer)) > 0) {
+            oos.write(buffer, 0, bytesRead);
+        }
 
-				if (message.equals(messages.get(EServerMessage.INFO_GET_FILESIZE))) {
-					Logger.log("Writing filesize to client " + clientsocket + "...");
+        fis.close();
+        oos.flush();
 
-					SyncFile theFile;
-					try {
-						theFile = (SyncFile) ois.readObject();
-						oos.writeLong(Files.size(theFile.getFileAsPath()));
-						oos.flush();
-					} catch (ClassNotFoundException e) {
-						Logger.log("Failed to read object from client " + clientsocket);
-						e.printStackTrace();
-						oos.writeObject(new MessageError("Failed to read filePath", EErrorType.STREAM_ACCESS));
-						oos.flush();
-					}
-					continue;
-				}
+        logger.log(String.format(
+            "Finished writing: %s, to client: %s",
+            file.toString(),
+            clientSocket.getInetAddress()
+        ));
+    }
 
-				if (message.equals(messages.get(EServerMessage.FILE_EXISTS))) {
-					try {
-						int checkLevel = ois.readInt();
-						SyncFile clientFile = (SyncFile) ois.readObject();
-						boolean exists = false;
+    private boolean matchMessage(String incomingMessage, EServerMessage message) {
+        return incomingMessage.equals(messages.get(message));
+    }
 
-						if (checkLevel == 3) {
-							for (SyncFile serverFile : ServerSetup.allFiles) {
-								try {
-									if (serverFile.equals(clientFile)) {
-										exists = true;
-									}
-								} catch (InvalidSyncFileException e) {
-									// TODO stub invalid file handling
-									e.printStackTrace();
-								}
-							}
-						} else {
-							for (SyncFile serverFile : ServerSetup.standardSyncableFiles) {
-								try {
-									if (serverFile.equals(clientFile)) {
-										exists = true;
-									}
-								} catch (InvalidSyncFileException e) {
-									// TODO stub invalid file handling
-									e.printStackTrace();
-								}
-							}
-						}
+    private void clearTimeout() {
+        if (timeoutTask != null) {
+            timeoutTask.cancel();
+            timeout.purge();
+        }
+    }
 
-						if (exists) {
-							System.out.println(clientFile.getFileName() + " exists");
-							oos.writeBoolean(true);
-							oos.flush();
-						} else {
-							System.out.println(clientFile.getFileName() + " does not exist");
-							oos.writeBoolean(false);
-							oos.flush();
-						}
-					} catch (ClassNotFoundException e) {
-						Logger.log("Failed to read object from client " + clientsocket);
-						e.printStackTrace();
-						oos.writeObject(new MessageError("Failed to read filePath", EErrorType.STREAM_ACCESS));
-						oos.flush();
-					}
-					continue;
-				}
-			} catch (SocketException e) {
-				Logger.log("Client " + clientsocket + " colsed by timeout");
-				break;
-			} catch (IOException e) {
-				Logger.log("Failed to write to " + clientsocket + " client stream");
-				e.printStackTrace();
-				break;
-			}
+    private void setTimeout(int durationMs) {
+        clearTimeout();
+        timeoutTask = new ServerTimeout(this);
+        timeout.schedule(timeoutTask, durationMs);
+        logger.debug(String.format(
+            "Reset timeout for client: %s, with a timeout of: %s",
+            clientSocket.getInetAddress(),
+            durationMs
+        ));
+    }
 
-			if (message.equals(messages.get(EServerMessage.EXIT))) {
-				break;
-			}
-		}
+    private void teardown() {
+        try {
+            clearTimeout();
+            timeout = null;
 
-		Logger.log("Closing connection with: " + clientsocket);
-		teardown();
-		return; // End thread, probably not needed here as it is the terminal point of the
-				// thread anyway
-	}
+            if (!clientSocket.isClosed()) {
+                clientSocket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-	private void teardown() {
-		try {
-			timeout = null;
+    public void timeoutShutdown() {
+        try {
+            logger.log("Client connection timed out, closing " + clientSocket);
 
-			if (!clientsocket.isClosed()) {
-				clientsocket.close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void timeoutShutdown() {
-		try {
-			Logger.log("Client connection timed out, closing " + clientsocket);
-
-			if (!clientsocket.isClosed()) {
-				clientsocket.close();
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+            if (!clientSocket.isClosed()) {
+                clientSocket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

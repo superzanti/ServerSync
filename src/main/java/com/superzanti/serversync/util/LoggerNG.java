@@ -3,60 +3,60 @@ package com.superzanti.serversync.util;
 import java.util.Arrays;
 
 /**
- * Manager for serversyncs logs
- *
+ * Non static manager for serversyncs logs
  * @author Rheimus
+ *
  */
-public class Logger {
+public class LoggerNG {
     public static final String FULL_LOG = "full";
     public static final String USER_LOG = "user";
     private static final String TAG_DEBUG = "DEBUG:";
-    static final String TAG_ERROR = "ERROR:";
-    static final String TAG_LOG = "LOG:";
+    private static final String TAG_ERROR = "ERROR:";
+    private static final String TAG_LOG = "LOG:";
 
-    private static Log LOG;
+    private Log LOG;
 
-    public Logger(String context) {
+    public LoggerNG(String context) {
         LOG = new Log("serversync-" + context);
     }
 
-    public static Log getLog() {
+    public Log getLog() {
         return LOG;
     }
 
-    public static void setSystemOutput(boolean output) {
+    public void setSystemOutput(boolean output) {
         LOG.shouldOutputToSystem = output;
     }
 
-    public static boolean save() {
+    public boolean save() {
         LOG.saveLog();
         return true;
     }
 
-    public static void log(String s) {
+    public void log(String s) {
         LOG.add(TAG_LOG, s);
         LOG.saveLog();
     }
 
-    public static void error(String s) {
+    public void error(String s) {
         LOG.add(TAG_ERROR, s);
         LOG.saveLog();
     }
 
-    public static void debug(Exception e) {
+    public void debug(Exception e) {
         debug(Arrays.toString(e.getStackTrace()));
     }
 
-    public static void debug(String s) {
+    public void debug(String s) {
         LOG.add(TAG_DEBUG, s);
         LOG.saveLog();
     }
 
-    public static void outputError(Object object) {
+    public void outputError(Object object) {
         debug("Failed to write object (" + object + ") to output stream");
     }
 
-    public static void inputError(Object object) {
+    public void inputError(Object object) {
         debug("Failed to read object from input stream: " + object);
     }
 }
