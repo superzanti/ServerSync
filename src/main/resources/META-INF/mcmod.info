@@ -1,0 +1,9 @@
+[
+{
+  "modid": "${ssmodid}",
+  "name": "${ssdisplayname}",
+  "description": "Sync files between client and server for Minecraft Forge",
+  "authorList": ["SuperZanti", "Rheimus"],
+  "logoFile": "ServersyncLogo.png"
+}
+]

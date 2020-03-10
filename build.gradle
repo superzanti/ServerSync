@@ -1,4 +1,7 @@
+import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
+
 plugins {
+    id 'edu.sc.seis.launch4j' version '2.4.6'
     id 'com.github.johnrengelman.shadow' version '5.1.0'
     id 'java'
     id 'application'
@@ -38,10 +41,9 @@ test {
 jar {
     archivesBaseName = ssname
     archiveClassifier = ssversion
-    destinationDirectory = file("$rootDir/publish")
 
     manifest {
-        attributes 'Main-Class': 'com.superzanti.serversync.ServerSync', 'Implementation-Version': ssversion
+        attributes 'Main-Class': mainclass, 'Implementation-Version': ssversion
     }
 }
 
@@ -49,12 +51,37 @@ shadowJar {
     configurations = [project.configurations.shadow]
     archivesBaseName = ssname
     archiveClassifier = ssversion
-    destinationDirectory = file("$rootDir/publish")
     minimize()
 
     dependencies {
         exclude 'forge*.jar'
     }
+}
+
+createExe {
+    dependsOn shadowJar
+    outfile = 'ServerSyncClient.exe'
+    icon = "${projectDir}/src/main/resources/ServersyncLogo.ico"
+    copyConfigurable = project.tasks.shadowJar.outputs.files
+    jar = "lib/${project.tasks.shadowJar.archiveName}"
+    supportUrl = "https://github.com/superzanti/ServerSync"
+    productName = "ServerSync - Client"
+    fileDescription = "The client side for users."
+    version = ssversion
+}
+
+task createServerExe(type: Launch4jLibraryTask) {
+    dependsOn shadowJar
+    outfile = 'ServerSyncServer.exe'
+    headerType = 'console'
+    mainClassName = 'com.superzanti.serversync.ServerSyncServer'
+    icon = "${projectDir}/src/main/resources/ServersyncLogoServer.ico"
+    copyConfigurable = project.tasks.shadowJar.outputs.files
+    jar = "lib/${project.tasks.shadowJar.archiveName}"
+    supportUrl = "https://github.com/superzanti/ServerSync"
+    productName = "ServerSync - Server"
+    fileDescription = "The server side for admins."
+    version = ssversion
 }
 
 clean {
