@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/rheimus/ServerSync.svg?branch=master)](https://travis-ci.org/rheimus/ServerSync)
+![Java CI](https://github.com/superzanti/ServerSync/workflows/Java%20CI/badge.svg)
+
+[Quick start guide](https://github.com/superzanti/ServerSync/wiki/Quick-start)
 
 ServerSync
 =========
