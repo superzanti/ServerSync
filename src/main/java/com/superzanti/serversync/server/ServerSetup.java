@@ -1,9 +1,12 @@
 package com.superzanti.serversync.server;
 
 import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.filemanager.FileManager;
+import com.superzanti.serversync.util.FileHash;
 import com.superzanti.serversync.util.GlobPathMatcher;
 import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.PathBuilder;
 import com.superzanti.serversync.util.enums.EServerMessage;
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -84,6 +87,21 @@ public class ServerSetup implements Runnable {
             Logger.debug("filtered: " + filteredFiles.toString());
             serverFiles.putAll(filteredFiles);
 
+            // Add config include files
+            Map<String, String> configIncludeFiles = config.CONFIG_INCLUDE_LIST
+                .stream()
+                .parallel()
+                .map(p -> new PathBuilder("config").add(p).buildPath())
+                .filter(path -> Files.exists(path) && !IgnoredFilesMatcher.matches(path))
+                .collect(Collectors.toMap(Path::toString, FileHash::hashFile));
+
+            Logger.log(String.format(
+                "Found %d included configs in <config>",
+                configIncludeFiles.size()
+            ));
+            Logger.debug("files: " + String.join(",", configIncludeFiles.keySet()));
+            serverFiles.putAll(configIncludeFiles);
+
             if (shouldPushClientOnlyFiles()) {
                 Logger.log("Server configured to push client only mods, clients can still refuse these mods!");
                 if (Files.notExists(fileManager.clientOnlyFilesDirectory)) {
@@ -131,7 +149,8 @@ public class ServerSetup implements Runnable {
             try {
                 Socket socket = server.accept();
                 socket.setSendBufferSize(ServerSetup.SEND_BUFFER_SIZE);
-                ServerWorker sc = new ServerWorker(socket, generateServerMessages(), timeoutScheduler, managedDirectories, serverFiles);
+                ServerWorker sc = new ServerWorker(
+                    socket, generateServerMessages(), timeoutScheduler, managedDirectories, serverFiles);
                 Thread clientThread = new Thread(sc, "Server client Handler");
                 clientThread.setName("ClientThread - " + socket.getInetAddress());
                 clientThread.start();
