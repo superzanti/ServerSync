@@ -12,7 +12,10 @@ import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class GUI_Client extends JFrame {
 
@@ -57,7 +60,10 @@ public class GUI_Client extends JFrame {
         setResizable(false);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new Dimension(600, 300));
-        setIconImage(new ImageIcon(ClassLoader.getSystemResource("ServersyncLogo.png")).getImage());
+
+        List<String> iconNames = Arrays.asList("ServersyncLogo-16.png", "ServersyncLogo-32.png", "ServersyncLogo-48.png", "ServersyncLogo-128.png");
+        List<Image> icons = iconNames.stream().parallel().map(i -> new ImageIcon(ClassLoader.getSystemResource(i)).getImage()).collect(Collectors.toList());
+        setIconImages(icons);
 
         P_serverDetails = new JPanel();
         P_serverDetails.setBackground(Color.DARK_GRAY);
