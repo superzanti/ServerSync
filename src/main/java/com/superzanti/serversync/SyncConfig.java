@@ -3,6 +3,7 @@ package com.superzanti.serversync;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EConfigDefaults;
 import com.superzanti.serversync.util.enums.EConfigType;
+import com.superzanti.serversync.util.enums.ELocations;
 import com.superzanti.serversync.util.enums.EServerMode;
 import com.superzanti.serversync.util.minecraft.config.*;
 
@@ -36,7 +37,7 @@ final class ConfigDefaults extends HashMap<EConfigDefaults, String> {
  * @author Rheimus
  */
 public class SyncConfig {
-    private static final String CONFIG_LOCATION = "config" + File.separator + "serversync";
+    private static final String CONFIG_LOCATION = ELocations.CONFIG.getValue();
     private static final HashMap<EConfigDefaults, String> defaults = new ConfigDefaults();
     private static final String CATEGORY_GENERAL = "general";
     private static final String CATEGORY_RULES = "rules";

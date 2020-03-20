@@ -188,10 +188,12 @@ public class Server {
                     // Client: Yes I do!
                     clientPaths.remove(path);
                     respond(EBinaryAnswer.YES);
+                    Logger.log(String.format("File up to date: %s", path));
                 } else {
                     didSyncFiles = true;
                     // Client: No I don't!
                     respond(EBinaryAnswer.NO);
+                    Logger.debug(String.format("Don't have file: %s", path));
 
                     // Server: Here is the file.
                     long fileSize = ois.readLong();
