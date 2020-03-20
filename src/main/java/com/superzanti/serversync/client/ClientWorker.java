@@ -160,7 +160,8 @@ public class ClientWorker implements Runnable {
 
         // Progress tracking setup
         AtomicInteger currentProgress = new AtomicInteger();
-        int maxProgress = server.fetchNumberOfServerManagedFiles();
+        double maxProgress = server.fetchNumberOfServerManagedFiles();
+        Logger.debug(String.format("Number of server files: %s", maxProgress));
         if (maxProgress == 0) {
             Logger.log("Server has no files to sync?");
             return new HashMap<>(0);
@@ -175,7 +176,7 @@ public class ClientWorker implements Runnable {
         return server.syncFiles(
             clientFiles,
             () -> ServerSync.clientGUI.updateProgress(
-                currentProgress.incrementAndGet() / maxProgress
+                (int) (currentProgress.incrementAndGet() / maxProgress * 100)
             )
         );
     }
