@@ -128,6 +128,7 @@ public class ServerWorker implements Runnable {
                     if (files.size() > 0) {
                         for (Map.Entry<String, String> entry :  files.entrySet()) {
                             try {
+                                logger.debug(String.format("Asking client if the have file: %s", entry.getKey()));
                                 oos.writeBoolean(true); // There are files left
                                 oos.writeUTF(entry.getKey()); // The path
                                 oos.writeUTF(entry.getValue()); // The hash
@@ -136,7 +137,10 @@ public class ServerWorker implements Runnable {
 
                                 // Client: Nope, don't have it joe!
                                 if (EBinaryAnswer.NO.getValue() == ois.readInt()) {
+                                    logger.debug("Client said they don't have the file");
                                     transferFile(entry.getKey());
+                                } else {
+                                    logger.debug("Client said they have the file already");
                                 }
                             } catch (IOException ex) {
                                 logger.debug(ex);
@@ -144,8 +148,11 @@ public class ServerWorker implements Runnable {
                                 break;
                             }
                         }
+
+                        logger.debug("Finished sync");
                         oos.writeBoolean(false); // No files left
                     } else {
+                        logger.debug("No files on the server?");
                         oos.writeBoolean(false); // No files at all?
                     }
                     oos.flush();

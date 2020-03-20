@@ -44,6 +44,7 @@ public class LoggerNG {
     }
 
     public void debug(Exception e) {
+        debug(e.getMessage());
         debug(Arrays.toString(e.getStackTrace()));
     }
 
