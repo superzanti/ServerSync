@@ -184,7 +184,7 @@ public class Server {
                 }
 
                 // Does the file exist on the client && does the hash match
-                if (clientPaths.contains(path) && hash.equals(FileHash.hashFile(clientFile))) {
+                if (Files.exists(clientFile) && hash.equals(FileHash.hashFile(clientFile))) {
                     // Client: Yes I do!
                     clientPaths.remove(path);
                     respond(EBinaryAnswer.YES);
