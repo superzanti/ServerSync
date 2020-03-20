@@ -138,9 +138,11 @@ public class ServerWorker implements Runnable {
                                 // Client: Nope, don't have it joe!
                                 if (EBinaryAnswer.NO.getValue() == ois.readInt()) {
                                     logger.debug("Client said they don't have the file");
+                                    setTimeout(ServerWorker.FILE_SYNC_CLIENT_TIMEOUT_MS);
                                     transferFile(entry.getKey());
                                 } else {
                                     logger.debug("Client said they have the file already");
+                                    setTimeout(ServerWorker.DEFAULT_CLIENT_TIMEOUT_MS);
                                 }
                             } catch (IOException ex) {
                                 logger.debug(ex);
@@ -199,8 +201,6 @@ public class ServerWorker implements Runnable {
     }
 
     private void transferFile(String path) throws IOException {
-        setTimeout(ServerWorker.FILE_SYNC_CLIENT_TIMEOUT_MS);
-
         Path file = Paths.get(path);
 
         // Not checking if the file exists as this is coming from a list of
