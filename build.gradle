@@ -26,8 +26,7 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
 
     compile fileTree(dir: 'libs', include: '*.jar')
-    shadow 'com.google.code.gson:gson:2.8.0'
-    shadow 'commons-codec:commons-codec:1.10'
+    shadow group: 'com.eclipsesource.minimal-json', name: 'minimal-json', version: '0.9.5'
 }
 
 application {

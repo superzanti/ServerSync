@@ -3,15 +3,13 @@ package com.superzanti.serversync.server;
 import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.filemanager.FileManager;
-import com.superzanti.serversync.util.FileHash;
-import com.superzanti.serversync.util.GlobPathMatcher;
-import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.PathBuilder;
+import com.superzanti.serversync.util.*;
+import com.superzanti.serversync.util.enums.ELocations;
 import com.superzanti.serversync.util.enums.EServerMessage;
-import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.IOException;
 import java.net.BindException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -31,6 +29,7 @@ public class ServerSetup implements Runnable {
     private static final int SEND_BUFFER_SIZE = 1024 * 8;
 
     private SyncConfig config = SyncConfig.getConfig();
+    private final Path bannedIps = Paths.get(ELocations.BANNED_IPS.getValue());
 
     private Timer timeoutScheduler = new Timer();
     private Map<String, String> serverFiles = new HashMap<>(200);
@@ -42,7 +41,7 @@ public class ServerSetup implements Runnable {
         for (EServerMessage msg : EServerMessage.values()) {
             // What is this doing? who knows but its fun!
             double rng = Math.random() * 1000d;
-            String hashKey = DigestUtils.sha1Hex(msg.toString() + rng);
+            String hashKey = String.format("%s", msg.hashCode() + rng);
 
             SERVER_MESSAGES.put(msg, hashKey);
         }
@@ -148,11 +147,20 @@ public class ServerSetup implements Runnable {
         while (!server.isClosed()) {
             try {
                 Socket socket = server.accept();
+                InetAddress address = socket.getInetAddress();
+                Logger.debug(String.format("Accepted connection from: %s", address));
+
+                if (isIpBanned(address.getHostAddress())) {
+                    socket.close();
+                    Logger.log(String.format("Connection closed from banned IP address: %s", address.getHostAddress()));
+                    continue;
+                }
+
                 socket.setSendBufferSize(ServerSetup.SEND_BUFFER_SIZE);
                 ServerWorker sc = new ServerWorker(
                     socket, generateServerMessages(), timeoutScheduler, managedDirectories, serverFiles);
                 Thread clientThread = new Thread(sc, "Server client Handler");
-                clientThread.setName("ClientThread - " + socket.getInetAddress());
+                clientThread.setName("ClientThread - " + address);
                 clientThread.start();
             } catch (IOException e) {
                 Logger.error(
@@ -166,6 +174,17 @@ public class ServerSetup implements Runnable {
         }
     }
 
+    private boolean isIpBanned(String ip) {
+        if (Files.exists(bannedIps)) {
+            try {
+                return BannedIPSReader.read(bannedIps).contains(ip);
+            } catch (IOException e) {
+                Logger.debug("Failed to read banned-ips.json");
+            }
+        }
+        Logger.debug("No banned-ips.json file exists, skipping ban check");
+        return false;
+    }
 
     public boolean shouldPushClientOnlyFiles() {
         return config.PUSH_CLIENT_MODS;
