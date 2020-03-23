@@ -1,7 +1,6 @@
 package com.superzanti.serversync;
 
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.enums.EConfigDefaults;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.ELocations;
 import com.superzanti.serversync.util.enums.EServerMode;
@@ -12,20 +11,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.*;
-
-final class ConfigDefaults extends HashMap<EConfigDefaults, String> {
-    private static final long serialVersionUID = 71158792045085436L;
-
-    public ConfigDefaults() {
-        this.put(EConfigDefaults.SERVER_IP, "127.0.0.1");
-        this.put(EConfigDefaults.SERVER_PORT, "38067");
-        this.put(EConfigDefaults.LAST_UPDATE, "");
-        this.put(EConfigDefaults.PUSH_CLIENT_MODS, "false");
-        this.put(EConfigDefaults.REFUSE_CLIENT_MODS, "false");
-    }
-}
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Handles all functionality to do with serversyncs config file and
@@ -35,7 +24,8 @@ final class ConfigDefaults extends HashMap<EConfigDefaults, String> {
  */
 public class SyncConfig {
     private static final String CONFIG_LOCATION = ELocations.CONFIG.getValue();
-    private static final HashMap<EConfigDefaults, String> defaults = new ConfigDefaults();
+    private static final String DEFAULT_ADDRESS = "127.0.0.1";
+    private static final int DEFAULT_PORT = 38067;
     private static final String CATEGORY_GENERAL = "general";
     private static final String CATEGORY_RULES = "rules";
     private static final String CATEGORY_CONNECTION = "serverconnection";
@@ -165,14 +155,14 @@ public class SyncConfig {
         connection.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_CONNECTION,
             "SERVER_IP",
-            "127.0.0.1",
+            DEFAULT_ADDRESS,
             new String[]{"# The IP address of the server [default: 127.0.0.1]"}
         ));
 
         connection.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_CONNECTION,
             "SERVER_PORT",
-            38067,
+            DEFAULT_PORT,
             new String[]{"# The port that your server will be serving on [range: 1 ~ 49151, default: 38067]"}
         ));
 
@@ -198,9 +188,9 @@ public class SyncConfig {
     }
 
     private void createServerConfiguration() {
-        SERVER_PORT = Integer.parseInt(defaults.get(EConfigDefaults.SERVER_PORT));
-        PUSH_CLIENT_MODS = Boolean.parseBoolean(defaults.get(EConfigDefaults.PUSH_CLIENT_MODS));
-        LAST_UPDATE = defaults.get(EConfigDefaults.LAST_UPDATE);
+        SERVER_PORT = DEFAULT_PORT;
+        PUSH_CLIENT_MODS = false;
+        LAST_UPDATE = "";
 
         FriendlyConfigCategory general = new FriendlyConfigCategory(SyncConfig.CATEGORY_GENERAL);
         general.add(new FriendlyConfigElement(
@@ -237,7 +227,7 @@ public class SyncConfig {
         serverConnection.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_CONNECTION,
             "SERVER_PORT",
-            38067,
+            DEFAULT_PORT,
             new String[]{"# The port that your server will be serving on [range: 1 ~ 49151, default: 38067]"}
         ));
 
@@ -260,17 +250,6 @@ public class SyncConfig {
             Logger.debug("Failed to write server config file: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    public boolean writeConfigUpdates() {
-        try {
-            config.writeConfig(
-                new FriendlyConfigWriter(Files.newBufferedWriter(configPath, StandardOpenOption.TRUNCATE_EXISTING)));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
     }
 
     private void init() {
