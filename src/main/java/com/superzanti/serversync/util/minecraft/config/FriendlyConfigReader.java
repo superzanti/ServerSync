@@ -3,6 +3,7 @@ package com.superzanti.serversync.util.minecraft.config;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class FriendlyConfigReader extends BufferedReader {
 
@@ -17,7 +18,7 @@ public class FriendlyConfigReader extends BufferedReader {
 
     public FriendlyConfigElement readNextElement() throws IOException {
         String line;
-        ArrayList<String> elementComments = new ArrayList<>();
+        List<String> elementComments = new ArrayList<>();
         FriendlyConfigElement el;
         while ((line = this.readLine()) != null) {
             //TODO read and attach comments to elements
@@ -42,14 +43,14 @@ public class FriendlyConfigReader extends BufferedReader {
                 String type = getType(line);
                 String name = getName(line);
                 String value = getValue(line);
-                el = new FriendlyConfigElement(category, type, name, value, elementComments);
+                el = new FriendlyConfigElement(category, type, name, value, elementComments.toArray(new String[0]));
                 elementComments.clear();
                 return el;
             }
             if (line.contains(":") && line.contains("<")) {
                 String type = getType(line);
                 String name = getName(line);
-                el = new FriendlyConfigElement(category, type, name, getValues(), elementComments);
+                el = new FriendlyConfigElement(category, type, name, getValues(), elementComments.toArray(new String[0]));
                 elementComments.clear();
                 return el;
             }

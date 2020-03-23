@@ -6,6 +6,7 @@ import com.superzanti.serversync.util.enums.ELocations;
 import com.superzanti.serversync.util.enums.EServerMode;
 import com.superzanti.serversync.util.minecraft.config.*;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,18 +36,20 @@ public class SyncConfig {
 
     private Path configPath;
     public final EConfigType configType;
+
     // COMMON //////////////////////////////
-    public String SERVER_IP;
-    public String LAST_UPDATE;
+    public String SERVER_IP = "127.0.0.1";
+    public String LAST_UPDATE = "";
     public List<String> FILE_IGNORE_LIST = new ArrayList<>();
-    public List<String> CONFIG_INCLUDE_LIST;
-    public Locale LOCALE;
+    public List<String> CONFIG_INCLUDE_LIST = new ArrayList<>();
+    public Locale LOCALE = Locale.getDefault();
     ////////////////////////////////////////
 
     // SERVER //////////////////////////////
-    public int SERVER_PORT;
-    public Boolean PUSH_CLIENT_MODS;
-    public List<String> DIRECTORY_INCLUDE_LIST;
+    public int SERVER_PORT = 38067;
+    public Boolean PUSH_CLIENT_MODS = false;
+    public List<String> DIRECTORY_INCLUDE_LIST = Collections.singletonList("mods");
+    public int SYNC_MODE = 0;
     ////////////////////////////////////////
 
     // CLIENT //////////////////////////////
@@ -56,6 +59,7 @@ public class SyncConfig {
     public static boolean pullServerConfig = true;
 
     private static SyncConfig singleton;
+    private boolean isUsingIncompatableConfig = false;
 
     public SyncConfig(EConfigType type) {
         // Adding ServerSyncs internal files to the ignored list by default
@@ -81,11 +85,18 @@ public class SyncConfig {
         }
 
         if (!Files.exists(configPath)) {
-            createConfiguraton();
+            createConfiguration();
         } else {
             readExistingConfiguration();
         }
+
         init();
+
+        if (isUsingIncompatableConfig) {
+            // Update old configs to the new format, or add missing entries.
+            Logger.log("Updated config to latest format");
+            createConfiguration();
+        }
     }
 
     public static SyncConfig getConfig() {
@@ -109,12 +120,15 @@ public class SyncConfig {
         }
     }
 
-    private boolean createConfiguraton() {
-        try {
-            Files.createFile(configPath);
-        } catch (IOException e) {
-            Logger.debug("Failed to create config file: " + e.getMessage());
-            return false;
+    private void createConfiguration() {
+        if (Files.notExists(configPath)) {
+            try {
+                Files.createFile(configPath);
+            } catch (IOException e) {
+                Logger.debug("Failed to create config file: " + e.getMessage());
+                Logger.debug(e);
+                return;
+            }
         }
 
         if (configType == EConfigType.SERVER) {
@@ -122,7 +136,6 @@ public class SyncConfig {
         } else {
             createClientConfiguration();
         }
-        return true;
     }
 
     private void createClientConfiguration() {
@@ -130,7 +143,7 @@ public class SyncConfig {
         general.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_GENERAL,
             "REFUSE_CLIENT_MODS",
-            false,
+            REFUSE_CLIENT_MODS,
             new String[]{"# Set this to true to refuse client mods pushed by the server, [default: false]"}
         ));
 
@@ -138,16 +151,8 @@ public class SyncConfig {
         rules.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_RULES,
             "S",
-            "CONFIG_INCLUDE_LIST",
-            Collections.emptyList(),
-            new String[]{"# These configs are included, by default configs are not synced."}
-        ));
-
-        rules.add(new FriendlyConfigElement(
-            SyncConfig.CATEGORY_RULES,
-            "S",
             "FILE_IGNORE_LIST",
-            Collections.emptyList(),
+            FILE_IGNORE_LIST,
             new String[]{"# These files are ignored by serversync, add your client mods here to stop serversync deleting them."}
         ));
 
@@ -155,14 +160,14 @@ public class SyncConfig {
         connection.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_CONNECTION,
             "SERVER_IP",
-            DEFAULT_ADDRESS,
+            SERVER_IP,
             new String[]{"# The IP address of the server [default: 127.0.0.1]"}
         ));
 
         connection.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_CONNECTION,
             "SERVER_PORT",
-            DEFAULT_PORT,
+            SERVER_PORT,
             new String[]{"# The port that your server will be serving on [range: 1 ~ 49151, default: 38067]"}
         ));
 
@@ -170,7 +175,7 @@ public class SyncConfig {
         other.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_OTHER,
             "LOCALE",
-            Locale.getDefault().toString(),
+            LOCALE.toString(),
             new String[]{"# Your locale string"}
         ));
 
@@ -179,12 +184,7 @@ public class SyncConfig {
         config.put(SyncConfig.CATEGORY_CONNECTION, connection);
         config.put(SyncConfig.CATEGORY_OTHER, other);
 
-        try {
-            config.writeConfig(new FriendlyConfigWriter(Files.newBufferedWriter(configPath)));
-        } catch (IOException e) {
-            Logger.debug("Failed to write client config file: " + e.getMessage());
-            e.printStackTrace();
-        }
+        writeConfig();
     }
 
     private void createServerConfiguration() {
@@ -196,8 +196,14 @@ public class SyncConfig {
         general.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_GENERAL,
             "PUSH_CLIENT_MODS",
-            false,
+            PUSH_CLIENT_MODS,
             new String[]{"# set true to push client side mods from clientmods directory, set on server [default: false]"}
+        ));
+        general.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_GENERAL,
+            "SYNC_MODE",
+            SYNC_MODE,
+            new String[]{"# The type of sync being used, tweak this if you want different network performance"}
         ));
 
         FriendlyConfigCategory rules = new FriendlyConfigCategory(SyncConfig.CATEGORY_RULES);
@@ -205,21 +211,21 @@ public class SyncConfig {
             SyncConfig.CATEGORY_RULES,
             "S",
             "CONFIG_INCLUDE_LIST",
-            Collections.emptyList(),
+            CONFIG_INCLUDE_LIST,
             new String[]{"# These configs are included, by default configs are not synced"}
         ));
         rules.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_RULES,
             "S",
             "DIRECTORY_INCLUDE_LIST",
-            Collections.singletonList("mods"),
+            DIRECTORY_INCLUDE_LIST,
             new String[]{"# These directories are included, by default mods and configs are included"}
         ));
         rules.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_RULES,
             "S",
             "FILE_IGNORE_LIST",
-            Collections.emptyList(),
+            FILE_IGNORE_LIST,
             new String[]{"# These files are ignored by serversync, list auto updates with mods added to the clientmods directory"}
         ));
 
@@ -227,7 +233,7 @@ public class SyncConfig {
         serverConnection.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_CONNECTION,
             "SERVER_PORT",
-            DEFAULT_PORT,
+            SERVER_PORT,
             new String[]{"# The port that your server will be serving on [range: 1 ~ 49151, default: 38067]"}
         ));
 
@@ -235,7 +241,7 @@ public class SyncConfig {
         other.add(new FriendlyConfigElement(
             SyncConfig.CATEGORY_OTHER,
             "LOCALE",
-            Locale.getDefault().toString(),
+            LOCALE.toString(),
             new String[]{"# Your locale string"}
         ));
 
@@ -244,38 +250,78 @@ public class SyncConfig {
         config.put(SyncConfig.CATEGORY_CONNECTION, serverConnection);
         config.put(SyncConfig.CATEGORY_OTHER, other);
 
-        try {
-            config.writeConfig(new FriendlyConfigWriter(Files.newBufferedWriter(configPath)));
+        writeConfig();
+    }
+
+    private void writeConfig() {
+        try (BufferedWriter write = Files.newBufferedWriter(configPath)) {
+            config.writeConfig(new FriendlyConfigWriter(write));
         } catch (IOException e) {
-            Logger.debug("Failed to write server config file: " + e.getMessage());
-            e.printStackTrace();
+            Logger.debug("Failed to write updates to config file");
+            Logger.debug(e);
         }
     }
 
     private void init() {
+        String couldNotFindString = "Could not find %s config entry";
         try {
             LOCALE = new Locale(config.getEntryByName("LOCALE").getString());
-
-            try {
-                FILE_IGNORE_LIST.addAll(config.getEntryByName("FILE_IGNORE_LIST").getList());
-            } catch (NullPointerException e) {
-                // Specific conversion from old config files
-                FILE_IGNORE_LIST.addAll(config.getEntryByName("MOD_IGNORE_LIST").getList());
-            }
-
-            CONFIG_INCLUDE_LIST = config.getEntryByName("CONFIG_INCLUDE_LIST").getList();
-
-            if (configType == EConfigType.SERVER) {
-                PUSH_CLIENT_MODS = config.getEntryByName("PUSH_CLIENT_MODS").getBoolean();
-                DIRECTORY_INCLUDE_LIST = config.getEntryByName("DIRECTORY_INCLUDE_LIST").getList();
-                SERVER_PORT = config.getEntryByName("SERVER_PORT").getInt();
-            } else if (configType == EConfigType.CLIENT) {
-                SERVER_IP = config.getEntryByName("SERVER_IP").getString();
-                SERVER_PORT = config.getEntryByName("SERVER_PORT").getInt();
-                REFUSE_CLIENT_MODS = config.getEntryByName("REFUSE_CLIENT_MODS").getBoolean();
-            }
         } catch (NullPointerException e) {
-            Logger.debug("could not retrieve an entry from the config file, have you altered the entry names?");
+            Logger.debug(String.format(couldNotFindString, "LOCALE"));
+            isUsingIncompatableConfig = true;
+        }
+        try {
+            FILE_IGNORE_LIST.addAll(config.getEntryByName("FILE_IGNORE_LIST").getList());
+        } catch (NullPointerException e) {
+            // Specific conversion from old config files
+            Logger.debug("Could not find FILE_IGNORE_LIST, looking for old MOD_IGNORE_LIST");
+            try {
+                FILE_IGNORE_LIST.addAll(config.getEntryByName("MOD_IGNORE_LIST").getList());
+            } catch (NullPointerException e2) {
+                Logger.debug(String.format(couldNotFindString, "MOD_IGNORE_LIST"));
+            }
+            isUsingIncompatableConfig = true;
+        }
+        try {
+            SERVER_PORT = config.getEntryByName("SERVER_PORT").getInt();
+        } catch (NullPointerException e) {
+            Logger.debug(String.format(couldNotFindString, "SERVER_PORT"));
+        }
+
+        if (configType == EConfigType.SERVER) {
+            try {
+                CONFIG_INCLUDE_LIST = config.getEntryByName("CONFIG_INCLUDE_LIST").getList();
+            } catch (NullPointerException e) {
+                Logger.debug(String.format(couldNotFindString, "CONFIG_INCLUDE_LIST"));
+                isUsingIncompatableConfig = true;
+            }
+            try {
+                SYNC_MODE = config.getEntryByName("SYNC_MODE").getInt();
+            } catch (NullPointerException e) {
+                Logger.debug(String.format(couldNotFindString, "SYNC_MODE"));
+            }
+            try {
+                PUSH_CLIENT_MODS = config.getEntryByName("PUSH_CLIENT_MODS").getBoolean();
+            } catch (NullPointerException e) {
+                Logger.debug(String.format(couldNotFindString, "PUSH_CLIENT_MODS"));
+            }
+            try {
+                DIRECTORY_INCLUDE_LIST = config.getEntryByName("DIRECTORY_INCLUDE_LIST").getList();
+            } catch (NullPointerException e) {
+                Logger.debug(String.format(couldNotFindString, "DIRECTORY_INCLUDE_LIST"));
+            }
+
+        } else if (configType == EConfigType.CLIENT) {
+            try {
+                SERVER_IP = config.getEntryByName("SERVER_IP").getString();
+            } catch (NullPointerException e) {
+                Logger.debug(String.format(couldNotFindString, "SERVER_IP"));
+            }
+            try {
+                REFUSE_CLIENT_MODS = config.getEntryByName("REFUSE_CLIENT_MODS").getBoolean();
+            } catch (NullPointerException e) {
+                Logger.debug(String.format(couldNotFindString, "REFUSE_CLIENT_MODS"));
+            }
         }
 
         Logger.debug("finished loading config");

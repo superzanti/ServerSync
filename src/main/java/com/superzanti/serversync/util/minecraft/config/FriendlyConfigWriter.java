@@ -2,7 +2,7 @@ package com.superzanti.serversync.util.minecraft.config;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Used to create and update the client side config file for Serversync
@@ -49,7 +49,7 @@ public class FriendlyConfigWriter extends BufferedWriter {
      */
     public void writeElement(FriendlyConfigElement element) throws IOException {
         if (element.hasComment) {
-            ArrayList<String> comments = element.getComments();
+            List<String> comments = element.getComments();
             for (String comment : comments) {
                 this.writeWithIndentation("# " + comment);
                 this.newLine();
@@ -57,7 +57,7 @@ public class FriendlyConfigWriter extends BufferedWriter {
         }
 
         if (element.isArray) {
-            ArrayList<String> values = element.getList();
+            List<String> values = element.getList();
 
             // Header for array element
             this.writeWithIndentation(element.getTypeTag() + ":" + element.getName() + " <");

@@ -1,7 +1,5 @@
 package com.superzanti.serversync.util.minecraft.config;
 
-import com.sun.istack.internal.Nullable;
-
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
@@ -18,7 +16,7 @@ public class FriendlyConfigElement {
     public boolean hasComment;
 
     public FriendlyConfigElement(
-        String category, String type, String name, @Nullable String value, String[] comments
+        String category, String type, String name, String value, String[] comments
     ) {
         this.category = category;
         this.comments = Arrays.asList(comments);
