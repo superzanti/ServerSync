@@ -13,10 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 final class ConfigDefaults extends HashMap<EConfigDefaults, String> {
     private static final long serialVersionUID = 71158792045085436L;
@@ -131,126 +128,138 @@ public class SyncConfig {
         }
 
         if (configType == EConfigType.SERVER) {
-            SERVER_PORT = Integer.parseInt(defaults.get(EConfigDefaults.SERVER_PORT));
-            PUSH_CLIENT_MODS = Boolean.parseBoolean(defaults.get(EConfigDefaults.PUSH_CLIENT_MODS));
-            LAST_UPDATE = defaults.get(EConfigDefaults.LAST_UPDATE);
-
-            ArrayList<String> comments = new ArrayList<>();
-            ArrayList<String> defaultValueList = new ArrayList<>();
-
-            FriendlyConfigCategory general = new FriendlyConfigCategory(SyncConfig.CATEGORY_GENERAL);
-            comments
-                .add("# set true to push client side mods from clientmods directory, set on server [default: false]");
-            general.add(
-                new FriendlyConfigElement(SyncConfig.CATEGORY_GENERAL, "B", "PUSH_CLIENT_MODS", "false", comments));
-            comments.clear();
-
-            FriendlyConfigCategory rules = new FriendlyConfigCategory(SyncConfig.CATEGORY_RULES);
-            comments.add("# These configs are included, by default configs are not synced");
-            rules.add(new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST",
-                                                new ArrayList<>(), comments
-            ));
-            comments.clear();
-
-            defaultValueList.add("mods");
-            comments.add("# These directories are included, by default mods and configs are included");
-            rules.add(new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "DIRECTORY_INCLUDE_LIST",
-                                                new ArrayList<>(defaultValueList), comments
-            ));
-            comments.clear();
-            defaultValueList.clear();
-
-            comments.add(
-                "# These files are ignored by serversync, list auto updates with mods added to the clientmods directory");
-            rules.add(
-                new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<>(),
-                                          comments
-                ));
-            comments.clear();
-
-            FriendlyConfigCategory serverConnection = new FriendlyConfigCategory(SyncConfig.CATEGORY_CONNECTION);
-            comments.add("# The port that your server will be serving on [range: 1 ~ 49151, default: 38067]");
-            serverConnection
-                .add(new FriendlyConfigElement(SyncConfig.CATEGORY_CONNECTION, "I", "SERVER_PORT", "38067", comments));
-            comments.clear();
-
-            FriendlyConfigCategory other = new FriendlyConfigCategory(SyncConfig.CATEGORY_OTHER);
-            comments.add("# Your locale string");
-            other.add(
-                new FriendlyConfigElement(SyncConfig.CATEGORY_OTHER, "S", "LOCALE", Locale.getDefault().toString(),
-                                          comments
-                ));
-            comments.clear();
-
-            config.put(SyncConfig.CATEGORY_GENERAL, general);
-            config.put(SyncConfig.CATEGORY_RULES, rules);
-            config.put(SyncConfig.CATEGORY_CONNECTION, serverConnection);
-            config.put(SyncConfig.CATEGORY_OTHER, other);
-
-            try {
-                config.writeConfig(new FriendlyConfigWriter(Files.newBufferedWriter(configPath)));
-            } catch (IOException e) {
-                Logger.debug("Failed to write server config file: " + e.getMessage());
-                e.printStackTrace();
-            }
-
+            createServerConfiguration();
         } else {
-            // Client config
-            ArrayList<String> comments = new ArrayList<>();
-
-            FriendlyConfigCategory general = new FriendlyConfigCategory(SyncConfig.CATEGORY_GENERAL);
-            comments.add("Set this to true to refuse client mods pushed by the server, [default: false]");
-            general.add(
-                new FriendlyConfigElement(SyncConfig.CATEGORY_GENERAL, "B", "REFUSE_CLIENT_MODS", "false", comments));
-            comments.clear();
-
-            FriendlyConfigCategory rules = new FriendlyConfigCategory(SyncConfig.CATEGORY_RULES);
-            comments.add("These configs are included, by default configs are not synced.");
-            rules.add(new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "CONFIG_INCLUDE_LIST",
-                                                new ArrayList<>(), comments
-            ));
-            comments.clear();
-
-            comments.add(
-                "These files are ignored by serversync, add your client mods here to stop serversync deleting them.");
-            rules.add(
-                new FriendlyConfigElement(SyncConfig.CATEGORY_RULES, "S", "FILE_IGNORE_LIST", new ArrayList<>(),
-                                          comments
-                ));
-            comments.clear();
-
-            FriendlyConfigCategory connection = new FriendlyConfigCategory(SyncConfig.CATEGORY_CONNECTION);
-            comments.add("The IP address of the server [default: 127.0.0.1]");
-            connection.add(
-                new FriendlyConfigElement(SyncConfig.CATEGORY_CONNECTION, "S", "SERVER_IP", "127.0.0.1", comments));
-            comments.clear();
-
-            comments.add("The port that your server will be serving on [range: 1 ~ 49151, default: 38067]");
-            connection
-                .add(new FriendlyConfigElement(SyncConfig.CATEGORY_CONNECTION, "I", "SERVER_PORT", "38067", comments));
-            comments.clear();
-
-            FriendlyConfigCategory other = new FriendlyConfigCategory(SyncConfig.CATEGORY_OTHER);
-            comments.add("# Your locale string");
-            other.add(
-                new FriendlyConfigElement(SyncConfig.CATEGORY_OTHER, "S", "LOCALE", Locale.getDefault().toString(),
-                                          comments
-                ));
-            comments.clear();
-
-            config.put(SyncConfig.CATEGORY_GENERAL, general);
-            config.put(SyncConfig.CATEGORY_RULES, rules);
-            config.put(SyncConfig.CATEGORY_CONNECTION, connection);
-            config.put(SyncConfig.CATEGORY_OTHER, other);
-
-            try {
-                config.writeConfig(new FriendlyConfigWriter(Files.newBufferedWriter(configPath)));
-            } catch (IOException e) {
-                Logger.debug("Failed to write client config file: " + e.getMessage());
-                e.printStackTrace();
-            }
+            createClientConfiguration();
         }
         return true;
+    }
+
+    private void createClientConfiguration() {
+        FriendlyConfigCategory general = new FriendlyConfigCategory(SyncConfig.CATEGORY_GENERAL);
+        general.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_GENERAL,
+            "REFUSE_CLIENT_MODS",
+            false,
+            new String[]{"# Set this to true to refuse client mods pushed by the server, [default: false]"}
+        ));
+
+        FriendlyConfigCategory rules = new FriendlyConfigCategory(SyncConfig.CATEGORY_RULES);
+        rules.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_RULES,
+            "S",
+            "CONFIG_INCLUDE_LIST",
+            Collections.emptyList(),
+            new String[]{"# These configs are included, by default configs are not synced."}
+        ));
+
+        rules.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_RULES,
+            "S",
+            "FILE_IGNORE_LIST",
+            Collections.emptyList(),
+            new String[]{"# These files are ignored by serversync, add your client mods here to stop serversync deleting them."}
+        ));
+
+        FriendlyConfigCategory connection = new FriendlyConfigCategory(SyncConfig.CATEGORY_CONNECTION);
+        connection.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_CONNECTION,
+            "SERVER_IP",
+            "127.0.0.1",
+            new String[]{"# The IP address of the server [default: 127.0.0.1]"}
+        ));
+
+        connection.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_CONNECTION,
+            "SERVER_PORT",
+            38067,
+            new String[]{"# The port that your server will be serving on [range: 1 ~ 49151, default: 38067]"}
+        ));
+
+        FriendlyConfigCategory other = new FriendlyConfigCategory(SyncConfig.CATEGORY_OTHER);
+        other.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_OTHER,
+            "LOCALE",
+            Locale.getDefault().toString(),
+            new String[]{"# Your locale string"}
+        ));
+
+        config.put(SyncConfig.CATEGORY_GENERAL, general);
+        config.put(SyncConfig.CATEGORY_RULES, rules);
+        config.put(SyncConfig.CATEGORY_CONNECTION, connection);
+        config.put(SyncConfig.CATEGORY_OTHER, other);
+
+        try {
+            config.writeConfig(new FriendlyConfigWriter(Files.newBufferedWriter(configPath)));
+        } catch (IOException e) {
+            Logger.debug("Failed to write client config file: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void createServerConfiguration() {
+        SERVER_PORT = Integer.parseInt(defaults.get(EConfigDefaults.SERVER_PORT));
+        PUSH_CLIENT_MODS = Boolean.parseBoolean(defaults.get(EConfigDefaults.PUSH_CLIENT_MODS));
+        LAST_UPDATE = defaults.get(EConfigDefaults.LAST_UPDATE);
+
+        FriendlyConfigCategory general = new FriendlyConfigCategory(SyncConfig.CATEGORY_GENERAL);
+        general.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_GENERAL,
+            "PUSH_CLIENT_MODS",
+            false,
+            new String[]{"# set true to push client side mods from clientmods directory, set on server [default: false]"}
+        ));
+
+        FriendlyConfigCategory rules = new FriendlyConfigCategory(SyncConfig.CATEGORY_RULES);
+        rules.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_RULES,
+            "S",
+            "CONFIG_INCLUDE_LIST",
+            Collections.emptyList(),
+            new String[]{"# These configs are included, by default configs are not synced"}
+        ));
+        rules.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_RULES,
+            "S",
+            "DIRECTORY_INCLUDE_LIST",
+            Collections.singletonList("mods"),
+            new String[]{"# These directories are included, by default mods and configs are included"}
+        ));
+        rules.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_RULES,
+            "S",
+            "FILE_IGNORE_LIST",
+            Collections.emptyList(),
+            new String[]{"# These files are ignored by serversync, list auto updates with mods added to the clientmods directory"}
+        ));
+
+        FriendlyConfigCategory serverConnection = new FriendlyConfigCategory(SyncConfig.CATEGORY_CONNECTION);
+        serverConnection.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_CONNECTION,
+            "SERVER_PORT",
+            38067,
+            new String[]{"# The port that your server will be serving on [range: 1 ~ 49151, default: 38067]"}
+        ));
+
+        FriendlyConfigCategory other = new FriendlyConfigCategory(SyncConfig.CATEGORY_OTHER);
+        other.add(new FriendlyConfigElement(
+            SyncConfig.CATEGORY_OTHER,
+            "LOCALE",
+            Locale.getDefault().toString(),
+            new String[]{"# Your locale string"}
+        ));
+
+        config.put(SyncConfig.CATEGORY_GENERAL, general);
+        config.put(SyncConfig.CATEGORY_RULES, rules);
+        config.put(SyncConfig.CATEGORY_CONNECTION, serverConnection);
+        config.put(SyncConfig.CATEGORY_OTHER, other);
+
+        try {
+            config.writeConfig(new FriendlyConfigWriter(Files.newBufferedWriter(configPath)));
+        } catch (IOException e) {
+            Logger.debug("Failed to write server config file: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public boolean writeConfigUpdates() {
