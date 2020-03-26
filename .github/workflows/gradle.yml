@@ -27,14 +27,9 @@ jobs:
         
     - name: Build with Gradle
       run: ./gradlew build createAllExecutables
-      
-    - uses: actions/upload-artifact@v1
-      with:
-        name: Package
-        path: build/libs
         
     - uses: actions/upload-artifact@v1
       with:
-        name: Windows
+        name: Package
         path: build/launch4j
       
