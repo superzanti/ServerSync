@@ -1,7 +1,8 @@
 package com.superzanti.serversync.util.minecraft.config;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class FriendlyConfigElement {
     private final String category;
@@ -9,35 +10,52 @@ public class FriendlyConfigElement {
     private String typeTag;
     private String value;
     private String name;
-    private ArrayList<String> values;
-    private ArrayList<String> comments;
+    private List<String> values;
+    private List<String> comments;
     public final boolean isArray;
     public boolean hasComment;
 
     public FriendlyConfigElement(
-        String category, String type, String name, String value, ArrayList<String> elementComments
+        String category, String type, String name, String value, String[] comments
     ) {
         this.category = category;
-        this.comments = elementComments;
+        this.comments = Arrays.asList(comments);
         this.name = name;
         setType(type);
         this.isArray = false;
-        this.hasComment = !comments.isEmpty();
+        this.hasComment = !this.comments.isEmpty();
         this.value = value;
         this.values = null;
     }
 
     public FriendlyConfigElement(
-        String category, String type, String name, ArrayList<String> values, ArrayList<String> elementComments
+        String category, String name, String value, String[] comments
+    ) {
+        this(category, "S", name, value, comments);
+    }
+
+    public FriendlyConfigElement(
+        String category, String name, int value, String[] comments
+    ) {
+        this(category, "I", name, String.valueOf(value), comments);
+    }
+
+    public FriendlyConfigElement(
+        String category, String name, boolean value, String[] comments
+    ) {
+        this(category, "B", name, String.valueOf(value), comments);
+    }
+
+    public FriendlyConfigElement(
+        String category, String type, String name, List<String> values, String[] comments
     ) {
         this.category = category;
-        this.comments = elementComments;
-        this.hasComment = !comments.isEmpty();
+        this.comments = Arrays.asList(comments);
+        this.hasComment = !this.comments.isEmpty();
         this.name = name;
         setType(type);
         this.values = values;
         this.isArray = true;
-        this.value = null;
     }
 
     private void setType(String type) {
@@ -53,21 +71,11 @@ public class FriendlyConfigElement {
         this.typeTag = type;
     }
 
-    public void addComment(String comment) {
-        this.comments.add(comment);
-        this.hasComment = true;
-    }
-
-    public void removeComments() {
-        this.comments = null;
-        this.hasComment = false;
-    }
-
-    public ArrayList<String> getComments() {
+    public List<String> getComments() {
         return this.comments;
     }
 
-    public ArrayList<String> getList() {
+    public List<String> getList() {
         if (isArray) {
             return values;
         }
@@ -76,10 +84,6 @@ public class FriendlyConfigElement {
 
     public String getCategoryName() {
         return category;
-    }
-
-    public Type getType() {
-        return type;
     }
 
     /**

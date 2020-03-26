@@ -64,22 +64,27 @@ What you should expect to see
 
 When the program starts up you will see a very lightweight console with general information on progress etc.
 
-Client GUI: (server has no GUI at the moment)
-
-![Information Console](http://s31.postimg.org/bxc807u63/ss_snap.png)
-
 Error messages will appear if the server cannot be found or there is some exception in the mod while downloading updates. All these errors should be fairly self explanatory and easy to fix.
 
 
-Compiling
+Working with the code
 --------------
-
-Simply git clone the repo, cd into the folder and run 
-```
+### Building a Jar
+```shell script
 ./gradlew build
 ```
+Find the output in `./build/libs`
 
-If you would like to setup a workspace to work on these files simply run
+### Building exe files
+```shell script
+./gradlew build createAllExecutables
+```
+Find the output in `./build/launch4j`
+
+## IDE Setup
+### IntelliJ
+Open the cloned project, IntelliJ should auto detect the gradle files and do the rest for you.
+### Eclipse
 ```
 ./gradlew eclipse
 ```
