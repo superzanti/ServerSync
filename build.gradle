@@ -14,6 +14,7 @@ repositories {
 }
 
 group = "com.superzanti.serversync"
+version = ssversion
 
 configurations {
     shadow
@@ -26,7 +27,7 @@ dependencies {
     // Use JUnit Jupiter Engine for testing.
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
 
-    compile fileTree(dir: 'libs', include: '*.jar')
+    implementation fileTree(dir: 'libs', include: '*.jar')
     shadow group: 'com.eclipsesource.minimal-json', name: 'minimal-json', version: '0.9.5'
 }
 
@@ -40,7 +41,6 @@ test {
 
 jar {
     archivesBaseName = ssname
-    archiveClassifier = ssversion
 
     manifest {
         attributes 'Main-Class': mainclass, 'Implementation-Version': ssversion
@@ -50,7 +50,6 @@ jar {
 shadowJar {
     configurations = [project.configurations.shadow]
     archivesBaseName = ssname
-    archiveClassifier = ssversion
     minimize()
 
     dependencies {
