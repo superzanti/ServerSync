@@ -6,6 +6,7 @@ plugins {
     id 'java'
     id 'application'
     id 'eclipse'
+    id 'maven-publish'
 }
 
 repositories {
@@ -81,6 +82,24 @@ task createServerExe(type: Launch4jLibraryTask) {
     productName = "ServerSync - Server"
     fileDescription = "The server side for admins."
     version = ssversion
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/${System.getenv('GPR_REPO')}")
+            credentials {
+                username = project.findProperty("gpr.user") as String ?: System.getenv("GPR_USERNAME")
+                password = project.findProperty("gpr.key") as String ?: System.getenv("GPR_TOKEN")
+            }
+        }
+    }
+    publications {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
+        }
+    }
 }
 
 clean {
