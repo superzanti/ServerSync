@@ -2,10 +2,11 @@ import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
 
 plugins {
     id 'edu.sc.seis.launch4j' version '2.4.6'
-    id 'com.github.johnrengelman.shadow' version '5.1.0'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
     id 'java'
     id 'application'
     id 'eclipse'
+    id 'maven-publish'
 }
 
 repositories {
@@ -14,6 +15,7 @@ repositories {
 }
 
 group = "com.superzanti.serversync"
+version = ssversion
 
 configurations {
     shadow
@@ -26,7 +28,7 @@ dependencies {
     // Use JUnit Jupiter Engine for testing.
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
 
-    compile fileTree(dir: 'libs', include: '*.jar')
+    implementation fileTree(dir: 'libs', include: '*.jar')
     shadow group: 'com.eclipsesource.minimal-json', name: 'minimal-json', version: '0.9.5'
 }
 
@@ -40,7 +42,6 @@ test {
 
 jar {
     archivesBaseName = ssname
-    archiveClassifier = ssversion
 
     manifest {
         attributes 'Main-Class': mainclass, 'Implementation-Version': ssversion
@@ -50,7 +51,6 @@ jar {
 shadowJar {
     configurations = [project.configurations.shadow]
     archivesBaseName = ssname
-    archiveClassifier = ssversion
     minimize()
 
     dependencies {
@@ -82,6 +82,24 @@ task createServerExe(type: Launch4jLibraryTask) {
     productName = "ServerSync - Server"
     fileDescription = "The server side for admins."
     version = ssversion
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/${System.getenv('GPR_REPO')}")
+            credentials {
+                username = project.findProperty("gpr.user") as String ?: System.getenv("GPR_USERNAME")
+                password = project.findProperty("gpr.key") as String ?: System.getenv("GPR_TOKEN")
+            }
+        }
+    }
+    publications {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
+        }
+    }
 }
 
 clean {

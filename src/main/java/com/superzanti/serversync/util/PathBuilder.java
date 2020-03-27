@@ -23,6 +23,7 @@ public class PathBuilder {
      * Adds (appends) a segment to path
      *
      * @param segment segment to add
+     * @return The builder for further actions
      */
     public PathBuilder add(String segment) {
         if (builder.length() > 0) {
@@ -34,6 +35,7 @@ public class PathBuilder {
 
     /**
      * Removes last segment.
+     * @return The builder for further actions
      */
     public PathBuilder removeLast() {
         int lastElementIndex = builder.lastIndexOf(FileSystems.getDefault().getSeparator());

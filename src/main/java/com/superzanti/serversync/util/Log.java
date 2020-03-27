@@ -27,6 +27,9 @@ public class Log extends Observable {
 
     /**
      * Shortcut method for adding to logs string builder
+     * @param tag The identifier for this log entry
+     * @param message The content of the log entry
+     * @return The logging instance for further logging actions
      */
     public Log add(String tag, String message) {
         if (tag.equals(Logger.TAG_LOG) || tag.equals(Logger.TAG_ERROR)) {
