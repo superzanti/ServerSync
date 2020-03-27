@@ -81,6 +81,11 @@ Find the output in `./build/libs`
 ```
 Find the output in `./build/launch4j`
 
+### Clean project
+```shell script
+./gradlew clean
+```
+
 ## IDE Setup
 ### IntelliJ
 Open the cloned project, IntelliJ should auto detect the gradle files and do the rest for you.
