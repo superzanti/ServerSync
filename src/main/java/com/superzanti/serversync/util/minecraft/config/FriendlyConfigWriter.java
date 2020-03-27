@@ -25,8 +25,8 @@ public class FriendlyConfigWriter extends BufferedWriter {
      * subsequent calls to writeElement() will be added to this category until
      * writeCloseCategory() has been called. Nesting indentation is handled automatically
      *
-     * @param name
-     * @throws IOException
+     * @param name The name of the category
+     * @throws IOException If the file could not be accessed
      */
     public void writeOpenCategory(String name) throws IOException {
         this.writeWithIndentation(name + " {");
@@ -45,7 +45,7 @@ public class FriendlyConfigWriter extends BufferedWriter {
      * lines after the element however it will automatically handle indentation
      *
      * @param element Element to write
-     * @throws IOException
+     * @throws IOException If the file could not be accessed
      */
     public void writeElement(FriendlyConfigElement element) throws IOException {
         if (element.hasComment) {
@@ -99,7 +99,7 @@ public class FriendlyConfigWriter extends BufferedWriter {
      * number of times
      *
      * @param num number of new lines to write
-     * @throws IOException
+     * @throws IOException If the file could not be accessed
      */
     public void newLines(int num) throws IOException {
         for (int i = 0; i < num; i++) {
