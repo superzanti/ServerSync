@@ -5,7 +5,6 @@ import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.filemanager.FileManager;
 import com.superzanti.serversync.server.Server;
-import com.superzanti.serversync.util.GlobPathMatcher;
 import com.superzanti.serversync.util.Logger;
 
 import java.io.IOException;
@@ -140,8 +139,7 @@ public class ClientWorker implements Runnable {
      */
     private List<Path> getClientState() {
         return managedDirectories
-            .stream()
-            .filter(dir -> !IgnoredFilesMatcher.matches(Paths.get(dir)))
+            .parallelStream()
             .map(Paths::get)
             .flatMap(dir -> {
                 try {
@@ -181,25 +179,6 @@ public class ClientWorker implements Runnable {
         );
     }
 
-    private void deleteFile(String path) {
-        Path file = Paths.get(path);
-
-        if (GlobPathMatcher.matches(file, config.FILE_IGNORE_LIST)) {
-            Logger.log(String.format("<I> %s %s", ServerSync.strings.getString("ignoring"), path));
-            return;
-        }
-
-        try {
-            if (Files.deleteIfExists(file)) {
-                Logger.log(String.format("<D> %s %s", path, ServerSync.strings.getString("delete_success")));
-            } else {
-                Logger.log("!!! failed to delete: " + path + " !!!");
-            }
-        } catch (IOException e) {
-            Logger.debug(e);
-        }
-    }
-
     private void deleteFiles(Map<String, String> files) {
         Logger.log("<------> " + ServerSync.strings.getString("delete_start") + " <------>");
         if (files.size() == 0) {
@@ -208,12 +187,37 @@ public class ClientWorker implements Runnable {
         }
 
         Logger.log(String.format("Ignore patterns: %s", String.join(", ", config.FILE_IGNORE_LIST)));
-        files
-            .entrySet()
-            .stream()
-            .filter(e -> "delete".equals(e.getValue()))
-            .forEach(e -> deleteFile(e.getKey()));
+        files.entrySet()
+             .parallelStream()
+             .filter(this::filterDeleteActions)
+             .map(e -> Paths.get(e.getKey()))
+             .filter(this::filterShouldFileBeDeleted)
+             .forEach(this::deleteFile);
 
         Logger.debug(files.toString());
+    }
+
+    private boolean filterDeleteActions(Map.Entry<String, String> actions) {
+        return "delete".equals(actions.getValue());
+    }
+
+    private boolean filterShouldFileBeDeleted(Path theFile) {
+        if (IgnoredFilesMatcher.matches(theFile)) {
+            Logger.log(String.format("<I> %s %s", ServerSync.strings.getString("ignoring"), theFile));
+            return false;
+        }
+        return true;
+    }
+
+    private void deleteFile(Path theFile) {
+        try {
+            if (Files.deleteIfExists(theFile)) {
+                Logger.log(String.format("<D> %s %s", theFile, ServerSync.strings.getString("delete_success")));
+            } else {
+                Logger.log("!!! failed to delete: " + theFile + " !!!");
+            }
+        } catch (IOException e) {
+            Logger.debug(e);
+        }
     }
 }
