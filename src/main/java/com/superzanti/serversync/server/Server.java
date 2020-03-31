@@ -156,13 +156,15 @@ public class Server {
                 String path = ois.readUTF();
                 String hash = ois.readUTF();
 
+
+
                 if (isClientOnlyFile(path)) {
                     if (config.REFUSE_CLIENT_MODS) {
                         // Skip this file essentially, possibly worth making a specific answer for client refused
                         // could be interesting for analytics.
-                        Logger.log(String.format("<R> Refused client mod: %s", path));
+                        Logger.log(String.format("<R> Refused client mod: %s", Paths.get(path)));
                         respond(EBinaryAnswer.YES);
-                        processedFiles.put(path, EFileProccessingStatus.REFUSED);
+                        processedFiles.put(Paths.get(path).toString(), EFileProccessingStatus.REFUSED);
                         afterEachFile.f();
                         continue;
                     } else {
@@ -176,9 +178,9 @@ public class Server {
                 // Has the client set this file to be ignored, clients can refuse to accept files
                 // from servers.
                 if (IgnoredFilesMatcher.matches(clientFile)) {
-                    Logger.debug(String.format("File: %s, set to ignore by the client.", path));
+                    Logger.debug(String.format("File: %s, set to ignore by the client.", clientFile));
                     respond(EBinaryAnswer.YES);
-                    processedFiles.put(path, EFileProccessingStatus.REFUSED);
+                    processedFiles.put(clientFile.toString(), EFileProccessingStatus.REFUSED);
                     afterEachFile.f();
                     continue;
                 }
@@ -189,24 +191,24 @@ public class Server {
                 if (Files.exists(clientFile) && hash.equals(FileHash.hashFile(clientFile))) {
                     // Client: I have that file already!
                     respond(EBinaryAnswer.YES);
-                    Logger.log(String.format("File up to date: %s", path));
-                    processedFiles.put(path, EFileProccessingStatus.NO_WORK);
+                    Logger.log(String.format("File up to date: %s", clientFile));
+                    processedFiles.put(clientFile.toString(), EFileProccessingStatus.NO_WORK);
                     afterEachFile.f();
                     continue;
                 }
 
                 // Client: I don't have that file!
                 respond(EBinaryAnswer.NO);
-                Logger.debug(String.format("Don't have file: %s", path));
+                Logger.debug(String.format("Don't have file: %s", clientFile));
 
                 // Server: Here is the file.
                 long fileSize = ois.readLong();
-                if (updateFile(path, fileSize)) {
-                    processedFiles.put(path, EFileProccessingStatus.SUCCESS);
+                if (updateFile(clientFile, fileSize)) {
+                    processedFiles.put(clientFile.toString(), EFileProccessingStatus.SUCCESS);
                     didSyncFiles = true;
                 } else {
-                    Logger.error(String.format("Failed to update file: %s", path));
-                    processedFiles.put(path, EFileProccessingStatus.FAILED);
+                    Logger.error(String.format("Failed to update file: %s", clientFile));
+                    processedFiles.put(clientFile.toString(), EFileProccessingStatus.FAILED);
                 }
                 afterEachFile.f();
             }
@@ -223,22 +225,21 @@ public class Server {
         return processedFiles;
     }
 
-    private boolean updateFile(String path, long size) {
+    private boolean updateFile(Path path, long size) {
         FileProgress GUIUpdater = new FileProgress();
 
-        Path clientFile = Paths.get(path);
         try {
-            Files.createDirectories(clientFile.getParent());
+            Files.createDirectories(path.getParent());
         } catch (IOException e) {
-            Logger.debug("Could not create parent directories for: " + clientFile.toString());
+            Logger.debug("Could not create parent directories for: " + path.toString());
             Logger.debug(e);
         }
 
-        if (size == 0 && Files.notExists(clientFile)) {
+        if (size == 0 && Files.notExists(path)) {
             Logger.debug(String.format("Found a 0 byte file, writing an empty file to: %s", path));
             try {
-                Files.createDirectories(clientFile.getParent());
-                Files.createFile(clientFile);
+                Files.createDirectories(path.getParent());
+                Files.createFile(path);
                 return true;
             } catch (IOException e) {
                 Logger.debug("Failed to write 0 size file.");
@@ -246,10 +247,10 @@ public class Server {
             }
         }
 
-        if (Files.exists(clientFile)) {
+        if (Files.exists(path)) {
             try {
-                Files.delete(clientFile);
-                Files.createFile(clientFile);
+                Files.delete(path);
+                Files.createFile(path);
 
                 // Zero size files do not need to continue
                 // The server will not send any bytes through the socket
@@ -257,15 +258,15 @@ public class Server {
                     return true;
                 }
             } catch (IOException e) {
-                Logger.debug("Failed to delete file: " + clientFile.getFileName().toString());
+                Logger.debug("Failed to delete file: " + path.getFileName().toString());
                 Logger.debug(e);
                 return false;
             }
         }
 
         try {
-            Logger.debug("Attempting to write file (" + clientFile.toString() + ")");
-            OutputStream wr = Files.newOutputStream(clientFile);
+            Logger.debug("Attempting to write file (" + path.toString() + ")");
+            OutputStream wr = Files.newOutputStream(path);
 
             byte[] outBuffer = new byte[clientSocket.getReceiveBufferSize()];
 
@@ -277,7 +278,7 @@ public class Server {
                 wr.write(outBuffer, 0, bytesReceived);
                 GUIUpdater.updateProgress(
                     (int) Math.ceil((float) totalBytesReceived / size * 100),
-                    clientFile.getFileName().toString()
+                    path.getFileName().toString()
                 );
 
                 if (totalBytesReceived == size) {
@@ -288,9 +289,9 @@ public class Server {
             wr.close();
 
             GUIUpdater.fileFinished();
-            Logger.debug("Finished writing file" + clientFile.toString());
+            Logger.debug("Finished writing file" + path.toString());
         } catch (FileNotFoundException e) {
-            Logger.debug("Failed to create file (" + clientFile.toString() + "): " + e.getMessage());
+            Logger.debug("Failed to create file (" + path.toString() + "): " + e.getMessage());
             Logger.debug(e);
             return false;
         } catch (IOException e) {
@@ -298,7 +299,7 @@ public class Server {
             return false;
         }
 
-        Logger.log(ServerSync.strings.getString("update_success") + ": " + clientFile.toString());
+        Logger.log(ServerSync.strings.getString("update_success") + ": " + path.toString());
         return true;
     }
 

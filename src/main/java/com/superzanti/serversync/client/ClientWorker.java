@@ -203,26 +203,6 @@ public class ClientWorker implements Runnable {
         return server.fetchManagedDirectories();
     }
 
-    /**
-     * The sate of the client from the perspective of what the server wants to manage.
-     * e.g. If the server wants to manage 'mods', 'config' and 'my-cool-extras' then this will return the content
-     * of the clients 'mods', 'config' and 'my-cool-extras' directories.
-     */
-    private List<Path> getClientState() {
-        return managedDirectories
-            .parallelStream()
-            .map(Paths::get)
-            .flatMap(dir -> {
-                try {
-                    return Files.walk(dir).filter(path -> !Files.isDirectory(path));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            })
-            .collect(Collectors.toList());
-    }
-
     private Map<String, EFileProccessingStatus> updateFiles() {
         Logger.log("<------> " + ServerSync.strings.getString("update_start") + " <------>");
         Logger.debug(ServerSync.strings.getString("ignoring") + " " + config.FILE_IGNORE_LIST);
