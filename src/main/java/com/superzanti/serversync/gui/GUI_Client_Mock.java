@@ -1,5 +1,7 @@
 package com.superzanti.serversync.gui;
 
+import com.superzanti.serversync.SyncConfig;
+
 public class GUI_Client_Mock extends GUI_Client {
     private static final long serialVersionUID = 1L;
 
@@ -32,7 +34,7 @@ public class GUI_Client_Mock extends GUI_Client {
 
     @Override
     public String getIPAddress() {
-        return "";
+        return SyncConfig.getConfig().SERVER_IP;
     }
 
     @Override
@@ -41,7 +43,7 @@ public class GUI_Client_Mock extends GUI_Client {
 
     @Override
     public int getPort() {
-        return 0;
+        return SyncConfig.getConfig().SERVER_PORT;
     }
 
     @Override

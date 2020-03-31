@@ -12,10 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * Handles all functionality to do with serversyncs config file and
@@ -38,9 +35,12 @@ public class SyncConfig {
     public final EConfigType configType;
 
     // COMMON //////////////////////////////
-    public String SERVER_IP = "127.0.0.1";
+    public String SERVER_IP = DEFAULT_ADDRESS;
     public String LAST_UPDATE = "";
-    public List<String> FILE_IGNORE_LIST = new ArrayList<>();
+    // Adding ServerSyncs internal files to the ignored list by default
+    // This stops SS from being deleted / synced when loaded via forge
+    // and stops the client from deleting the config files.
+    public List<String> FILE_IGNORE_LIST = Arrays.asList("**/serversync-*.jar", "**/serversync-*.cfg");
     public List<String> CONFIG_INCLUDE_LIST = new ArrayList<>();
     public Locale LOCALE = Locale.getDefault();
     ////////////////////////////////////////
@@ -62,12 +62,6 @@ public class SyncConfig {
     private boolean isUsingIncompatableConfig = false;
 
     public SyncConfig(EConfigType type) {
-        // Adding ServerSyncs internal files to the ignored list by default
-        // This stops SS from being deleted / synced when loaded via forge
-        // and stops the client from deleting the config files.
-        FILE_IGNORE_LIST.add("**/serversync-*.jar");
-        FILE_IGNORE_LIST.add("**/serversync-*.cfg");
-
         configType = type;
         config = new FriendlyConfig();
         if (configType == EConfigType.SERVER) {
@@ -109,6 +103,19 @@ public class SyncConfig {
             }
         }
         return SyncConfig.singleton;
+    }
+
+    /**
+     * Bit of a hack, need to update the config to be read/write
+     *
+     * @param ip   The updated IP address
+     * @param port The updated port
+     */
+    public void updateServerDetails(String ip, int port) {
+        SERVER_IP = ip;
+        SERVER_PORT = port;
+
+        createConfiguration();
     }
 
     private void readExistingConfiguration() {
@@ -271,12 +278,12 @@ public class SyncConfig {
             isUsingIncompatableConfig = true;
         }
         try {
-            FILE_IGNORE_LIST.addAll(config.getEntryByName("FILE_IGNORE_LIST").getList());
+            FILE_IGNORE_LIST = config.getEntryByName("FILE_IGNORE_LIST").getList();
         } catch (NullPointerException e) {
             // Specific conversion from old config files
             Logger.debug("Could not find FILE_IGNORE_LIST, looking for old MOD_IGNORE_LIST");
             try {
-                FILE_IGNORE_LIST.addAll(config.getEntryByName("MOD_IGNORE_LIST").getList());
+                FILE_IGNORE_LIST = config.getEntryByName("MOD_IGNORE_LIST").getList();
             } catch (NullPointerException e2) {
                 Logger.debug(String.format(couldNotFindString, "MOD_IGNORE_LIST"));
             }
