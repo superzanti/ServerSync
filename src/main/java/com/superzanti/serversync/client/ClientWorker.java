@@ -172,6 +172,11 @@ public class ClientWorker implements Runnable {
 
         updateHappened = true;
         closeWorker();
+
+        // Update configured server to the latest used address
+        // consideration to be had here for client silent sync mode
+        config.updateServerDetails(ServerSync.clientGUI.getIPAddress(), ServerSync.clientGUI.getPort());
+
         Logger.log(ServerSync.strings.getString("update_complete"));
     }
 
@@ -278,7 +283,11 @@ public class ClientWorker implements Runnable {
 
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    Logger.debug(String.format("Running delete comparison with (Server): %s, (Client files): %s", file.toString(), updatedFiles.keySet().toString()));
+                    Logger.debug(String.format(
+                        "Running delete comparison with (Server): %s, (Client files): %s",
+                        file.toString(),
+                        updatedFiles.keySet().toString()
+                    ));
                     if (updatedFiles.containsKey(file.toString())) {
                         deletedFiles.put(file.toString(), EFileProccessingStatus.NO_WORK);
                         return FileVisitResult.CONTINUE;
