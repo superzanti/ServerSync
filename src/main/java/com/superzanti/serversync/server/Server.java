@@ -1,5 +1,6 @@
 package com.superzanti.serversync.server;
 
+import com.superzanti.serversync.RefStrings;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
@@ -179,6 +180,12 @@ public class Server {
                 // from servers.
                 if (IgnoredFilesMatcher.matches(clientFile)) {
                     Logger.debug(String.format("File: %s, set to ignore by the client.", clientFile));
+                    Logger.log(String.format(
+                        "%s %s %s",
+                        RefStrings.IGNORE_TOKEN,
+                        ServerSync.strings.getString("message_client_refused_file"),
+                        clientFile
+                    ));
                     respond(EBinaryAnswer.YES);
                     processedFiles.put(clientFile.toString(), EFileProccessingStatus.REFUSED);
                     afterEachFile.f();
