@@ -61,20 +61,7 @@ public class ServerSetup implements Runnable {
                 Files.createDirectories(Paths.get(managedDirectory));
             }
 
-            Map<String, String> managedFiles = fileManager
-                .getDiffableFilesFromDirectories(managedDirectories);
-
-            //TODO add file include list for white / black list matching combos
-            // Glob matching from user configured patterns
-            Map<String, String> filteredFiles = managedFiles
-                .entrySet()
-                .stream()
-                .filter(entry -> {
-                    Path file = Paths.get(entry.getKey());
-                    return !GlobPathMatcher
-                        .matches(file, config.FILE_IGNORE_LIST);
-                })
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            Map<String, String> managedFiles = fileManager.getDiffableFilesFromDirectories(managedDirectories);
 
             Logger.log(String.format(
                 "Found %d files in %d directories <%s>",
@@ -82,9 +69,7 @@ public class ServerSetup implements Runnable {
                 managedDirectories.size(),
                 String.join(", ", managedDirectories)
             ));
-            Logger.debug("unfiltered: " + managedFiles.toString());
-            Logger.debug("filtered: " + filteredFiles.toString());
-            serverFiles.putAll(filteredFiles);
+            serverFiles.putAll(managedFiles);
 
             // Add config include files
             Map<String, String> configIncludeFiles = config.CONFIG_INCLUDE_LIST
@@ -98,7 +83,7 @@ public class ServerSetup implements Runnable {
                 "Found %d included configs in <config>",
                 configIncludeFiles.size()
             ));
-            Logger.debug("files: " + String.join(",", configIncludeFiles.keySet()));
+            Logger.debug("Config files: " + String.join(",", configIncludeFiles.keySet()));
             serverFiles.putAll(configIncludeFiles);
 
             if (shouldPushClientOnlyFiles()) {
