@@ -203,7 +203,7 @@ public class SyncConfig {
             SyncConfig.CATEGORY_GENERAL,
             "SYNC_MODE",
             SYNC_MODE,
-            new String[]{"# The type of sync being used, tweak this if you want different network performance"}
+            new String[]{"# The type of sync being used, tweak this if you want different network performance", "# NOT CURRENTLY IMPLEMENTED"}
         ));
 
         FriendlyConfigCategory rules = new FriendlyConfigCategory(SyncConfig.CATEGORY_RULES);

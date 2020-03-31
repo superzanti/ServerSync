@@ -9,6 +9,7 @@ import com.superzanti.serversync.util.AutoClose;
 import com.superzanti.serversync.util.FileHash;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EBinaryAnswer;
+import com.superzanti.serversync.util.enums.EFileProccessingStatus;
 import com.superzanti.serversync.util.enums.EServerMessage;
 
 import java.io.*;
@@ -23,7 +24,6 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 /**
@@ -131,25 +131,23 @@ public class Server {
         return -1;
     }
 
-    public Map<String, String> syncFiles(List<Path> clientFiles, VoidFunction guiUpdate) {
+    /**
+     * Start mode 0 sync dialog with the server.
+     *
+     * @param afterEachFile A consumer that executes after each file is processed
+     * @return A map of files processed to status
+     */
+    public Map<String, EFileProccessingStatus> syncFiles(VoidFunction afterEachFile) {
         // Server: Do you have this file?
         // - String: path
         // - String: hash
         // Client: yes | no (bit)
         // Server (yes) - skip to next file
         // Server (no) - send file
-        Map<String, String> leftoverFiles = new HashMap<>();
-        List<String> clientPaths = clientFiles.stream().map(Path::toString).collect(Collectors.toList());
-        String message = SCOMS.get(EServerMessage.SYNC_FILES);
+        Map<String, EFileProccessingStatus> processedFiles = new HashMap<>(100);
         boolean didSyncFiles = false;
 
-        try {
-            oos.writeObject(message);
-            oos.flush();
-        } catch (IOException e) {
-            Logger.debug("Failed to send coms message to server: SYNC_FILES");
-            Logger.debug(e);
-        }
+        requestSync(0);
 
         // While I have more files to process...
         try {
@@ -158,14 +156,16 @@ public class Server {
                 String path = ois.readUTF();
                 String hash = ois.readUTF();
 
+
+
                 if (isClientOnlyFile(path)) {
                     if (config.REFUSE_CLIENT_MODS) {
                         // Skip this file essentially, possibly worth making a specific answer for client refused
                         // could be interesting for analytics.
-                        clientPaths.remove(path);
-                        Logger.log(String.format("<R> Refused client mod: %s", path));
+                        Logger.log(String.format("<R> Refused client mod: %s", Paths.get(path)));
                         respond(EBinaryAnswer.YES);
-                        guiUpdate.f();
+                        processedFiles.put(Paths.get(path).toString(), EFileProccessingStatus.REFUSED);
+                        afterEachFile.f();
                         continue;
                     } else {
                         // TODO make the destination server configurable
@@ -175,36 +175,42 @@ public class Server {
 
                 Path clientFile = Paths.get(path);
 
+                // Has the client set this file to be ignored, clients can refuse to accept files
+                // from servers.
                 if (IgnoredFilesMatcher.matches(clientFile)) {
-                    Logger.debug(String.format("File: %s, set to ignore by the client.", path));
-                    clientPaths.remove(path);
+                    Logger.debug(String.format("File: %s, set to ignore by the client.", clientFile));
                     respond(EBinaryAnswer.YES);
-                    guiUpdate.f();
+                    processedFiles.put(clientFile.toString(), EFileProccessingStatus.REFUSED);
+                    afterEachFile.f();
                     continue;
                 }
 
-                // Does the file exist on the client && does the hash match
+                // Does the file exist on the client?
+                //   - if it does then check its hash to see if it is the same file
+                //       - if the hash check succeeds then we already have the file, skip to the next file
                 if (Files.exists(clientFile) && hash.equals(FileHash.hashFile(clientFile))) {
-                    // Client: Yes I do!
-                    clientPaths.remove(path);
+                    // Client: I have that file already!
                     respond(EBinaryAnswer.YES);
-                    Logger.log(String.format("File up to date: %s", path));
-                } else {
-                    didSyncFiles = true;
-                    // Client: No I don't!
-                    respond(EBinaryAnswer.NO);
-                    Logger.debug(String.format("Don't have file: %s", path));
-
-                    // Server: Here is the file.
-                    long fileSize = ois.readLong();
-                    if (updateFile(path, fileSize)) {
-                        clientPaths.remove(path);
-                    } else {
-                        Logger.error(String.format("Failed to update file: %s", path));
-                        leftoverFiles.put(path, "retry");
-                    }
+                    Logger.log(String.format("File up to date: %s", clientFile));
+                    processedFiles.put(clientFile.toString(), EFileProccessingStatus.NO_WORK);
+                    afterEachFile.f();
+                    continue;
                 }
-                guiUpdate.f();
+
+                // Client: I don't have that file!
+                respond(EBinaryAnswer.NO);
+                Logger.debug(String.format("Don't have file: %s", clientFile));
+
+                // Server: Here is the file.
+                long fileSize = ois.readLong();
+                if (updateFile(clientFile, fileSize)) {
+                    processedFiles.put(clientFile.toString(), EFileProccessingStatus.SUCCESS);
+                    didSyncFiles = true;
+                } else {
+                    Logger.error(String.format("Failed to update file: %s", clientFile));
+                    processedFiles.put(clientFile.toString(), EFileProccessingStatus.FAILED);
+                }
+                afterEachFile.f();
             }
         } catch (IOException e) {
             Logger.error("Critical failure during sync process!");
@@ -216,30 +222,24 @@ public class Server {
             Logger.log("All files match the server.");
         }
 
-        // Return list of remaining files to deal with
-        clientPaths.forEach(remainingPath -> {
-            leftoverFiles.put(remainingPath, "delete");
-        });
-
-        return leftoverFiles;
+        return processedFiles;
     }
 
-    private boolean updateFile(String path, long size) {
+    private boolean updateFile(Path path, long size) {
         FileProgress GUIUpdater = new FileProgress();
 
-        Path clientFile = Paths.get(path);
         try {
-            Files.createDirectories(clientFile.getParent());
+            Files.createDirectories(path.getParent());
         } catch (IOException e) {
-            Logger.debug("Could not create parent directories for: " + clientFile.toString());
+            Logger.debug("Could not create parent directories for: " + path.toString());
             Logger.debug(e);
         }
 
-        if (size == 0 && Files.notExists(clientFile)) {
+        if (size == 0 && Files.notExists(path)) {
             Logger.debug(String.format("Found a 0 byte file, writing an empty file to: %s", path));
             try {
-                Files.createDirectories(clientFile.getParent());
-                Files.createFile(clientFile);
+                Files.createDirectories(path.getParent());
+                Files.createFile(path);
                 return true;
             } catch (IOException e) {
                 Logger.debug("Failed to write 0 size file.");
@@ -247,10 +247,10 @@ public class Server {
             }
         }
 
-        if (Files.exists(clientFile)) {
+        if (Files.exists(path)) {
             try {
-                Files.delete(clientFile);
-                Files.createFile(clientFile);
+                Files.delete(path);
+                Files.createFile(path);
 
                 // Zero size files do not need to continue
                 // The server will not send any bytes through the socket
@@ -258,15 +258,15 @@ public class Server {
                     return true;
                 }
             } catch (IOException e) {
-                Logger.debug("Failed to delete file: " + clientFile.getFileName().toString());
+                Logger.debug("Failed to delete file: " + path.getFileName().toString());
                 Logger.debug(e);
                 return false;
             }
         }
 
         try {
-            Logger.debug("Attempting to write file (" + clientFile.toString() + ")");
-            OutputStream wr = Files.newOutputStream(clientFile);
+            Logger.debug("Attempting to write file (" + path.toString() + ")");
+            OutputStream wr = Files.newOutputStream(path);
 
             byte[] outBuffer = new byte[clientSocket.getReceiveBufferSize()];
 
@@ -278,7 +278,7 @@ public class Server {
                 wr.write(outBuffer, 0, bytesReceived);
                 GUIUpdater.updateProgress(
                     (int) Math.ceil((float) totalBytesReceived / size * 100),
-                    clientFile.getFileName().toString()
+                    path.getFileName().toString()
                 );
 
                 if (totalBytesReceived == size) {
@@ -289,9 +289,9 @@ public class Server {
             wr.close();
 
             GUIUpdater.fileFinished();
-            Logger.debug("Finished writing file" + clientFile.toString());
+            Logger.debug("Finished writing file" + path.toString());
         } catch (FileNotFoundException e) {
-            Logger.debug("Failed to create file (" + clientFile.toString() + "): " + e.getMessage());
+            Logger.debug("Failed to create file (" + path.toString() + "): " + e.getMessage());
             Logger.debug(e);
             return false;
         } catch (IOException e) {
@@ -299,7 +299,7 @@ public class Server {
             return false;
         }
 
-        Logger.log(ServerSync.strings.getString("update_success") + ": " + clientFile.toString());
+        Logger.log(ServerSync.strings.getString("update_success") + ": " + path.toString());
         return true;
     }
 
@@ -340,6 +340,26 @@ public class Server {
         }
         Logger.debug(ServerSync.strings.getString("debug_server_close_success"));
         return true;
+    }
+
+    private void requestSync(int mode) {
+        // TODO implement a response to this request
+
+        if (mode == 0) {
+            String message = SCOMS.get(EServerMessage.SYNC_FILES);
+            try {
+                oos.writeObject(message);
+                oos.flush();
+            } catch (IOException e) {
+                Logger.debug("Failed to send coms message to server: SYNC_FILES");
+                Logger.debug(e);
+            }
+        }
+
+        if (mode == 1) {
+            // TODO sync via a single transmission of a manifest file
+            Logger.error("Mode 1 not implemented yet!");
+        }
     }
 
     private void respond(EBinaryAnswer answer) throws IOException {
