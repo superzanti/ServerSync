@@ -1,20 +1,18 @@
 package com.superzanti.serversync.client;
 
+import com.superzanti.serversync.RefStrings;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.filemanager.FileManager;
+import com.superzanti.serversync.util.enums.EFileProccessingStatus;
 import com.superzanti.serversync.server.Server;
 import com.superzanti.serversync.util.Logger;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -59,7 +57,7 @@ public class ClientWorker implements Runnable {
         managedDirectories = getServerManagedDirectories();
 
         Logger.log(String.format("Building file list for directories: %s", managedDirectories));
-        // UPDATE
+        // Create dirs on the client that don't exist yet
         managedDirectories.forEach(path -> {
             try {
                 Files.createDirectories(Paths.get(path));
@@ -67,37 +65,110 @@ public class ClientWorker implements Runnable {
                 e.printStackTrace();
             }
         });
-        Map<String, String> remainingFiles = updateFiles(getClientState());
 
-        // DELETE
-        if (remainingFiles != null) {
-            deleteFiles(remainingFiles);
+        // Attempt to sync files with max number of retries, note that some files may fail here
+        // the user should be notified that they may have to manually deal with them
+        // TODO make retries user configurable?
+        int maxUpdateRetries = 2;
+        boolean updateSuccess = false;
+        Map<String, EFileProccessingStatus> updatedFiles = new HashMap<>();
+        for (int i = 0; i < maxUpdateRetries; i++) {
+            updatedFiles = updateFiles();
 
-            // UNEXPECTED FAILURES
-            if (remainingFiles.containsValue("retry")) {
-                Logger.log("Some files failed to sync!");
-                remainingFiles.forEach((file, action) -> {
-                    if ("retry".equals(action)) {
-                        Logger.log(file);
-                    }
-                });
-                Logger.log("Retrying sync...");
+            if (updatedFiles.containsValue(EFileProccessingStatus.FAILED)) {
+                Logger.log(String.format(
+                    "%s %s",
+                    RefStrings.ERROR_TOKEN,
+                    ServerSync.strings.getString("message_file_failed_to_sync")
+                ));
 
-                remainingFiles = updateFiles(getClientState());
-
-                if (remainingFiles.containsValue("retry")) {
-                    Logger.log(remainingFiles.toString());
-                    Logger.error("Some files failed to sync on second pass, something is very broken :(");
-                    errorInUpdates = true;
+                if (i < maxUpdateRetries - 1) {
+                    Logger.log(ServerSync.strings.getString("message_attempting_sync_retry"));
                 }
+                continue;
             }
+
+            updateSuccess = true;
+            break;
         }
 
-        // CLEANUP
+        // Move on to delete phase, note that some files may fail here
+        // the user should be notified that they may have to manually deal with them
+        // TODO make retries user configurable?
+        int maxDeleteRetries = 2;
+        boolean deleteSuccess = false;
+        Map<String, EFileProccessingStatus> deletedFiles = new HashMap<>();
+
+        for (int i = 0; i < maxDeleteRetries; i++) {
+            deletedFiles = deleteFiles(managedDirectories, updatedFiles);
+
+            if (deletedFiles.containsValue(EFileProccessingStatus.FAILED)) {
+                Logger.log(String.format(
+                    "%s %s",
+                    RefStrings.ERROR_TOKEN,
+                    ServerSync.strings.getString("message_file_failed_to_delete")
+                ));
+
+                if (i < maxDeleteRetries - 1) {
+                    Logger.log(ServerSync.strings.getString("message_attempting_delete_retry"));
+                }
+                continue;
+            }
+
+            deleteSuccess = true;
+            break;
+        }
+
+        // Cleanup phase, things like empty directories or duplicate files should be handled here.
         FileManager.removeEmptyDirectories(
             managedDirectories.stream().map(Paths::get).collect(Collectors.toList()),
-            (dir) -> Logger.log(String.format("<C> Removed empty directory: %s", dir.toString()))
+            (dir) -> Logger.log(String.format(
+                "%s Removed empty directory: %s",
+                RefStrings.CLEANUP_TOKEN,
+                dir.toString()
+            ))
         );
+
+        // Catch update or delete errors and notify the user that they may have to manually intervene.
+        if (!updateSuccess) {
+            Logger.debug("Update failure, max retries exceeded");
+            List<String> fileNames = updatedFiles.entrySet()
+                                                 .parallelStream()
+                                                 .filter(e -> e.getValue().equals(EFileProccessingStatus.FAILED))
+                                                 .map(Map.Entry::getKey)
+                                                 .collect(Collectors.toList());
+            Logger.log(String.format(
+                "%s %s",
+                RefStrings.ERROR_TOKEN,
+                ServerSync.strings.getString("message_file_failed_to_sync")
+            ));
+            Logger.log(String.format(
+                "%s %s",
+                RefStrings.ERROR_TOKEN,
+                ServerSync.strings.getString("message_manual_action_required")
+            ));
+            Logger.log(fileNames.toString());
+        }
+
+        if (!deleteSuccess) {
+            Logger.debug("Delete failure, max retries exceeded");
+            List<String> fileNames = deletedFiles.entrySet()
+                                                 .parallelStream()
+                                                 .filter(e -> e.getValue().equals(EFileProccessingStatus.FAILED))
+                                                 .map(Map.Entry::getKey)
+                                                 .collect(Collectors.toList());
+            Logger.log(String.format(
+                "%s %s",
+                RefStrings.ERROR_TOKEN,
+                ServerSync.strings.getString("message_file_failed_to_delete")
+            ));
+            Logger.log(String.format(
+                "%s %s",
+                RefStrings.ERROR_TOKEN,
+                ServerSync.strings.getString("message_manual_action_required")
+            ));
+            Logger.log(fileNames.toString());
+        }
 
         updateHappened = true;
         closeWorker();
@@ -152,7 +223,7 @@ public class ClientWorker implements Runnable {
             .collect(Collectors.toList());
     }
 
-    private Map<String, String> updateFiles(List<Path> clientFiles) {
+    private Map<String, EFileProccessingStatus> updateFiles() {
         Logger.log("<------> " + ServerSync.strings.getString("update_start") + " <------>");
         Logger.debug(ServerSync.strings.getString("ignoring") + " " + config.FILE_IGNORE_LIST);
 
@@ -171,45 +242,145 @@ public class ClientWorker implements Runnable {
 
         // Update files if needed, return files that remain after testing against the servers state
         // these will be the files the the client contains but the server does not.
-        return server.syncFiles(
-            clientFiles,
-            () -> ServerSync.clientGUI.updateProgress(
-                (int) (currentProgress.incrementAndGet() / maxProgress * 100)
-            )
-        );
+        return server.syncFiles(() -> forEachFile((currentProgress.incrementAndGet() / maxProgress * 100)));
     }
 
-    private void deleteFiles(Map<String, String> files) {
+    private synchronized void forEachFile(double progress) {
+        ServerSync.clientGUI.updateProgress((int) progress);
+    }
+
+    private Map<String, EFileProccessingStatus> deleteFiles(
+        List<String> managedDirectories, Map<String, EFileProccessingStatus> updatedFiles
+    ) {
         Logger.log("<------> " + ServerSync.strings.getString("delete_start") + " <------>");
-        if (files.size() == 0) {
-            Logger.log("No files to delete.");
-            return;
-        }
-
         Logger.log(String.format("Ignore patterns: %s", String.join(", ", config.FILE_IGNORE_LIST)));
-        files.entrySet()
-             .parallelStream()
-             .filter(this::filterDeleteActions)
-             .map(e -> Paths.get(e.getKey()))
-             .filter(this::filterShouldFileBeDeleted)
-             .forEach(this::deleteFile);
 
-        Logger.debug(files.toString());
+        return managedDirectories.parallelStream()
+                                 .map(Paths::get)
+                                 .filter(this::filterShouldCheckDirectory)
+                                 .flatMap(dir -> deleteDirectoryFiles(dir, updatedFiles).entrySet().stream())
+                                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private boolean filterDeleteActions(Map.Entry<String, String> actions) {
-        return "delete".equals(actions.getValue());
+    private boolean filterShouldCheckDirectory(Path theDirectory) {
+        if (IgnoredFilesMatcher.matches(theDirectory)) {
+            Logger.log(String.format(
+                "%s %s %s",
+                RefStrings.IGNORE_TOKEN,
+                ServerSync.strings.getString("ignoring"),
+                theDirectory
+            ));
+            return false;
+        }
+        return true;
+    }
+
+    private Map<String, EFileProccessingStatus> deleteDirectoryFiles(
+        Path theDirectory, Map<String, EFileProccessingStatus> updatedFiles
+    ) {
+        Map<String, EFileProccessingStatus> deletedFiles = new HashMap<>();
+        try {
+            Files.walkFileTree(theDirectory, new FileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                    if (IgnoredFilesMatcher.matches(dir)) {
+                        Logger.log(String.format(
+                            "%s %s %s",
+                            RefStrings.IGNORE_TOKEN,
+                            ServerSync.strings.getString("ignoring"),
+                            dir
+                        ));
+                        // Pointless to continue as the client has set the whole directory to ignore.
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                    if (updatedFiles.containsKey(file.toString())) {
+                        deletedFiles.put(file.toString(), EFileProccessingStatus.NO_WORK);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    if (IgnoredFilesMatcher.matches(file)) {
+                        deletedFiles.put(file.toString(), EFileProccessingStatus.REFUSED);
+                        Logger.log(String.format(
+                            "%s %s %s",
+                            RefStrings.IGNORE_TOKEN,
+                            ServerSync.strings.getString("ignoring"),
+                            file
+                        ));
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    try {
+                        Files.deleteIfExists(file);
+                        deletedFiles.put(file.toString(), EFileProccessingStatus.SUCCESS);
+                        Logger.log(String.format(
+                            "%s %s %s",
+                            RefStrings.DELETE_TOKEN,
+                            ServerSync.strings.getString("delete_success"),
+                            file
+                        ));
+                    } catch (IOException e) {
+                        Logger.debug(e);
+                        Logger.log(String.format(
+                            "%s %s %s",
+                            RefStrings.ERROR_TOKEN,
+                            ServerSync.strings.getString("message_file_failed_to_access"),
+                            file
+                        ));
+                        deletedFiles.put(file.toString(), EFileProccessingStatus.FAILED);
+                    }
+
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                    Logger.log(String.format(
+                        "%s %s %s",
+                        RefStrings.ERROR_TOKEN,
+                        ServerSync.strings.getString("message_file_failed_to_access"),
+                        file
+                    ));
+                    deletedFiles.put(file.toString(), EFileProccessingStatus.FAILED);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            Logger.debug(e);
+            Logger.log(String.format(
+                "%s %s %s",
+                RefStrings.ERROR_TOKEN,
+                ServerSync.strings.getString("message_file_failed_to_access"),
+                theDirectory
+            ));
+        }
+        return deletedFiles;
     }
 
     private boolean filterShouldFileBeDeleted(Path theFile) {
         if (IgnoredFilesMatcher.matches(theFile)) {
-            Logger.log(String.format("<I> %s %s", ServerSync.strings.getString("ignoring"), theFile));
+            Logger.log(String.format(
+                "%s %s %s",
+                RefStrings.IGNORE_TOKEN,
+                ServerSync.strings.getString("ignoring"),
+                theFile
+            ));
             return false;
         }
         return true;
     }
 
     private void deleteFile(Path theFile) {
+
         try {
             if (Files.deleteIfExists(theFile)) {
                 Logger.log(String.format("<D> %s %s", theFile, ServerSync.strings.getString("delete_success")));
