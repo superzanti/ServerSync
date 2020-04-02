@@ -1,37 +1,21 @@
 package com.superzanti.serversync.util;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 
 public class FileHash {
     public static String hashFile(Path file) {
-        //TODO Just use NIO in the first place
-        return FileHash.hashString(file.toFile());
-    }
-
-    public static String hashString(File file) {
         try {
-            InputStream fin = new FileInputStream(file);
+            byte[] fileBytes = Files.readAllBytes(file);
             MessageDigest hash = MessageDigest.getInstance("SHA-256");
-
-            // Push file to hash
-            byte[] buffer = new byte[1024];
-            int read;
-            do {
-                read = fin.read(buffer);
-                if (read > 0) {
-                    hash.update(buffer, 0, read);
-                }
-            } while (read != -1);
-            fin.close();
+            hash.update(fileBytes);
 
             // Digest file
             byte[] digest = hash.digest();
             if (digest == null) {
-                return null;
+                Logger.debug(String.format("Failed to digest file: %s", file));
+                return "";
             }
 
             // Convert to string
@@ -42,7 +26,9 @@ public class FileHash {
 
             return sb.toString();
         } catch (Exception e) {
-            return null;
+            Logger.debug(String.format("Failed to hash file: %s", file));
+            Logger.debug(e);
         }
+        return "";
     }
 }
