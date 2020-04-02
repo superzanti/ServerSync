@@ -63,8 +63,8 @@ public class FileManager {
         List<Path> allFiles = dirs
             .parallelStream()
             .flatMap(dir -> {
-                try {
-                    return Files.walk(dir).filter(dirPath -> !Files.isDirectory(dirPath));
+                try(Stream<Path> walker = Files.walk(dir).filter(dirPath -> !Files.isDirectory(dirPath))) {
+                    return walker;
                 } catch (IOException e) {
                     Logger.debug(String.format("Failed to access files in the directory: %s", dir));
                     Logger.debug(e);
