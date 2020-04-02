@@ -85,7 +85,9 @@ public class FileManager {
             .collect(Collectors.toList());
         Logger.debug(String.format("Filtered files: %s", PrettyList.get(filteredFiles)));
 
-        return filteredFiles.stream().collect(Collectors.toConcurrentMap(Path::toString, FileHash::hashFile));
+        return filteredFiles.stream()
+                            .filter(Files::exists)
+                            .collect(Collectors.toConcurrentMap(Path::toString, FileHash::hashFile));
     }
 
     public static void removeEmptyDirectories(List<Path> directories, Function<Path> emptyDirectoryCallback) {
