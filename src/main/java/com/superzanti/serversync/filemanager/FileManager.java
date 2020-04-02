@@ -2,10 +2,7 @@ package com.superzanti.serversync.filemanager;
 
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.server.Function;
-import com.superzanti.serversync.util.FileHash;
-import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.PathBuilder;
-import com.superzanti.serversync.util.PathUtils;
+import com.superzanti.serversync.util.*;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -69,25 +66,24 @@ public class FileManager {
                 try {
                     return Files.walk(dir).filter(dirPath -> !Files.isDirectory(dirPath));
                 } catch (IOException e) {
-                    Logger
-                        .debug(String.format("Failed to access files in the directory: %s", dir));
+                    Logger.debug(String.format("Failed to access files in the directory: %s", dir));
                     Logger.debug(e);
                 }
                 return Stream.empty();
             }).collect(Collectors.toList());
-        Logger.debug(String.format("All files: %s", allFiles));
+        Logger.debug(String.format("All files: %s", PrettyList.get(allFiles)));
 
         List<Path> ignoredFiles = allFiles
             .parallelStream()
             .filter(IgnoredFilesMatcher::matches)
             .collect(Collectors.toList());
-        Logger.debug(String.format("Ignored files: %s", ignoredFiles));
+        Logger.debug(String.format("Ignored files: %s", PrettyList.get(ignoredFiles)));
 
         List<Path> filteredFiles = allFiles
             .parallelStream()
             .filter(f -> !IgnoredFilesMatcher.matches(f))
             .collect(Collectors.toList());
-        Logger.debug(String.format("Filtered files: %s", filteredFiles));
+        Logger.debug(String.format("Filtered files: %s", PrettyList.get(filteredFiles)));
 
         //TODO add file size to this map
         return filteredFiles.stream().collect(Collectors.toMap(Path::toString, FileHash::hashFile));

@@ -55,7 +55,7 @@ public class ServerSetup implements Runnable {
 
         try {
             Logger.log("Starting scan for managed files: " + dateFormatter.format(new Date()));
-            Logger.debug(String.format("Ignore patterns: %s", String.join(", ", config.FILE_IGNORE_LIST)));
+            Logger.debug(String.format("Ignore patterns: %s", PrettyList.get(config.FILE_IGNORE_LIST)));
 
             for (String managedDirectory : managedDirectories) {
                 Files.createDirectories(Paths.get(managedDirectory));
