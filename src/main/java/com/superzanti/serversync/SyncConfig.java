@@ -272,7 +272,13 @@ public class SyncConfig {
     private void init() {
         String couldNotFindString = "Could not find %s config entry";
         try {
-            LOCALE = new Locale(config.getEntryByName("LOCALE").getString());
+            String localeString = config.getEntryByName("LOCALE").getString();
+            String[] localeParts = localeString.split("_");
+            if (localeParts.length != 2) {
+                Logger.error("Malformed locale string!");
+                localeParts = new String[]{"en", "US"};
+            }
+            LOCALE = new Locale(localeParts[0], localeParts[1]);
         } catch (NullPointerException e) {
             Logger.debug(String.format(couldNotFindString, "LOCALE"));
             isUsingIncompatableConfig = true;
