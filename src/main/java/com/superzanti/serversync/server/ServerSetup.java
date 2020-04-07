@@ -159,7 +159,7 @@ public class ServerSetup implements Runnable {
                 clientThread.start();
             } catch (IOException e) {
                 Logger.error(
-                    "Error while accepting client connection, breaking server listener. You will need to restart serversync");
+                    "Error while accepting client connection, breaking server listener. You will need to restart ServerSync");
                 try {
                     server.close();
                 } catch (IOException ex) {
