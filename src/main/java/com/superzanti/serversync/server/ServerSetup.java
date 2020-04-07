@@ -55,7 +55,7 @@ public class ServerSetup implements Runnable {
 
         try {
             Logger.log("Starting scan for managed files: " + dateFormatter.format(new Date()));
-            Logger.debug(String.format("Ignore patterns: %s", PrettyCollection.get(config.FILE_IGNORE_LIST)));
+            Logger.log(String.format("Ignore patterns: %s", PrettyCollection.get(config.FILE_IGNORE_LIST)));
 
             for (String managedDirectory : managedDirectories) {
                 Files.createDirectories(Paths.get(managedDirectory));
@@ -69,7 +69,10 @@ public class ServerSetup implements Runnable {
                 managedDirectories.size(),
                 String.join(", ", managedDirectories)
             ));
-            serverFiles.putAll(managedFiles);
+            if (managedFiles.size() > 0) {
+                serverFiles.putAll(managedFiles);
+                Logger.log(String.format("Managed files: %s", PrettyCollection.get(managedFiles)));
+            }
 
             // Only include configs if some are actually listed
             // saves wasting time scanning the config directory.
@@ -89,7 +92,7 @@ public class ServerSetup implements Runnable {
                     configIncludeFiles.size()
                 ));
                 if (configIncludeFiles.size() > 0) {
-                    Logger.debug(String.format("Config files: %s", PrettyCollection.get(configIncludeFiles)));
+                    Logger.log(String.format("Config files: %s", PrettyCollection.get(configIncludeFiles)));
                     serverFiles.putAll(configIncludeFiles);
                 }
             }
@@ -112,7 +115,7 @@ public class ServerSetup implements Runnable {
                         FileManager.clientOnlyFilesDirectoryName
                     ));
                     if (clientOnlyFiles.size() > 0) {
-                        Logger.debug(String.format("Client only files: %s", PrettyCollection.get(clientOnlyFiles)));
+                        Logger.log(String.format("Client only files: %s", PrettyCollection.get(clientOnlyFiles)));
                         serverFiles.putAll(clientOnlyFiles);
                     }
                 }
