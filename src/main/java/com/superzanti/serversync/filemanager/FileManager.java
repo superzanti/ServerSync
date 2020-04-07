@@ -1,18 +1,16 @@
 package com.superzanti.serversync.filemanager;
 
+import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.server.Function;
-import com.superzanti.serversync.util.FileHash;
-import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.PathBuilder;
-import com.superzanti.serversync.util.PathUtils;
+import com.superzanti.serversync.util.*;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FileManager {
     public static final String clientOnlyFilesDirectoryName = "clientmods";
@@ -62,22 +60,34 @@ public class FileManager {
             dirs.add(dir);
         }
 
-        List<Path> allFiles = dirs.stream().flatMap(dir -> {
-            try {
-                return Files.walk(dir).filter(dirPath -> !Files.isDirectory(dirPath));
-            } catch (IOException e) {
-                Logger.debug(String.format("Failed to access files in the directory: %s", dir));
-                Logger.debug(e);
-            }
-            return null;
-        }).collect(Collectors.toList());
+        List<Path> allFiles = dirs
+            .parallelStream()
+            .flatMap(dir -> {
+                try {
+                    return Files.walk(dir).filter(dirPath -> !Files.isDirectory(dirPath));
+                } catch (IOException e) {
+                    Logger.debug(String.format("Failed to access files in the directory: %s", dir));
+                    Logger.debug(e);
+                }
+                return Stream.empty();
+            }).collect(Collectors.toList());
+        Logger.debug(String.format("All files: %s", PrettyCollection.get(allFiles)));
 
-        if (allFiles.stream().anyMatch(Objects::isNull)) {
-            throw new IOException("Some files could not be accessed");
-        }
+        List<Path> ignoredFiles = allFiles
+            .parallelStream()
+            .filter(IgnoredFilesMatcher::matches)
+            .collect(Collectors.toList());
+        Logger.debug(String.format("Ignored files: %s", PrettyCollection.get(ignoredFiles)));
 
-        //TODO add file size to this map
-        return allFiles.stream().collect(Collectors.toMap(Path::toString, FileHash::hashFile));
+        List<Path> filteredFiles = allFiles
+            .parallelStream()
+            .filter(f -> !IgnoredFilesMatcher.matches(f))
+            .collect(Collectors.toList());
+        Logger.debug(String.format("Filtered files: %s", PrettyCollection.get(filteredFiles)));
+
+        return filteredFiles.stream()
+                            .filter(Files::exists)
+                            .collect(Collectors.toConcurrentMap(Path::toString, FileHash::hashFile));
     }
 
     public static void removeEmptyDirectories(List<Path> directories, Function<Path> emptyDirectoryCallback) {

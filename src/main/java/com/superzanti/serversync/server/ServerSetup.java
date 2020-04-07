@@ -55,26 +55,13 @@ public class ServerSetup implements Runnable {
 
         try {
             Logger.log("Starting scan for managed files: " + dateFormatter.format(new Date()));
-            Logger.debug(String.format("Ignore patterns: %s", String.join(", ", config.FILE_IGNORE_LIST)));
+            Logger.log(String.format("Ignore patterns: %s", PrettyCollection.get(config.FILE_IGNORE_LIST)));
 
             for (String managedDirectory : managedDirectories) {
                 Files.createDirectories(Paths.get(managedDirectory));
             }
 
-            Map<String, String> managedFiles = fileManager
-                .getDiffableFilesFromDirectories(managedDirectories);
-
-            //TODO add file include list for white / black list matching combos
-            // Glob matching from user configured patterns
-            Map<String, String> filteredFiles = managedFiles
-                .entrySet()
-                .stream()
-                .filter(entry -> {
-                    Path file = Paths.get(entry.getKey());
-                    return !GlobPathMatcher
-                        .matches(file, config.FILE_IGNORE_LIST);
-                })
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            Map<String, String> managedFiles = fileManager.getDiffableFilesFromDirectories(managedDirectories);
 
             Logger.log(String.format(
                 "Found %d files in %d directories <%s>",
@@ -82,24 +69,33 @@ public class ServerSetup implements Runnable {
                 managedDirectories.size(),
                 String.join(", ", managedDirectories)
             ));
-            Logger.debug("unfiltered: " + managedFiles.toString());
-            Logger.debug("filtered: " + filteredFiles.toString());
-            serverFiles.putAll(filteredFiles);
+            if (managedFiles.size() > 0) {
+                serverFiles.putAll(managedFiles);
+                Logger.log(String.format("Managed files: %s", PrettyCollection.get(managedFiles)));
+            }
 
-            // Add config include files
-            Map<String, String> configIncludeFiles = config.CONFIG_INCLUDE_LIST
-                .stream()
-                .parallel()
-                .map(p -> new PathBuilder("config").add(p).buildPath())
-                .filter(path -> Files.exists(path) && !IgnoredFilesMatcher.matches(path))
-                .collect(Collectors.toMap(Path::toString, FileHash::hashFile));
+            // Only include configs if some are actually listed
+            // saves wasting time scanning the config directory.
+            if (config.CONFIG_INCLUDE_LIST.size() > 0) {
+                Logger.log(String.format("Starting scan for managed configs: %s", dateFormatter.format(new Date())));
+                Logger.log(String.format("Include patterns: %s", PrettyCollection.get(config.CONFIG_INCLUDE_LIST)));
+                // Add config include files
+                Map<String, String> configIncludeFiles = config.CONFIG_INCLUDE_LIST
+                    .stream()
+                    .parallel()
+                    .map(p -> new PathBuilder("config").add(p).buildPath())
+                    .filter(path -> Files.exists(path) && !IgnoredFilesMatcher.matches(path))
+                    .collect(Collectors.toConcurrentMap(Path::toString, FileHash::hashFile));
 
-            Logger.log(String.format(
-                "Found %d included configs in <config>",
-                configIncludeFiles.size()
-            ));
-            Logger.debug("files: " + String.join(",", configIncludeFiles.keySet()));
-            serverFiles.putAll(configIncludeFiles);
+                Logger.log(String.format(
+                    "Found %d included configs in <config>",
+                    configIncludeFiles.size()
+                ));
+                if (configIncludeFiles.size() > 0) {
+                    Logger.log(String.format("Config files: %s", PrettyCollection.get(configIncludeFiles)));
+                    serverFiles.putAll(configIncludeFiles);
+                }
+            }
 
             if (shouldPushClientOnlyFiles()) {
                 Logger.log("Server configured to push client only mods, clients can still refuse these mods!");
@@ -118,8 +114,10 @@ public class ServerSetup implements Runnable {
                         clientOnlyFiles.size(),
                         FileManager.clientOnlyFilesDirectoryName
                     ));
-                    Logger.debug(clientOnlyFiles.toString());
-                    serverFiles.putAll(clientOnlyFiles);
+                    if (clientOnlyFiles.size() > 0) {
+                        Logger.log(String.format("Client only files: %s", PrettyCollection.get(clientOnlyFiles)));
+                        serverFiles.putAll(clientOnlyFiles);
+                    }
                 }
             }
         } catch (IOException e) {
@@ -164,7 +162,7 @@ public class ServerSetup implements Runnable {
                 clientThread.start();
             } catch (IOException e) {
                 Logger.error(
-                    "Error while accepting client connection, breaking server listener. You will need to restart serversync");
+                    "Error while accepting client connection, breaking server listener. You will need to restart ServerSync");
                 try {
                     server.close();
                 } catch (IOException ex) {

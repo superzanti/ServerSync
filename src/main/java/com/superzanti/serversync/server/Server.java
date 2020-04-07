@@ -156,8 +156,7 @@ public class Server {
                 // Server: Do you have this file?
                 String path = ois.readUTF();
                 String hash = ois.readUTF();
-
-
+                Logger.debug(String.format("Processing file: %s, with hash: %s", path, hash));
 
                 if (isClientOnlyFile(path)) {
                     if (config.REFUSE_CLIENT_MODS) {
