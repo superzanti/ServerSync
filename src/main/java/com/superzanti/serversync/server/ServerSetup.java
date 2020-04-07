@@ -74,20 +74,24 @@ public class ServerSetup implements Runnable {
             // Only include configs if some are actually listed
             // saves wasting time scanning the config directory.
             if (config.CONFIG_INCLUDE_LIST.size() > 0) {
+                Logger.log(String.format("Starting scan for managed configs: %s", dateFormatter.format(new Date())));
+                Logger.log(String.format("Include patterns: %s", PrettyList.get(config.CONFIG_INCLUDE_LIST)));
                 // Add config include files
                 Map<String, String> configIncludeFiles = config.CONFIG_INCLUDE_LIST
                     .stream()
                     .parallel()
                     .map(p -> new PathBuilder("config").add(p).buildPath())
                     .filter(path -> Files.exists(path) && !IgnoredFilesMatcher.matches(path))
-                    .collect(Collectors.toMap(Path::toString, FileHash::hashFile));
+                    .collect(Collectors.toConcurrentMap(Path::toString, FileHash::hashFile));
 
                 Logger.log(String.format(
                     "Found %d included configs in <config>",
                     configIncludeFiles.size()
                 ));
-                Logger.debug("Config files: " + String.join(",", configIncludeFiles.keySet()));
-                serverFiles.putAll(configIncludeFiles);
+                if (configIncludeFiles.size() > 0) {
+                    Logger.debug("Config files: " + String.join(",", configIncludeFiles.keySet()));
+                    serverFiles.putAll(configIncludeFiles);
+                }
             }
 
             if (shouldPushClientOnlyFiles()) {
