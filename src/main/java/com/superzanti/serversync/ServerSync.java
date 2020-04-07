@@ -39,10 +39,10 @@ public class ServerSync {
     private static void commonInit() {
         Locale locale = SyncConfig.getConfig().LOCALE;
         try {
-            System.out.println("Loading language file: " + locale);
-            strings = ResourceBundle.getBundle("assets.serversync.MessagesBundle", locale);
+            Logger.log("Loading language file: " + locale);
+            strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", locale);
         } catch (MissingResourceException e) {
-            System.out.println("No language file available for: " + locale + ", defaulting to en_US");
+            Logger.log("No language file available for: " + locale + ", defaulting to en_US");
             strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", new Locale("en", "US"));
         }
     }
