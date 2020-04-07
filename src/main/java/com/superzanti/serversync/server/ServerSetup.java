@@ -71,20 +71,24 @@ public class ServerSetup implements Runnable {
             ));
             serverFiles.putAll(managedFiles);
 
-            // Add config include files
-            Map<String, String> configIncludeFiles = config.CONFIG_INCLUDE_LIST
-                .stream()
-                .parallel()
-                .map(p -> new PathBuilder("config").add(p).buildPath())
-                .filter(path -> Files.exists(path) && !IgnoredFilesMatcher.matches(path))
-                .collect(Collectors.toMap(Path::toString, FileHash::hashFile));
+            // Only include configs if some are actually listed
+            // saves wasting time scanning the config directory.
+            if (config.CONFIG_INCLUDE_LIST.size() > 0) {
+                // Add config include files
+                Map<String, String> configIncludeFiles = config.CONFIG_INCLUDE_LIST
+                    .stream()
+                    .parallel()
+                    .map(p -> new PathBuilder("config").add(p).buildPath())
+                    .filter(path -> Files.exists(path) && !IgnoredFilesMatcher.matches(path))
+                    .collect(Collectors.toMap(Path::toString, FileHash::hashFile));
 
-            Logger.log(String.format(
-                "Found %d included configs in <config>",
-                configIncludeFiles.size()
-            ));
-            Logger.debug("Config files: " + String.join(",", configIncludeFiles.keySet()));
-            serverFiles.putAll(configIncludeFiles);
+                Logger.log(String.format(
+                    "Found %d included configs in <config>",
+                    configIncludeFiles.size()
+                ));
+                Logger.debug("Config files: " + String.join(",", configIncludeFiles.keySet()));
+                serverFiles.putAll(configIncludeFiles);
+            }
 
             if (shouldPushClientOnlyFiles()) {
                 Logger.log("Server configured to push client only mods, clients can still refuse these mods!");
