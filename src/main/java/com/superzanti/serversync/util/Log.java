@@ -39,7 +39,7 @@ public class Log extends Observable {
         if (shouldOutputToSystem) {
             System.out.println(tag + message);
         }
-        this.logContent.append(message);
+        this.logContent.append(tag).append(message);
         this.logContent.append("\r\n");
         this.setChanged();
         this.notifyObservers();
