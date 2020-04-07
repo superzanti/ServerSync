@@ -71,19 +71,19 @@ public class FileManager {
                 }
                 return Stream.empty();
             }).collect(Collectors.toList());
-        Logger.debug(String.format("All files: %s", PrettyList.get(allFiles)));
+        Logger.debug(String.format("All files: %s", PrettyCollection.get(allFiles)));
 
         List<Path> ignoredFiles = allFiles
             .parallelStream()
             .filter(IgnoredFilesMatcher::matches)
             .collect(Collectors.toList());
-        Logger.debug(String.format("Ignored files: %s", PrettyList.get(ignoredFiles)));
+        Logger.debug(String.format("Ignored files: %s", PrettyCollection.get(ignoredFiles)));
 
         List<Path> filteredFiles = allFiles
             .parallelStream()
             .filter(f -> !IgnoredFilesMatcher.matches(f))
             .collect(Collectors.toList());
-        Logger.debug(String.format("Filtered files: %s", PrettyList.get(filteredFiles)));
+        Logger.debug(String.format("Filtered files: %s", PrettyCollection.get(filteredFiles)));
 
         return filteredFiles.stream()
                             .filter(Files::exists)

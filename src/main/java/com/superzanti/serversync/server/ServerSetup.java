@@ -55,7 +55,7 @@ public class ServerSetup implements Runnable {
 
         try {
             Logger.log("Starting scan for managed files: " + dateFormatter.format(new Date()));
-            Logger.debug(String.format("Ignore patterns: %s", PrettyList.get(config.FILE_IGNORE_LIST)));
+            Logger.debug(String.format("Ignore patterns: %s", PrettyCollection.get(config.FILE_IGNORE_LIST)));
 
             for (String managedDirectory : managedDirectories) {
                 Files.createDirectories(Paths.get(managedDirectory));
@@ -75,7 +75,7 @@ public class ServerSetup implements Runnable {
             // saves wasting time scanning the config directory.
             if (config.CONFIG_INCLUDE_LIST.size() > 0) {
                 Logger.log(String.format("Starting scan for managed configs: %s", dateFormatter.format(new Date())));
-                Logger.log(String.format("Include patterns: %s", PrettyList.get(config.CONFIG_INCLUDE_LIST)));
+                Logger.log(String.format("Include patterns: %s", PrettyCollection.get(config.CONFIG_INCLUDE_LIST)));
                 // Add config include files
                 Map<String, String> configIncludeFiles = config.CONFIG_INCLUDE_LIST
                     .stream()
@@ -89,7 +89,7 @@ public class ServerSetup implements Runnable {
                     configIncludeFiles.size()
                 ));
                 if (configIncludeFiles.size() > 0) {
-                    Logger.debug("Config files: " + String.join(",", configIncludeFiles.keySet()));
+                    Logger.debug(String.format("Config files: %s", PrettyCollection.get(configIncludeFiles)));
                     serverFiles.putAll(configIncludeFiles);
                 }
             }
@@ -111,8 +111,10 @@ public class ServerSetup implements Runnable {
                         clientOnlyFiles.size(),
                         FileManager.clientOnlyFilesDirectoryName
                     ));
-                    Logger.debug(clientOnlyFiles.toString());
-                    serverFiles.putAll(clientOnlyFiles);
+                    if (clientOnlyFiles.size() > 0) {
+                        Logger.debug(String.format("Client only files: %s", PrettyCollection.get(clientOnlyFiles)));
+                        serverFiles.putAll(clientOnlyFiles);
+                    }
                 }
             }
         } catch (IOException e) {
