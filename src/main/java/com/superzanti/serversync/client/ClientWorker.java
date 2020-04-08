@@ -5,14 +5,17 @@ import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.filemanager.FileManager;
-import com.superzanti.serversync.util.enums.EFileProccessingStatus;
 import com.superzanti.serversync.server.Server;
 import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.enums.EFileProccessingStatus;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -37,7 +40,6 @@ public class ClientWorker implements Runnable {
     private List<String> managedDirectories = new ArrayList<>(0);
 
     private SyncConfig config = SyncConfig.getConfig();
-    private FileManager fileManager = new FileManager();
 
     @Override
     public void run() {
