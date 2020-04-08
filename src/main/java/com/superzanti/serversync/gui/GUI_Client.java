@@ -130,9 +130,6 @@ public class GUI_Client extends JFrame {
 
         add(root);
 
-        // Listeners
-        B_sync.addActionListener(e -> publishSyncPressed());
-
         TF_ipAddress.addKeyListener(new KeyListener() {
 
             @Override
@@ -161,7 +158,6 @@ public class GUI_Client extends JFrame {
             public void keyReleased(java.awt.event.KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     requestFocus();
-                    publishSyncPressed();
                 }
             }
 
@@ -255,36 +251,6 @@ public class GUI_Client extends JFrame {
 
     public void disableSyncButton() {
         SwingUtilities.invokeLater(() -> B_sync.setEnabled(false));
-    }
-
-    public void toggleSyncButton() {
-        SwingUtilities.invokeLater(() -> {
-            if (B_sync.isEnabled()) {
-                B_sync.setEnabled(false);
-            } else {
-                B_sync.setEnabled(true);
-                B_sync.setText("Sync");
-            }
-        });
-    }
-
-    public interface SyncPressedListener {
-        void onSyncPressed();
-    }
-
-    private SyncPressedListener listener;
-
-    public void setSyncPressedListener(SyncPressedListener listener) {
-        this.listener = listener;
-    }
-
-    private boolean publishSyncPressed() {
-        if (this.listener != null) {
-            this.listener.onSyncPressed();
-            return true;
-        }
-
-        return false;
     }
 
     public String getIPAddress() {

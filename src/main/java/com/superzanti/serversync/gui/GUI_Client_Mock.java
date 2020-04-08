@@ -29,10 +29,6 @@ public class GUI_Client_Mock extends GUI_Client {
     }
 
     @Override
-    public void toggleSyncButton() {
-    }
-
-    @Override
     public String getIPAddress() {
         return SyncConfig.getConfig().SERVER_IP;
     }
