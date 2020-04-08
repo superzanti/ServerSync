@@ -245,7 +245,7 @@ public class GUI_Client extends JFrame {
     public void enableSyncButton() {
         SwingUtilities.invokeLater(() -> {
             B_sync.setEnabled(true);
-            B_sync.setText("Sync");
+            B_sync.setText(ServerSync.strings.getString("go_button"));
         });
     }
 
