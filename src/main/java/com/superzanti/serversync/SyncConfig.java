@@ -61,6 +61,10 @@ public class SyncConfig {
     private static SyncConfig singleton;
     private boolean isUsingIncompatableConfig = false;
 
+    public SyncConfig() {
+        this.configType = EConfigType.COMMON;
+    }
+
     public SyncConfig(EConfigType type) {
         configType = type;
         config = new FriendlyConfig();

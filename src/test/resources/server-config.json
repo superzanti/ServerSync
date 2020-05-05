@@ -1,0 +1,35 @@
+{
+  "general": {
+    "push_client_mods": false,
+    "sync_mode": 2
+  },
+  "connection": {
+    "port": 38067
+  },
+  "rules": {
+    "directory_include_list": [
+      {
+        "name": "test-mirror",
+        "mode": "mirror"
+      },
+      {
+        "name": "test-push",
+        "mode": "push"
+      },
+      "test-default"
+    ],
+    "file_ignore_list": [
+      {
+        "description": "No jar files allowed",
+        "pattern": "**/*.jar"
+      },
+      {
+        "pattern": "**/other.bing"
+      },
+      "**/basic.thing"
+    ]
+  },
+  "misc": {
+    "locale": "en_NZ"
+  }
+}

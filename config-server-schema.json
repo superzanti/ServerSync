@@ -1,0 +1,295 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/superzanti/ServerSync/server-config.json",
+  "type": "object",
+  "title": "The server configuration schema",
+  "description": "The root schema comprises the entire JSON document.",
+  "default": {},
+  "required": [
+    "general",
+    "connection",
+    "rules",
+    "misc"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "general": {
+      "$id": "#/properties/general",
+      "type": "object",
+      "title": "The general schema",
+      "description": "General configuration of the servers behavior",
+      "default": {},
+      "examples": [
+        {
+          "sync_mode": 2,
+          "push_client_mods": false
+        }
+      ],
+      "required": [
+        "push_client_mods",
+        "sync_mode"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "push_client_mods": {
+          "$id": "#/properties/general/properties/push_client_mods",
+          "type": "boolean",
+          "title": "The push_client_mods schema",
+          "description": "Should clientmods be used for suggesting client side only mods",
+          "default": false,
+          "examples": [
+            false
+          ]
+        },
+        "sync_mode": {
+          "$id": "#/properties/general/properties/sync_mode",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2,
+          "title": "The sync_mode schema",
+          "description": "The type of file transfer that the server uses",
+          "default": 2,
+          "examples": [
+            2
+          ]
+        }
+      }
+    },
+    "connection": {
+      "$id": "#/properties/connection",
+      "type": "object",
+      "title": "The connection schema",
+      "description": "Details about where your server communicates from",
+      "default": {},
+      "examples": [
+        {
+          "port": 38067
+        }
+      ],
+      "required": [
+        "port"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "port": {
+          "$id": "#/properties/connection/properties/port",
+          "type": "integer",
+          "title": "The port schema",
+          "description": "The port the server is serving on",
+          "default": 38067,
+          "examples": [
+            38067
+          ]
+        }
+      }
+    },
+    "rules": {
+      "$id": "#/properties/rules",
+      "type": "object",
+      "title": "The rules schema",
+      "description": "Rules about what files to transfer and how",
+      "default": {},
+      "examples": [
+        {
+          "file_ignore_list": [
+            {
+              "pattern": "**/*.jar"
+            }
+          ],
+          "directory_include_list": [
+            {
+              "name": "test-mirror",
+              "mode": "mirror"
+            },
+            {
+              "name": "test-push",
+              "mode": "push"
+            }
+          ]
+        }
+      ],
+      "required": [
+        "directory_include_list",
+        "file_ignore_list"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "directory_include_list": {
+          "$id": "#/properties/rules/properties/directory_include_list",
+          "type": "array",
+          "title": "The directory_include_list schema",
+          "description": "The directories that will be scanned for files to sync",
+          "default": [],
+          "examples": [
+            [
+              {
+                "name": "test-mirror",
+                "mode": "mirror"
+              },
+              {
+                "name": "test-push",
+                "mode": "push"
+              }
+            ]
+          ],
+          "additionalItems": true,
+          "items": {
+            "$id": "#/properties/rules/properties/directory_include_list/items",
+            "anyOf": [
+              {
+                "$id": "#/properties/rules/properties/directory_include_list/items/anyOf/0",
+                "type": "object",
+                "title": "Object style included directory",
+                "description": "Sync directory with details about how",
+                "default": {},
+                "examples": [
+                  {
+                    "mode": "mirror",
+                    "name": "test-mirror"
+                  }
+                ],
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": true,
+                "properties": {
+                  "name": {
+                    "$id": "#/properties/rules/properties/directory_include_list/items/anyOf/0/properties/name",
+                    "type": "string",
+                    "title": "The name schema",
+                    "description": "The name of the directory",
+                    "default": "",
+                    "examples": [
+                      "test-mirror"
+                    ]
+                  },
+                  "mode": {
+                    "$id": "#/properties/rules/properties/directory_include_list/items/anyOf/0/properties/mode",
+                    "type": "string",
+                    "pattern": "push|mirror",
+                    "title": "The mode schema",
+                    "description": "What style of sync is being used, mostly affects file deletion client side",
+                    "default": "",
+                    "examples": [
+                      "mirror"
+                    ]
+                  }
+                }
+              },
+              {
+                "$id": "#/properties/rules/properties/directory_include_list/items/anyOf/1",
+                "type": "string",
+                "title": "Named default mode",
+                "description": "Default sync mode for named directory",
+                "default": "",
+                "examples": [
+                  "test-directory"
+                ]
+              }
+            ]
+          }
+        },
+        "file_ignore_list": {
+          "$id": "#/properties/rules/properties/file_ignore_list",
+          "type": "array",
+          "title": "The file_ignore_list schema",
+          "description": "A list of file patterns to ignore from sync",
+          "default": [],
+          "examples": [
+            [
+              {
+                "pattern": "**/*.jar",
+                "description": "No JARs"
+              }
+            ]
+          ],
+          "additionalItems": true,
+          "items": {
+            "$id": "#/properties/rules/properties/file_ignore_list/items",
+            "anyOf": [
+              {
+                "$id": "#/properties/rules/properties/file_ignore_list/items/anyOf/0",
+                "type": "object",
+                "title": "Detailed configuration",
+                "description": "Used to specify extra information about a pattern",
+                "default": {},
+                "examples": [
+                  {
+                    "pattern": "**/*.jar",
+                    "description": "No JARs"
+                  }
+                ],
+                "required": [
+                  "pattern"
+                ],
+                "additionalProperties": true,
+                "properties": {
+                  "description": {
+                    "$id": "#/properties/rules/properties/file_ignore_list/items/anyOf/0/properties/description",
+                    "type": "string",
+                    "title": "A description about the purpose of this pattern",
+                    "description": "Use this to remind yourself why you are ignoring this pattern",
+                    "default": "",
+                    "examples": [
+                      "No JARs"
+                    ]
+                  },
+                  "pattern": {
+                    "$id": "#/properties/rules/properties/file_ignore_list/items/anyOf/0/properties/pattern",
+                    "type": "string",
+                    "title": "The pattern to match against",
+                    "description": "Matches using GLOB patterns",
+                    "default": "",
+                    "examples": [
+                      "**/*.jar"
+                    ]
+                  }
+                }
+              },
+              {
+                "$id": "#/properties/rules/properties/file_ignore_list/items/anyOf/1",
+                "type": "string",
+                "title": "Basic configuration",
+                "description": "A pattern to match without extra details",
+                "default": "",
+                "examples": [
+                  "**/*.jar",
+                  "example.jar",
+                  "partial*.jar"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "misc": {
+      "$id": "#/properties/misc",
+      "type": "object",
+      "title": "The misc schema",
+      "description": "Unspecified other settings",
+      "default": {},
+      "examples": [
+        {
+          "locale": "en_NZ"
+        }
+      ],
+      "required": [
+        "locale"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "locale": {
+          "$id": "#/properties/misc/properties/locale",
+          "type": "string",
+          "title": "The locale",
+          "description": "What language should serversync load in",
+          "default": "",
+          "examples": [
+            "en_NZ"
+          ]
+        }
+      }
+    }
+  }
+}
