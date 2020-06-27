@@ -5,14 +5,17 @@ import com.superzanti.serversync.gui.GUI_Client;
 import com.superzanti.serversync.gui.GUI_Client_Mock;
 import com.superzanti.serversync.server.ServerSetup;
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.ProgramArguments;
 import com.superzanti.serversync.util.enums.EServerMode;
+import picocli.CommandLine;
+import picocli.CommandLine.*;
 
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.concurrent.Callable;
 
-public class ServerSync {
+@Command(name = "ServerSync", mixinStandardHelpOptions = true, version = "3.6.0", description = "A utility for synchronizing a server<->client style game.")
+public class ServerSync implements Callable<Integer> {
 
     /* AWT EVENT DISPATCHER THREAD */
 
@@ -21,23 +24,45 @@ public class ServerSync {
     public static EServerMode MODE;
 
     public static GUI_Client clientGUI;
-
     public static ResourceBundle strings;
 
-    public static ProgramArguments arguments;
+    @Option(names = {"-o", "--progress", "progress-only"}, description = "Only show progress indication. Ignored if '-s', '--server' is specified.")
+    private boolean modeProgressOnly = false;
+    @Option(names = {"-q", "--quiet", "silent"}, description = "Remove all GUI interaction. Ignored if '-s', '--server' is specified.")
+    private boolean modeQuiet = false;
+    @Option(names = {"-s", "--server", "server"}, description = "Run the program in server mode.")
+    private boolean modeServer = false;
+    @Option(names = {"-a", "--address"}, description = "The address of the server you wish to connect to.")
+    private String serverAddress;
+    @Option(names = {"-p", "--port"}, description = "The port the server is running on.")
+    private int serverPort = -1;
 
     public static void main(String[] args) {
-        arguments = new ProgramArguments(args);
+        int exitCode = new CommandLine(new ServerSync()).execute(args);
+        if (exitCode != 0) {
+            System.exit(exitCode);
+        }
+    }
 
-        if (arguments.isServer) {
+    @Override
+    public Integer call() {
+        if (modeServer) {
             runInServerMode();
         } else {
             runInClientMode();
         }
+        return 0;
     }
 
-    private static void commonInit() {
+    private void commonInit() {
         Locale locale = SyncConfig.getConfig().LOCALE;
+        if (serverAddress != null) {
+            SyncConfig.getConfig().SERVER_IP = serverAddress;
+        }
+        if (serverPort > 0) {
+            SyncConfig.getConfig().SERVER_PORT = serverPort;
+        }
+
         try {
             Logger.log("Loading language file: " + locale);
             strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", locale);
@@ -47,7 +72,7 @@ public class ServerSync {
         }
     }
 
-    private static void runInServerMode() {
+    private void runInServerMode() {
         ServerSync.MODE = EServerMode.SERVER;
         new Logger("server");
         Logger.setSystemOutput(true);
@@ -58,17 +83,17 @@ public class ServerSync {
         serverThread.start();
     }
 
-    private static void runInClientMode() {
+    private void runInClientMode() {
         ServerSync.MODE = EServerMode.CLIENT;
         new Logger("client");
         SyncConfig config = SyncConfig.getConfig();
         commonInit();
 
         Thread clientThread;
-        if (arguments.syncSilent) {
+        if (modeQuiet) {
             clientGUI = new GUI_Client_Mock();
             new Thread(new ClientWorker()).start();
-        } else if (arguments.syncProgressOnly) {
+        } else if (modeProgressOnly) {
             // TODO setup a progress only version of the GUI
             clientGUI = new GUI_Client();
             clientGUI.setIPAddress(config.SERVER_IP);

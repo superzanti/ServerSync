@@ -14,6 +14,8 @@ repositories {
     jcenter()
 }
 
+
+
 group = "com.superzanti.serversync"
 version = ssversion
 
@@ -29,7 +31,11 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
 
     implementation fileTree(dir: 'libs', include: '*.jar')
+
+    annotationProcessor 'info.picocli:picocli-codegen:4.3.2'
+
     shadow group: 'com.eclipsesource.minimal-json', name: 'minimal-json', version: '0.9.5'
+    shadow group: 'info.picocli', name: 'picocli', version: '4.3.2'
 }
 
 application {
