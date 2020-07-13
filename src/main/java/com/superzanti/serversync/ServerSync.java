@@ -9,6 +9,7 @@ import com.superzanti.serversync.util.enums.EServerMode;
 import picocli.CommandLine;
 import picocli.CommandLine.*;
 
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -36,6 +37,8 @@ public class ServerSync implements Callable<Integer> {
     private String serverAddress;
     @Option(names = {"-p", "--port"}, description = "The port the server is running on.")
     private int serverPort = -1;
+    @Option(names = {"-i", "--ignore"}, arity = "1..*", description = "A glob pattern or series of patterns for files to ignore")
+    private String[] ignorePatterns;
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new ServerSync()).execute(args);
@@ -61,6 +64,9 @@ public class ServerSync implements Callable<Integer> {
         }
         if (serverPort > 0) {
             SyncConfig.getConfig().SERVER_PORT = serverPort;
+        }
+        if (ignorePatterns != null) {
+            SyncConfig.getConfig().FILE_IGNORE_LIST = Arrays.asList(ignorePatterns);
         }
 
         try {
