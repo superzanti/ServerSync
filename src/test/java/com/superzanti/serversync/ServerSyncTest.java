@@ -13,7 +13,7 @@ class ServerSyncTest {
 
     @BeforeEach
     void setUp() {
-        ServerSync.main(new String[]{"-a", "test-address", "-p", String.valueOf(TEST_PORT)});
+        ServerSync.main(new String[]{"-q","-a", "test-address", "-p", String.valueOf(TEST_PORT)});
     }
 
     @Test
