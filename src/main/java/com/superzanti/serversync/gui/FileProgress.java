@@ -24,13 +24,19 @@ public class FileProgress implements Runnable {
     }
 
     public void fileFinished() {
-        ServerSync.clientGUI.updateFileProgress(null, 0);
+        updateFileProgress(null, 0);
     }
 
     @Override
     public void run() {
         if (sb != null) {
-            ServerSync.clientGUI.updateFileProgress(sb.toString(), progress);
+            updateFileProgress(sb.toString(), progress);
+        }
+    }
+
+    private void updateFileProgress(String message, int progress) {
+        if (ServerSync.clientGUI != null) {
+            ServerSync.clientGUI.updateFileProgress(message, progress);
         }
     }
 

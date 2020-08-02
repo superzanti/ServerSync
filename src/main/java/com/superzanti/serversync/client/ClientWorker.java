@@ -45,7 +45,7 @@ public class ClientWorker implements Runnable {
     public void run() {
         updateHappened = false;
 
-        ServerSync.clientGUI.disableSyncButton();
+        disableSyncButton();
         Logger.getLog().clearUserFacingLog();
 
         server = new Server(config.SERVER_IP, config.SERVER_PORT);
@@ -177,7 +177,10 @@ public class ClientWorker implements Runnable {
 
         // Update configured server to the latest used address
         // consideration to be had here for client silent sync mode
-        config.updateServerDetails(ServerSync.clientGUI.getIPAddress(), ServerSync.clientGUI.getPort());
+        //TODO fix or delete this
+        if (ServerSync.clientGUI != null) {
+            config.updateServerDetails(ServerSync.clientGUI.getIPAddress(), ServerSync.clientGUI.getPort());
+        }
 
         Logger.log(ServerSync.strings.getString("update_complete"));
     }
@@ -193,17 +196,17 @@ public class ClientWorker implements Runnable {
 
         if (!updateHappened && !errorInUpdates) {
             Logger.log(ServerSync.strings.getString("update_not_needed"));
-            ServerSync.clientGUI.updateProgress(100);
+            updateProgress(100);
         } else {
             Logger.debug(ServerSync.strings.getString("update_happened"));
-            ServerSync.clientGUI.updateProgress(100);
+            updateProgress(100);
         }
 
         if (errorInUpdates) {
             Logger.error(ServerSync.strings.getString("update_error"));
         }
 
-        ServerSync.clientGUI.enableSyncButton();
+        enableSyncButton();
     }
 
     private List<String> getServerManagedDirectories() {
@@ -233,7 +236,7 @@ public class ClientWorker implements Runnable {
     }
 
     private synchronized void forEachFile(double progress) {
-        ServerSync.clientGUI.updateProgress((int) progress);
+        updateProgress((int) progress);
     }
 
     private Map<String, EFileProccessingStatus> deleteFiles(
@@ -356,6 +359,24 @@ public class ClientWorker implements Runnable {
             ));
         }
         return deletedFiles;
+    }
+
+    private void updateProgress(int progress) {
+        if (ServerSync.clientGUI != null) {
+            ServerSync.clientGUI.updateProgress(progress);
+        }
+    }
+
+    private void enableSyncButton() {
+        if (ServerSync.clientGUI != null) {
+            ServerSync.clientGUI.enableSyncButton();
+        }
+    }
+
+    private void disableSyncButton() {
+        if (ServerSync.clientGUI != null) {
+            ServerSync.clientGUI.disableSyncButton();
+        }
     }
 
     private boolean filterShouldFileBeDeleted(Path theFile) {

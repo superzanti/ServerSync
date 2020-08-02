@@ -2,12 +2,12 @@ package com.superzanti.serversync;
 
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.gui.GUI_Client;
-import com.superzanti.serversync.gui.GUI_Client_Mock;
 import com.superzanti.serversync.server.ServerSetup;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EServerMode;
 import picocli.CommandLine;
-import picocli.CommandLine.*;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -97,7 +97,7 @@ public class ServerSync implements Callable<Integer> {
 
         Thread clientThread;
         if (modeQuiet) {
-            clientGUI = new GUI_Client_Mock();
+            clientGUI = null;
             new Thread(new ClientWorker()).start();
         } else if (modeProgressOnly) {
             // TODO setup a progress only version of the GUI
