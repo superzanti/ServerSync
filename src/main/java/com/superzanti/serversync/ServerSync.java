@@ -1,14 +1,17 @@
 package com.superzanti.serversync;
 
 import com.superzanti.serversync.client.ClientWorker;
+import com.superzanti.serversync.config.ConfigLoader;
 import com.superzanti.serversync.gui.GUI_Client;
 import com.superzanti.serversync.server.ServerSetup;
 import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.EServerMode;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -27,24 +30,30 @@ public class ServerSync implements Callable<Integer> {
     public static GUI_Client clientGUI;
     public static ResourceBundle strings;
 
+    @Option(names = {"-r", "--root"}, description = "The root directory of the game, defaults to the current working directory.")
+    private static String rootDirectory = System.getProperty("user.dir");
     @Option(names = {"-o", "--progress", "progress-only"}, description = "Only show progress indication. Ignored if '-s', '--server' is specified.")
-    private boolean modeProgressOnly = false;
+    private static boolean modeProgressOnly = false;
     @Option(names = {"-q", "--quiet", "silent"}, description = "Remove all GUI interaction. Ignored if '-s', '--server' is specified.")
-    private boolean modeQuiet = false;
+    private static boolean modeQuiet = false;
     @Option(names = {"-s", "--server", "server"}, description = "Run the program in server mode.")
-    private boolean modeServer = false;
+    private static boolean modeServer = false;
     @Option(names = {"-a", "--address"}, description = "The address of the server you wish to connect to.")
-    private String serverAddress;
+    private static String serverAddress;
     @Option(names = {"-p", "--port"}, description = "The port the server is running on.")
-    private int serverPort = -1;
+    private static int serverPort = -1;
     @Option(names = {"-i", "--ignore"}, arity = "1..*", description = "A glob pattern or series of patterns for files to ignore")
-    private String[] ignorePatterns;
+    private static String[] ignorePatterns;
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new ServerSync()).execute(args);
         if (exitCode != 0) {
             System.exit(exitCode);
         }
+    }
+
+    public static String getRootDirectory() {
+        return ServerSync.rootDirectory;
     }
 
     @Override
@@ -82,6 +91,12 @@ public class ServerSync implements Callable<Integer> {
         ServerSync.MODE = EServerMode.SERVER;
         new Logger("server");
         Logger.setSystemOutput(true);
+        try {
+            ConfigLoader.load(EConfigType.SERVER);
+        } catch (IOException e) {
+            Logger.error("Failed to load server config");
+            Logger.debug(e);
+        }
         commonInit();
 
         ServerSetup setup = new ServerSetup();
@@ -93,6 +108,12 @@ public class ServerSync implements Callable<Integer> {
         ServerSync.MODE = EServerMode.CLIENT;
         new Logger("client");
         SyncConfig config = SyncConfig.getConfig();
+        try {
+            ConfigLoader.load(EConfigType.CLIENT);
+        } catch (IOException e) {
+            Logger.error("Failed to load client config");
+            e.printStackTrace();
+        }
         commonInit();
 
         Thread clientThread;

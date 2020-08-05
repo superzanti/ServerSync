@@ -1,5 +1,6 @@
 package com.superzanti.serversync.filemanager;
 
+import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.server.Function;
 import com.superzanti.serversync.util.*;
@@ -20,7 +21,7 @@ public class FileManager {
     public final Path logsDirectory;
 
     public FileManager() {
-        String root = PathUtils.getMinecraftDirectory();
+        String root = ServerSync.getRootDirectory();
 
         if (root == null) {
             root = "";
@@ -45,7 +46,7 @@ public class FileManager {
         // Check for invalid directory configuration
         List<Path> dirs = new ArrayList<>();
         for (String includedDirectory : includedDirectories) {
-            Path dir = Paths.get(includedDirectory);
+            Path dir = rootPath.resolve(Paths.get(includedDirectory));
             if (!Files.exists(dir)) {
                 Logger.debug(String.format("Configured directory: %s does not exist.", dir));
                 throw new IOException("File does not exist");
@@ -70,7 +71,9 @@ public class FileManager {
                     Logger.debug(e);
                 }
                 return Stream.empty();
-            }).collect(Collectors.toList());
+            })
+            .map(rootPath::relativize)
+            .collect(Collectors.toList());
         Logger.debug(String.format("All files: %s", PrettyCollection.get(allFiles)));
 
         List<Path> ignoredFiles = allFiles
@@ -86,8 +89,12 @@ public class FileManager {
         Logger.debug(String.format("Filtered files: %s", PrettyCollection.get(filteredFiles)));
 
         return filteredFiles.stream()
-                            .filter(Files::exists)
-                            .collect(Collectors.toConcurrentMap(Path::toString, FileHash::hashFile));
+                            .filter(path -> Files.exists(rootPath.resolve(path)))
+                            .collect(
+                                Collectors.toConcurrentMap(
+                                    Path::toString,
+                                    path -> FileHash.hashFile(rootPath.resolve(path))
+                                ));
     }
 
     public static void removeEmptyDirectories(List<Path> directories, Function<Path> emptyDirectoryCallback) {

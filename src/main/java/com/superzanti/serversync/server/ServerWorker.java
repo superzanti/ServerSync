@@ -3,11 +3,15 @@ package com.superzanti.serversync.server;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.LoggerNG;
+import com.superzanti.serversync.util.PrettyCollection;
 import com.superzanti.serversync.util.enums.EBinaryAnswer;
 import com.superzanti.serversync.util.enums.EServerMessage;
 import com.superzanti.serversync.util.errors.UnknownMessageError;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
@@ -40,6 +44,8 @@ public class ServerWorker implements Runnable {
     
     private LoggerNG clientLogger;
 
+    private Path rootDir;
+
     ServerWorker(
         Socket socket,
         EnumMap<EServerMessage, String> comsMessages,
@@ -55,6 +61,7 @@ public class ServerWorker implements Runnable {
         timeout = timeoutScheduler;
         Date clientConnectionStarted = new Date();
         DateFormat dateFormatter = DateFormat.getDateTimeInstance();
+        rootDir = Paths.get(ServerSync.getRootDirectory());
 
         clientLogger.log("Connection established with " + clientSocket + dateFormatter.format(clientConnectionStarted));
     }
@@ -126,9 +133,12 @@ public class ServerWorker implements Runnable {
                     if (files.size() > 0) {
                         for (Map.Entry<String, String> entry :  files.entrySet()) {
                             try {
+                                Path relative = Paths.get(entry.getKey());
+                                Path serverPath = rootDir.resolve(relative);
+
                                 clientLogger.debug(String.format("Asking client if the have file: %s", entry.getKey()));
                                 oos.writeBoolean(true); // There are files left
-                                oos.writeUTF(entry.getKey()); // The path
+                                oos.writeUTF(relative.toString()); // The path
                                 oos.writeUTF(entry.getValue()); // The hash
                                 oos.flush();
 
@@ -137,7 +147,7 @@ public class ServerWorker implements Runnable {
                                 if (EBinaryAnswer.NO.getValue() == ois.readInt()) {
                                     clientLogger.debug("Client said they don't have the file");
                                     setTimeout(ServerWorker.FILE_SYNC_CLIENT_TIMEOUT_MS);
-                                    transferFile(entry.getKey());
+                                    transferFile(serverPath);
                                 } else {
                                     clientLogger.debug("Client said they have the file already");
                                     setTimeout(ServerWorker.DEFAULT_CLIENT_TIMEOUT_MS);
@@ -164,6 +174,7 @@ public class ServerWorker implements Runnable {
                 // the directories that I am managing / sync'ing
                 // needed by the client to know what it should delete
                 if (matchMessage(message, EServerMessage.GET_MANAGED_DIRECTORIES)) {
+                    clientLogger.debug(PrettyCollection.get(directories));
                     oos.writeObject(directories);
                     oos.flush();
                     continue;
@@ -199,9 +210,7 @@ public class ServerWorker implements Runnable {
         teardown();
     }
 
-    private void transferFile(String path) throws IOException {
-        Path file = Paths.get(path);
-
+    private void transferFile(Path file) throws IOException {
         // Not checking if the file exists as this is coming from a list of
         // files that we already know exist.
 

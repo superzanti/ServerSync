@@ -1,5 +1,7 @@
 package com.superzanti.serversync.util;
 
+import com.superzanti.serversync.ServerSync;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,7 +50,7 @@ public class Log extends Observable {
 
     void saveLog() {
         Thread saveT = new Thread(new Runnable() {
-            Path logsDir = Paths.get("logs");
+            Path logsDir = Paths.get(ServerSync.getRootDirectory(), "logs");
             Path log = logsDir.resolve(fileName + EXT);
 
             @Override
