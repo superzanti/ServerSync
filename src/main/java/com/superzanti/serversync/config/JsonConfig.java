@@ -26,7 +26,7 @@ public class JsonConfig {
     private static String PROP_FILE_IGNORE_LIST = "file_ignore_list";
     private static String PROP_LOCALE = "locale";
 
-    public static SyncConfig forServer(Path json) throws IOException {
+    public static void forServer(Path json) throws IOException {
         try (Reader reader = Files.newBufferedReader(json)) {
             SyncConfig config = SyncConfig.getConfig();
             JsonObject root = Json.parse(reader).asObject();
@@ -72,11 +72,10 @@ public class JsonConfig {
             String[] localeParts = getString(misc, PROP_LOCALE).split("_");
             config.LOCALE = new Locale(localeParts[0], localeParts[1]);
 
-            return config;
         }
     }
 
-    public static SyncConfig forClient(Path json) throws IOException {
+    public static void forClient(Path json) throws IOException {
         try (Reader reader = Files.newBufferedReader(json)) {
             SyncConfig config = SyncConfig.getConfig();
             JsonObject root = Json.parse(reader).asObject();
@@ -109,7 +108,6 @@ public class JsonConfig {
             String[] localeParts = getString(misc, PROP_LOCALE).split("_");
             config.LOCALE = new Locale(localeParts[0], localeParts[1]);
 
-            return config;
         }
     }
 
