@@ -187,8 +187,6 @@ public class GUI_Client extends JFrame {
                         error = true;
                     }
                 }
-
-                SyncConfig.pullServerConfig = true;
             }
 
             if (!error) {
