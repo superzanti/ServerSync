@@ -305,7 +305,13 @@ public class Server {
             return false;
         }
 
-        Logger.log(ServerSync.strings.getString("update_success") + ": " + path.toString());
+        Logger.log(
+            String.format(
+                "%s %s %s",
+                RefStrings.UPDATE_TOKEN,
+                ServerSync.strings.getString("update_success"),
+                path.toString()
+            ));
         return true;
     }
 
