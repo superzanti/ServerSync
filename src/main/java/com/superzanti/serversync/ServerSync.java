@@ -12,6 +12,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -30,20 +32,22 @@ public class ServerSync implements Callable<Integer> {
     public static GUI_Client clientGUI;
     public static ResourceBundle strings;
 
+    public static Path rootDir = Paths.get(System.getProperty("user.dir"));
+
     @Option(names = {"-r", "--root"}, description = "The root directory of the game, defaults to the current working directory.")
-    private static String rootDirectory = System.getProperty("user.dir");
+    private String rootDirectory = System.getProperty("user.dir");
     @Option(names = {"-o", "--progress", "progress-only"}, description = "Only show progress indication. Ignored if '-s', '--server' is specified.")
-    private static boolean modeProgressOnly = false;
+    private boolean modeProgressOnly = false;
     @Option(names = {"-q", "--quiet", "silent"}, description = "Remove all GUI interaction. Ignored if '-s', '--server' is specified.")
-    private static boolean modeQuiet = false;
+    private boolean modeQuiet = false;
     @Option(names = {"-s", "--server", "server"}, description = "Run the program in server mode.")
-    private static boolean modeServer = false;
+    private boolean modeServer = false;
     @Option(names = {"-a", "--address"}, description = "The address of the server you wish to connect to.")
-    private static String serverAddress;
+    private String serverAddress;
     @Option(names = {"-p", "--port"}, description = "The port the server is running on.")
-    private static int serverPort = -1;
+    private int serverPort = -1;
     @Option(names = {"-i", "--ignore"}, arity = "1..*", description = "A glob pattern or series of patterns for files to ignore")
-    private static String[] ignorePatterns;
+    private String[] ignorePatterns;
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new ServerSync()).execute(args);
@@ -52,12 +56,9 @@ public class ServerSync implements Callable<Integer> {
         }
     }
 
-    public static String getRootDirectory() {
-        return ServerSync.rootDirectory;
-    }
-
     @Override
     public Integer call() {
+        ServerSync.rootDir = Paths.get(rootDirectory);
         if (modeServer) {
             runInServerMode();
         } else {

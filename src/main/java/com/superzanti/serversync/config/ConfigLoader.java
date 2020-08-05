@@ -9,11 +9,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ConfigLoader {
-    private static final Path v2ServerConfig = Paths.get(ServerSync.getRootDirectory(),"serversync-server.json");
-    private static final Path v2ClientConfig = Paths.get(ServerSync.getRootDirectory(),"serversync-client.json");
+    private static final Path v2ServerConfig = Paths.get(ServerSync.rootDir.toString(),"serversync-server.json");
+    private static final Path v2ClientConfig = Paths.get(ServerSync.rootDir.toString(),"serversync-client.json");
 
-    private static final Path v1ServerConfig = Paths.get(ServerSync.getRootDirectory(),"config", "serversync", "serversync-server.cfg");
-    private static final Path v1ClientConfig = Paths.get(ServerSync.getRootDirectory(),"config", "serversync", "serversync-client.cfg");
+    private static final Path v1ServerConfig = Paths.get(ServerSync.rootDir.toString(),"config", "serversync", "serversync-server.cfg");
+    private static final Path v1ClientConfig = Paths.get(ServerSync.rootDir.toString(),"config", "serversync", "serversync-client.cfg");
 
     public static void load(EConfigType type) throws IOException {
         if (EConfigType.SERVER.equals(type)) {

@@ -50,7 +50,7 @@ public class Log extends Observable {
 
     void saveLog() {
         Thread saveT = new Thread(new Runnable() {
-            Path logsDir = Paths.get(ServerSync.getRootDirectory(), "logs");
+            Path logsDir = Paths.get(ServerSync.rootDir.toString(), "logs");
             Path log = logsDir.resolve(fileName + EXT);
 
             @Override

@@ -3,7 +3,10 @@ package com.superzanti.serversync.filemanager;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.server.Function;
-import com.superzanti.serversync.util.*;
+import com.superzanti.serversync.util.FileHash;
+import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.PathBuilder;
+import com.superzanti.serversync.util.PrettyCollection;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -16,21 +19,14 @@ import java.util.stream.Stream;
 public class FileManager {
     public static final String clientOnlyFilesDirectoryName = "clientmods";
 
-    public final Path rootPath;
     public final Path clientOnlyFilesDirectory;
     public final Path logsDirectory;
 
     public FileManager() {
-        String root = ServerSync.getRootDirectory();
+        Logger.debug(String.format("root dir: %s", ServerSync.rootDir.toAbsolutePath().toString()));
 
-        if (root == null) {
-            root = "";
-        }
-        Logger.debug(String.format("root dir: %s", Paths.get(root).toAbsolutePath().toString()));
-        rootPath = Paths.get(root);
-
-        clientOnlyFilesDirectory = new PathBuilder(root).add(FileManager.clientOnlyFilesDirectoryName).buildPath();
-        logsDirectory = new PathBuilder(root).add("logs").buildPath();
+        clientOnlyFilesDirectory = new PathBuilder(ServerSync.rootDir.toString()).add(FileManager.clientOnlyFilesDirectoryName).buildPath();
+        logsDirectory = new PathBuilder(ServerSync.rootDir.toString()).add("logs").buildPath();
     }
 
     // New version of sync process
@@ -46,7 +42,7 @@ public class FileManager {
         // Check for invalid directory configuration
         List<Path> dirs = new ArrayList<>();
         for (String includedDirectory : includedDirectories) {
-            Path dir = rootPath.resolve(Paths.get(includedDirectory));
+            Path dir = ServerSync.rootDir.resolve(Paths.get(includedDirectory));
             if (!Files.exists(dir)) {
                 Logger.debug(String.format("Configured directory: %s does not exist.", dir));
                 throw new IOException("File does not exist");
@@ -72,7 +68,7 @@ public class FileManager {
                 }
                 return Stream.empty();
             })
-            .map(rootPath::relativize)
+            .map(ServerSync.rootDir::relativize)
             .collect(Collectors.toList());
         Logger.debug(String.format("All files: %s", PrettyCollection.get(allFiles)));
 
@@ -89,11 +85,11 @@ public class FileManager {
         Logger.debug(String.format("Filtered files: %s", PrettyCollection.get(filteredFiles)));
 
         return filteredFiles.stream()
-                            .filter(path -> Files.exists(rootPath.resolve(path)))
+                            .filter(path -> Files.exists(ServerSync.rootDir.resolve(path)))
                             .collect(
                                 Collectors.toConcurrentMap(
                                     Path::toString,
-                                    path -> FileHash.hashFile(rootPath.resolve(path))
+                                    path -> FileHash.hashFile(ServerSync.rootDir.resolve(path))
                                 ));
     }
 

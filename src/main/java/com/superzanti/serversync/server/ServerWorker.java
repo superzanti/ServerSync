@@ -44,8 +44,6 @@ public class ServerWorker implements Runnable {
     
     private LoggerNG clientLogger;
 
-    private Path rootDir;
-
     ServerWorker(
         Socket socket,
         EnumMap<EServerMessage, String> comsMessages,
@@ -61,7 +59,6 @@ public class ServerWorker implements Runnable {
         timeout = timeoutScheduler;
         Date clientConnectionStarted = new Date();
         DateFormat dateFormatter = DateFormat.getDateTimeInstance();
-        rootDir = Paths.get(ServerSync.getRootDirectory());
 
         clientLogger.log("Connection established with " + clientSocket + dateFormatter.format(clientConnectionStarted));
     }
@@ -134,7 +131,7 @@ public class ServerWorker implements Runnable {
                         for (Map.Entry<String, String> entry :  files.entrySet()) {
                             try {
                                 Path relative = Paths.get(entry.getKey());
-                                Path serverPath = rootDir.resolve(relative);
+                                Path serverPath = ServerSync.rootDir.resolve(relative);
 
                                 clientLogger.debug(String.format("Asking client if the have file: %s", entry.getKey()));
                                 oos.writeBoolean(true); // There are files left

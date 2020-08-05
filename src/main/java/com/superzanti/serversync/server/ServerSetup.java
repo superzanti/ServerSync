@@ -156,7 +156,12 @@ public class ServerSetup implements Runnable {
 
                 socket.setSendBufferSize(ServerSetup.SEND_BUFFER_SIZE);
                 ServerWorker sc = new ServerWorker(
-                    socket, generateServerMessages(), timeoutScheduler, managedDirectories, serverFiles);
+                    socket,
+                    generateServerMessages(),
+                    timeoutScheduler,
+                    managedDirectories,
+                    serverFiles
+                );
                 Thread clientThread = new Thread(sc, "Server client Handler");
                 clientThread.setName("ClientThread - " + address);
                 clientThread.start();
