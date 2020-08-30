@@ -2,7 +2,7 @@ package com.superzanti.serversync.gui;
 
 import com.superzanti.serversync.RefStrings;
 import com.superzanti.serversync.ServerSync;
-import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.util.Log;
 import com.superzanti.serversync.util.Logger;

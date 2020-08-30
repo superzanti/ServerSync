@@ -2,6 +2,7 @@ package com.superzanti.serversync;
 
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.config.ConfigLoader;
+import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.gui.GUI_Client;
 import com.superzanti.serversync.server.ServerSetup;
 import com.superzanti.serversync.util.Logger;
@@ -26,7 +27,7 @@ public class ServerSync implements Callable<Integer> {
     /* AWT EVENT DISPATCHER THREAD */
 
     public static final String APPLICATION_TITLE = "Serversync";
-    public static final String HANDSHAKE = "HANDSHAKE";
+    public static final String GET_SERVER_INFO = "SERVER_INFO";
     public static EServerMode MODE;
 
     public static GUI_Client clientGUI;

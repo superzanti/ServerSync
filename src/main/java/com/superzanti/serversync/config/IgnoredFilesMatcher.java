@@ -1,6 +1,5 @@
 package com.superzanti.serversync.config;
 
-import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.util.GlobPathMatcher;
 
 import java.nio.file.Path;

@@ -1,8 +1,13 @@
 package com.superzanti.serversync.server;
 
 import com.superzanti.serversync.ServerSync;
+import com.superzanti.serversync.config.SyncConfig;
+import com.superzanti.serversync.files.FileManifest;
+import com.superzanti.serversync.files.ManifestEntry;
+import com.superzanti.serversync.communication.response.ServerInfo;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.LoggerNG;
+import com.superzanti.serversync.files.PathBuilder;
 import com.superzanti.serversync.util.PrettyCollection;
 import com.superzanti.serversync.util.enums.EBinaryAnswer;
 import com.superzanti.serversync.util.enums.EServerMessage;
@@ -18,7 +23,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * This worker handles requests from the client continuously until told to exit
@@ -31,31 +39,31 @@ public class ServerWorker implements Runnable {
     private static final int DEFAULT_CLIENT_TIMEOUT_MS = 120000; // 2 minutes
     private static final int FILE_SYNC_CLIENT_TIMEOUT_MS = 600000; // 10 minutes
 
-    private Socket clientSocket;
+    private final Socket clientSocket;
     private ObjectInputStream ois;
     private ObjectOutputStream oos;
 
-    private EnumMap<EServerMessage, String> messages;
-    private List<String> directories;
-    private Map<String, String> files;
+    private final List<String> messages;
+    private final FileManifest manifest;
 
     private Timer timeout;
     private TimerTask timeoutTask;
-    
-    private LoggerNG clientLogger;
+
+    private final LoggerNG clientLogger;
 
     ServerWorker(
         Socket socket,
-        EnumMap<EServerMessage, String> comsMessages,
+        List<String> messages,
         Timer timeoutScheduler,
-        List<String> managedDirectories,
-        Map<String, String> serverFiles
+        FileManifest manifest
     ) {
-        clientLogger = new LoggerNG(String.format("server-connection-from-%s", socket.getInetAddress().toString().replaceAll("[/\\.:@?|\\*\"]", "-")));
+        clientLogger = new LoggerNG(String.format(
+            "server-connection-from-%s",
+            socket.getInetAddress().toString().replaceAll("[/.:@?|*\"]", "-")
+        ));
+        this.manifest = manifest;
+        this.messages = messages;
         clientSocket = socket;
-        messages = comsMessages;
-        directories = managedDirectories;
-        files = serverFiles;
         timeout = timeoutScheduler;
         Date clientConnectionStarted = new Date();
         DateFormat dateFormatter = DateFormat.getDateTimeInstance();
@@ -70,41 +78,47 @@ public class ServerWorker implements Runnable {
             oos = new ObjectOutputStream(clientSocket.getOutputStream());
         } catch (IOException e) {
             clientLogger.log("Failed to create client streams");
-            e.printStackTrace();
+            Logger.error(String.format("Error in client setup: %s", clientSocket.getInetAddress()));
+            Logger.debug(e);
         }
 
         while (!clientSocket.isClosed()) {
             String message = null;
             try {
                 setTimeout(ServerWorker.DEFAULT_CLIENT_TIMEOUT_MS);
-                message = (String) ois.readObject();
-                clientLogger.log(
-                    String.format("Received message: %s, from client: %s", message, clientSocket.getInetAddress()));
+                message = ois.readUTF();
+                clientLogger.log(String.format(
+                    "Received message: %s, from client: %s",
+                    message,
+                    clientSocket.getInetAddress()
+                ));
+                Logger.debug(String.format("Received message: %s", message));
             } catch (SocketException e) {
                 // Client timed out
+                Logger.error(String.format("Client: %s, timed out", clientSocket.getInetAddress()));
                 break;
-            } catch (ClassNotFoundException | IOException e) {
+            } catch (IOException e) {
                 clientLogger.debug(e);
             }
 
             if (message == null) {
                 clientLogger.debug("Received null message, this should not happen.");
-                continue;
+                break;
             }
 
             try {
                 // <---->
                 // always called first
-                if (message.equals(ServerSync.HANDSHAKE)) {
-                    clientLogger.log("Sending coms messages");
-                    oos.writeObject(messages);
+                if (message.equals(ServerSync.GET_SERVER_INFO)) {
+                    clientLogger.log("Sending server information");
+                    oos.writeObject(new ServerInfo(messages, SyncConfig.getConfig().SYNC_MODE));
                     oos.flush();
                     continue;
                 }
 
                 // <---->
                 // fallback if I don't know what this message is
-                if (!messages.containsValue(message)) {
+                if (!messages.contains(message)) {
                     try {
                         clientLogger.log("Unknown message received from: " + clientSocket.getInetAddress());
                         oos.writeObject(new UnknownMessageError(message));
@@ -118,6 +132,40 @@ public class ServerWorker implements Runnable {
                     break;
                 }
 
+                if (matchMessage(message, EServerMessage.GET_MANIFEST)) {
+                    oos.writeObject(manifest);
+                    oos.flush();
+                    continue;
+                }
+
+                // READ FROM CLIENT <entry>: The file I want
+                // SEND TO CLIENT <boolean>: If the file exists on the server
+                // STREAM TO CLIENT <the file>
+                /*
+                 * Individual updating of singular files, this is less efficient than using a manifest of files
+                 * that can be packaged and sent all at once.
+                 */
+                if (matchMessage(message, EServerMessage.UPDATE_FILE)) {
+                    try {
+                        ManifestEntry entry = (ManifestEntry) ois.readObject();
+                        Path theFile = new PathBuilder().add(entry.path).toPath();
+                        if (Files.exists(theFile)) {
+                            oos.writeBoolean(true);
+                            oos.flush();
+                            transferFile(theFile);
+                        } else {
+                            oos.writeBoolean(false);
+                        }
+                        oos.flush();
+                    } catch (ClassNotFoundException e) {
+                        clientLogger.error("Failed to parse entry from client");
+                        clientLogger.debug(e);
+                        oos.writeBoolean(false);
+                        oos.flush();
+                    }
+                    continue;
+                }
+
                 // <---->
                 // the actual file sync
                 if (matchMessage(message, EServerMessage.SYNC_FILES)) {
@@ -127,16 +175,16 @@ public class ServerWorker implements Runnable {
                     // Client: yes | no
                     // -- (yes) - skip to next file
                     // -- (no) - send filesize -> send file
-                    if (files.size() > 0) {
-                        for (Map.Entry<String, String> entry :  files.entrySet()) {
+                    if (manifest.entries.size() > 0) {
+                        for (ManifestEntry entry : manifest.entries) {
                             try {
-                                Path relative = Paths.get(entry.getKey());
+                                Path relative = Paths.get(entry.path);
                                 Path serverPath = ServerSync.rootDir.resolve(relative);
 
-                                clientLogger.debug(String.format("Asking client if the have file: %s", entry.getKey()));
+                                clientLogger.debug(String.format("Asking client if the have file: %s", entry.path));
                                 oos.writeBoolean(true); // There are files left
                                 oos.writeUTF(relative.toString()); // The path
-                                oos.writeUTF(entry.getValue()); // The hash
+                                oos.writeUTF(entry.hash); // The hash
                                 oos.flush();
 
 
@@ -152,7 +200,10 @@ public class ServerWorker implements Runnable {
                             } catch (IOException ex) {
                                 clientLogger.debug(ex);
                                 clientLogger
-                                    .log(String.format("Encountered error during sync with %s, killing sync process", clientSocket.getInetAddress()));
+                                    .log(String.format(
+                                        "Encountered error during sync with %s, killing sync process",
+                                        clientSocket.getInetAddress()
+                                    ));
                                 break;
                             }
                         }
@@ -171,8 +222,8 @@ public class ServerWorker implements Runnable {
                 // the directories that I am managing / sync'ing
                 // needed by the client to know what it should delete
                 if (matchMessage(message, EServerMessage.GET_MANAGED_DIRECTORIES)) {
-                    clientLogger.debug(PrettyCollection.get(directories));
-                    oos.writeObject(directories);
+                    clientLogger.debug(PrettyCollection.get(manifest.directories));
+                    oos.writeObject(manifest.directories);
                     oos.flush();
                     continue;
                 }
@@ -180,7 +231,7 @@ public class ServerWorker implements Runnable {
                 // <---->
                 // how many files are managed by the server?
                 if (matchMessage(message, EServerMessage.GET_NUMBER_OF_MANAGED_FILES)) {
-                    oos.writeInt(files.size());
+                    oos.writeInt(manifest.entries.size());
                     oos.flush();
                     continue;
                 }
@@ -201,6 +252,11 @@ public class ServerWorker implements Runnable {
                 ));
                 break;
             }
+
+            String error = String.format("Unhandled message type: %s", message);
+            clientLogger.log(error);
+            Logger.error(String.format("%s from client: %s", error, clientSocket.getInetAddress()));
+            break;
         }
 
         clientLogger.log("Closing connection with: " + clientSocket);
@@ -224,14 +280,15 @@ public class ServerWorker implements Runnable {
             Logger.error(error);
         } catch (SecurityException se) {
             clientLogger.debug(se);
-            clientLogger.error(String.format(ServerSync.strings.getString("server_message_file_permission_denied"), file));
+            clientLogger
+                .error(String.format(ServerSync.strings.getString("server_message_file_permission_denied"), file));
         }
         clientLogger.debug(String.format("File size is: %d", size));
         oos.writeLong(size);
         oos.flush();
         // --
 
-        if(size > 0) {
+        if (size > 0) {
             int bytesRead;
             byte[] buffer = new byte[clientSocket.getSendBufferSize()];
 
@@ -239,7 +296,7 @@ public class ServerWorker implements Runnable {
                 while ((bytesRead = fis.read(buffer)) > 0) {
                     oos.write(buffer, 0, bytesRead);
                 }
-            } catch(IOException e) {
+            } catch (IOException e) {
                 clientLogger.debug(String.format("Failed to write file: %s", file));
                 clientLogger.debug(e);
             } finally {
@@ -255,7 +312,7 @@ public class ServerWorker implements Runnable {
     }
 
     private boolean matchMessage(String incomingMessage, EServerMessage message) {
-        return incomingMessage.equals(messages.get(message));
+        return incomingMessage.equals(message.toString());
     }
 
     private void clearTimeout() {

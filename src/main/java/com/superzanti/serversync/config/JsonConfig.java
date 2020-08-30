@@ -1,7 +1,7 @@
 package com.superzanti.serversync.config;
 
 import com.eclipsesource.json.*;
-import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.files.FileRedirect;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -12,19 +12,20 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class JsonConfig {
-    private static String CAT_GENERAL = "general";
-    private static String CAT_CONNECTION = "connection";
-    private static String CAT_RULES = "rules";
-    private static String CAT_MISC = "misc";
+    private static final String CAT_GENERAL = "general";
+    private static final String CAT_CONNECTION = "connection";
+    private static final String CAT_RULES = "rules";
+    private static final String CAT_MISC = "misc";
 
-    private static String PROP_PUSH_CLIENT_MODS = "push_client_mods";
-    private static String PROP_REFUSE_CLIENT_MODS = "refuse_client_mods";
-    private static String PROP_SYNC_MODE = "sync_mode";
-    private static String PROP_PORT = "port";
-    private static String PROP_ADDRESS = "address";
-    private static String PROP_DIRECTORY_INCLUDE_LIST = "directory_include_list";
-    private static String PROP_FILE_IGNORE_LIST = "file_ignore_list";
-    private static String PROP_LOCALE = "locale";
+    private static final String PROP_PUSH_CLIENT_MODS = "push_client_mods";
+    private static final String PROP_REFUSE_CLIENT_MODS = "refuse_client_mods";
+    private static final String PROP_SYNC_MODE = "sync_mode";
+    private static final String PROP_PORT = "port";
+    private static final String PROP_ADDRESS = "address";
+    private static final String PROP_DIRECTORY_INCLUDE_LIST = "directory_include_list";
+    private static final String PROP_FILE_IGNORE_LIST = "file_ignore_list";
+    private static final String PROP_FILE_REDIRECT_LIST = "redirect_files";
+    private static final String PROP_LOCALE = "locale";
 
     public static void forServer(Path json) throws IOException {
         try (Reader reader = Files.newBufferedReader(json)) {
@@ -67,6 +68,13 @@ public class JsonConfig {
                     }
                     return v.asString();
                 })
+                .collect(Collectors.toList());
+
+            JsonArray fileRedirectList = getArray(rules, PROP_FILE_REDIRECT_LIST);
+            config.REDIRECT_FILES_LIST = fileRedirectList
+                .values()
+                .stream()
+                .map(v -> FileRedirect.from(v.asObject()))
                 .collect(Collectors.toList());
 
             String[] localeParts = getString(misc, PROP_LOCALE).split("_");
@@ -131,6 +139,9 @@ public class JsonConfig {
         JsonArray fileIgnoreList = new JsonArray();
         config.FILE_IGNORE_LIST.forEach(fileIgnoreList::add);
         rules.add(PROP_FILE_IGNORE_LIST, fileIgnoreList);
+        JsonArray redirectFilesList = new JsonArray();
+        config.REDIRECT_FILES_LIST.forEach(f -> redirectFilesList.add(f.toJson()));
+        rules.add(PROP_FILE_REDIRECT_LIST, redirectFilesList);
         root.add(CAT_RULES, rules);
 
         JsonObject misc = new JsonObject();

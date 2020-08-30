@@ -1,5 +1,7 @@
-package com.superzanti.serversync;
+package com.superzanti.serversync.config;
 
+import com.superzanti.serversync.ServerSync;
+import com.superzanti.serversync.files.FileRedirect;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.EServerMode;
 
@@ -25,7 +27,8 @@ public class SyncConfig {
     public int SERVER_PORT = 38067;
     public Boolean PUSH_CLIENT_MODS = false;
     public List<String> DIRECTORY_INCLUDE_LIST = Collections.singletonList("mods");
-    public int SYNC_MODE = 0;
+    public List<FileRedirect> REDIRECT_FILES_LIST = new ArrayList<>();
+    public int SYNC_MODE = 2;
     ////////////////////////////////////////
 
     // CLIENT //////////////////////////////

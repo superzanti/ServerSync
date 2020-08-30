@@ -1,6 +1,5 @@
 package com.superzanti.serversync.config;
 
-import com.superzanti.serversync.SyncConfig;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.minecraft.config.FriendlyConfig;

@@ -1,5 +1,6 @@
 package com.superzanti.serversync;
 
+import com.superzanti.serversync.config.SyncConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

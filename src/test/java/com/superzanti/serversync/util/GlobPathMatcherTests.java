@@ -1,7 +1,7 @@
 package com.superzanti.serversync.util;
 
 import com.superzanti.serversync.ServerSync;
-import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.util.enums.EServerMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

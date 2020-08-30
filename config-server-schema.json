@@ -93,7 +93,7 @@
         {
           "file_ignore_list": [
             {
-              "pattern": "**/*.jar"
+              "pattern": "\\*\\*/*.jar"
             }
           ],
           "directory_include_list": [
@@ -198,7 +198,7 @@
           "examples": [
             [
               {
-                "pattern": "**/*.jar",
+                "pattern": "\\*\\*/*.jar",
                 "description": "No JARs"
               }
             ]
@@ -215,7 +215,7 @@
                 "default": {},
                 "examples": [
                   {
-                    "pattern": "**/*.jar",
+                    "pattern": "\\*\\*/*.jar",
                     "description": "No JARs"
                   }
                 ],
@@ -257,6 +257,64 @@
                   "example.jar",
                   "partial*.jar"
                 ]
+              }
+            ]
+          }
+        },
+        "redirect_files": {
+          "$id": "#/properties/rules/properties/redirect_files",
+          "type": "array",
+          "description": "A list of patterns for redirecting files to a different location on the client",
+          "default": [],
+          "examples": [
+            {
+              "pattern": "\\*\\*/\\*.jar",
+              "redirectTo": "ignored-mods"
+            }
+          ],
+          "additionalItems": true,
+          "items": {
+            "$id": "#/properties/rules/properties/redirect_files/items",
+            "anyOf": [
+              {
+                "$id": "#/properties/rules/properties/redirect_files/items/anyOf/0",
+                "type": "object",
+                "title": "Detailed configuration",
+                "description": "Used to specify extra information about a pattern",
+                "default": {},
+                "examples": [
+                  {
+                    "pattern": "\\*\\*/\\*.jar",
+                    "redirectTo": "ignored-mods"
+                  }
+                ],
+                "required": [
+                  "pattern",
+                  "redirectTo"
+                ],
+                "additionalProperties": true,
+                "properties": {
+                  "redirectTo": {
+                    "$id": "#/properties/rules/properties/file_ignore_list/items/anyOf/0/properties/redirectTo",
+                    "type": "string",
+                    "title": "Where to redirect the file on the client",
+                    "description": "This is where the file should end up on the client relative to the 'rootDir'",
+                    "default": "",
+                    "examples": [
+                      "some-place"
+                    ]
+                  },
+                  "pattern": {
+                    "$id": "#/properties/rules/properties/file_ignore_list/items/anyOf/0/properties/pattern",
+                    "type": "string",
+                    "title": "The pattern to match against",
+                    "description": "Matches using GLOB patterns",
+                    "default": "",
+                    "examples": [
+                      "**/*.jar"
+                    ]
+                  }
+                }
               }
             ]
           }
