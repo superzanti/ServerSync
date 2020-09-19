@@ -1,8 +1,8 @@
 package com.superzanti.serversync.server;
 
-import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
-import com.superzanti.serversync.filemanager.FileManager;
+import com.superzanti.serversync.files.*;
 import com.superzanti.serversync.util.*;
 import com.superzanti.serversync.util.enums.ELocations;
 import com.superzanti.serversync.util.enums.EServerMessage;
@@ -28,32 +28,47 @@ import java.util.stream.Collectors;
 public class ServerSetup implements Runnable {
     private static final int SEND_BUFFER_SIZE = 1024 * 8;
 
-    private SyncConfig config = SyncConfig.getConfig();
+    private final SyncConfig config = SyncConfig.getConfig();
     private final Path bannedIps = Paths.get(ELocations.BANNED_IPS.getValue());
 
-    private Timer timeoutScheduler = new Timer();
-    private Map<String, String> serverFiles = new HashMap<>(200);
-    private List<String> managedDirectories = new ArrayList<>(config.DIRECTORY_INCLUDE_LIST);
+    private final Timer timeoutScheduler = new Timer();
+    private final Map<String, String> serverFiles = new HashMap<>(200);
+    private final List<String> managedDirectories = new ArrayList<>(config.DIRECTORY_INCLUDE_LIST);
 
-    private static EnumMap<EServerMessage, String> generateServerMessages() {
-        EnumMap<EServerMessage, String> SERVER_MESSAGES = new EnumMap<>(EServerMessage.class);
 
-        for (EServerMessage msg : EServerMessage.values()) {
-            // What is this doing? who knows but its fun!
-            double rng = Math.random() * 1000d;
-            String hashKey = String.format("%s", msg.hashCode() + rng);
+    private final FileManifest manifest = new FileManifest();
+    private final List<String> messages = Arrays.stream(EServerMessage.values())
+                                                .map(EServerMessage::toString)
+                                                .collect(Collectors.toList());
 
-            SERVER_MESSAGES.put(msg, hashKey);
+    private void populateManifest(Map<String, String> files) {
+        try {
+            manifest.directories = config.DIRECTORY_INCLUDE_LIST;
+            files.forEach((key, value) -> {
+                Path p = Paths.get(key);
+                Optional<FileRedirect> re = config.REDIRECT_FILES_LIST
+                    .stream()
+                    .filter(r -> GlobPathMatcher.matches(p, r.pattern))
+                    .findFirst();
+                if (re.isPresent()) {
+                    manifest.entries.add(new ManifestEntry(key, value, re.get().redirectTo));
+                } else {
+                    manifest.entries.add(new ManifestEntry(key, value, ""));
+                }
+            });
+            Logger.debug(String.format("Manifest directories: %s", PrettyCollection.get(manifest.directories)));
+            Logger.debug(String.format("Manifest entries: %s", PrettyCollection.get(manifest.entries)));
+        } catch (Exception e) {
+            Logger.debug(e);
         }
-
-        return SERVER_MESSAGES;
     }
+
 
     public ServerSetup() {
         DateFormat dateFormatter = DateFormat.getDateInstance();
-        FileManager fileManager = new FileManager();
 
         try {
+            Logger.log(String.format("Starting server in mode: %s", config.SYNC_MODE));
             Logger.log("Starting scan for managed files: " + dateFormatter.format(new Date()));
             Logger.log(String.format("Ignore patterns: %s", PrettyCollection.get(config.FILE_IGNORE_LIST)));
 
@@ -61,7 +76,8 @@ public class ServerSetup implements Runnable {
                 Files.createDirectories(Paths.get(managedDirectory));
             }
 
-            Map<String, String> managedFiles = fileManager.getDiffableFilesFromDirectories(managedDirectories);
+            Map<String, String> managedFiles = FileManager.getDiffableFilesFromDirectories(managedDirectories);
+            populateManifest(managedFiles);
 
             Logger.log(String.format(
                 "Found %d files in %d directories <%s>",
@@ -83,7 +99,7 @@ public class ServerSetup implements Runnable {
                 Map<String, String> configIncludeFiles = config.CONFIG_INCLUDE_LIST
                     .stream()
                     .parallel()
-                    .map(p -> new PathBuilder("config").add(p).buildPath())
+                    .map(p -> new PathBuilder().add("config").add(p).toPath())
                     .filter(path -> Files.exists(path) && !IgnoredFilesMatcher.matches(path))
                     .collect(Collectors.toConcurrentMap(Path::toString, FileHash::hashFile));
 
@@ -99,14 +115,14 @@ public class ServerSetup implements Runnable {
 
             if (shouldPushClientOnlyFiles()) {
                 Logger.log("Server configured to push client only mods, clients can still refuse these mods!");
-                if (Files.notExists(fileManager.clientOnlyFilesDirectory)) {
+                if (Files.notExists(FileManager.clientOnlyFilesDirectory)) {
                     Logger.log(String.format(
                         "%s directory did not exist, creating",
                         FileManager.clientOnlyFilesDirectoryName
                     ));
-                    Files.createDirectories(fileManager.clientOnlyFilesDirectory);
+                    Files.createDirectories(FileManager.clientOnlyFilesDirectory);
                 } else {
-                    Map<String, String> clientOnlyFiles = fileManager.getDiffableFilesFromDirectories(
+                    Map<String, String> clientOnlyFiles = FileManager.getDiffableFilesFromDirectories(
                         Collections.singletonList(FileManager.clientOnlyFilesDirectoryName)
                     );
                     Logger.log(String.format(
@@ -156,7 +172,11 @@ public class ServerSetup implements Runnable {
 
                 socket.setSendBufferSize(ServerSetup.SEND_BUFFER_SIZE);
                 ServerWorker sc = new ServerWorker(
-                    socket, generateServerMessages(), timeoutScheduler, managedDirectories, serverFiles);
+                    socket,
+                    messages,
+                    timeoutScheduler,
+                    manifest
+                );
                 Thread clientThread = new Thread(sc, "Server client Handler");
                 clientThread.setName("ClientThread - " + address);
                 clientThread.start();

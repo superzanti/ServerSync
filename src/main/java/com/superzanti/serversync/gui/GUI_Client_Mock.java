@@ -1,6 +1,6 @@
 package com.superzanti.serversync.gui;
 
-import com.superzanti.serversync.SyncConfig;
+import com.superzanti.serversync.config.SyncConfig;
 
 public class GUI_Client_Mock extends GUI_Client {
     private static final long serialVersionUID = 1L;

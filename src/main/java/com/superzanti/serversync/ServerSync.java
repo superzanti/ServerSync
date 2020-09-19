@@ -1,14 +1,20 @@
 package com.superzanti.serversync;
 
 import com.superzanti.serversync.client.ClientWorker;
+import com.superzanti.serversync.config.ConfigLoader;
+import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.gui.GUI_Client;
-import com.superzanti.serversync.gui.GUI_Client_Mock;
 import com.superzanti.serversync.server.ServerSetup;
 import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.EServerMode;
 import picocli.CommandLine;
-import picocli.CommandLine.*;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -21,12 +27,16 @@ public class ServerSync implements Callable<Integer> {
     /* AWT EVENT DISPATCHER THREAD */
 
     public static final String APPLICATION_TITLE = "Serversync";
-    public static final String HANDSHAKE = "HANDSHAKE";
+    public static final String GET_SERVER_INFO = "SERVER_INFO";
     public static EServerMode MODE;
 
     public static GUI_Client clientGUI;
     public static ResourceBundle strings;
 
+    public static Path rootDir = Paths.get(System.getProperty("user.dir"));
+
+    @Option(names = {"-r", "--root"}, description = "The root directory of the game, defaults to the current working directory.")
+    private String rootDirectory = System.getProperty("user.dir");
     @Option(names = {"-o", "--progress", "progress-only"}, description = "Only show progress indication. Ignored if '-s', '--server' is specified.")
     private boolean modeProgressOnly = false;
     @Option(names = {"-q", "--quiet", "silent"}, description = "Remove all GUI interaction. Ignored if '-s', '--server' is specified.")
@@ -49,6 +59,7 @@ public class ServerSync implements Callable<Integer> {
 
     @Override
     public Integer call() {
+        ServerSync.rootDir = Paths.get(rootDirectory);
         if (modeServer) {
             runInServerMode();
         } else {
@@ -82,6 +93,12 @@ public class ServerSync implements Callable<Integer> {
         ServerSync.MODE = EServerMode.SERVER;
         new Logger("server");
         Logger.setSystemOutput(true);
+        try {
+            ConfigLoader.load(EConfigType.SERVER);
+        } catch (IOException e) {
+            Logger.error("Failed to load server config");
+            Logger.debug(e);
+        }
         commonInit();
 
         ServerSetup setup = new ServerSetup();
@@ -93,11 +110,17 @@ public class ServerSync implements Callable<Integer> {
         ServerSync.MODE = EServerMode.CLIENT;
         new Logger("client");
         SyncConfig config = SyncConfig.getConfig();
+        try {
+            ConfigLoader.load(EConfigType.CLIENT);
+        } catch (IOException e) {
+            Logger.error("Failed to load client config");
+            e.printStackTrace();
+        }
         commonInit();
 
         Thread clientThread;
         if (modeQuiet) {
-            clientGUI = new GUI_Client_Mock();
+            clientGUI = null;
             new Thread(new ClientWorker()).start();
         } else if (modeProgressOnly) {
             // TODO setup a progress only version of the GUI

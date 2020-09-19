@@ -20,11 +20,15 @@ public class GlobPathMatcher {
         }
     }
 
+    private static PathMatcher globMatcher(String pattern) {
+        return FileSystems.getDefault().getPathMatcher("glob:" + pattern);
+    }
+
+    public static boolean matches(Path path, String pattern) {
+        return globMatcher(sanitizePattern(pattern)).matches(path);
+    }
+
     public static boolean matches(Path path, List<String> patterns) {
-        return patterns.stream().anyMatch(pattern -> {
-            String sanitizedPattern = sanitizePattern(pattern);
-            PathMatcher globMatcher = FileSystems.getDefault().getPathMatcher("glob:" + sanitizedPattern);
-            return globMatcher.matches(path);
-        });
+        return patterns.stream().anyMatch(pattern -> globMatcher(sanitizePattern(pattern)).matches(path));
     }
 }

@@ -64,6 +64,8 @@ $RECYCLE.BIN/
 # =========================
 # Working Dir
 # =========================
+serversync-server.json
+serversync-client.json
 *.pydevproject
 .project
 .metadata

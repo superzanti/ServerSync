@@ -3,6 +3,9 @@ package com.superzanti.serversync.util.minecraft.config;
 import java.io.IOException;
 import java.util.HashMap;
 
+/**
+ * Begone from here, there be beasts lurking.
+ */
 public class FriendlyConfig extends HashMap<String, FriendlyConfigCategory> {
     private static final long serialVersionUID = -8812919144959413432L;
 

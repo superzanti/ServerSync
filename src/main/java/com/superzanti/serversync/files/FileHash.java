@@ -1,4 +1,6 @@
-package com.superzanti.serversync.util;
+package com.superzanti.serversync.files;
+
+import com.superzanti.serversync.util.Logger;
 
 import java.io.BufferedInputStream;
 import java.math.BigInteger;

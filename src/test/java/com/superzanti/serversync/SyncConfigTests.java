@@ -1,5 +1,6 @@
 package com.superzanti.serversync;
 
+import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EConfigType;
 import org.junit.jupiter.api.BeforeEach;

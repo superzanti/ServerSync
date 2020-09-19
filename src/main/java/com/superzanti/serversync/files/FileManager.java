@@ -1,35 +1,30 @@
-package com.superzanti.serversync.filemanager;
+package com.superzanti.serversync.files;
 
+import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
-import com.superzanti.serversync.server.Function;
-import com.superzanti.serversync.util.*;
+import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.PrettyCollection;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FileManager {
     public static final String clientOnlyFilesDirectoryName = "clientmods";
 
-    public final Path rootPath;
-    public final Path clientOnlyFilesDirectory;
-    public final Path logsDirectory;
+    public static final Path clientOnlyFilesDirectory = new PathBuilder().add(FileManager.clientOnlyFilesDirectoryName).toPath();
+    public static final Path logsDirectory = new PathBuilder().add("logs").toPath();
 
-    public FileManager() {
-        String root = PathUtils.getMinecraftDirectory();
+    static {
+        Logger.debug(String.format("root dir: %s", ServerSync.rootDir.toAbsolutePath().toString()));
+    }
 
-        if (root == null) {
-            root = "";
-        }
-        Logger.debug(String.format("root dir: %s", Paths.get(root).toAbsolutePath().toString()));
-        rootPath = Paths.get(root);
-
-        clientOnlyFilesDirectory = new PathBuilder(root).add(FileManager.clientOnlyFilesDirectoryName).buildPath();
-        logsDirectory = new PathBuilder(root).add("logs").buildPath();
+    private FileManager() {
     }
 
     // New version of sync process
@@ -41,11 +36,11 @@ public class FileManager {
      * @return The files contained in the directories
      * @throws IOException when a configured directory is not a directory or does not exist.
      */
-    public Map<String, String> getDiffableFilesFromDirectories(List<String> includedDirectories) throws IOException {
+    public static Map<String, String> getDiffableFilesFromDirectories(List<String> includedDirectories) throws IOException {
         // Check for invalid directory configuration
         List<Path> dirs = new ArrayList<>();
         for (String includedDirectory : includedDirectories) {
-            Path dir = Paths.get(includedDirectory);
+            Path dir = ServerSync.rootDir.resolve(Paths.get(includedDirectory));
             if (!Files.exists(dir)) {
                 Logger.debug(String.format("Configured directory: %s does not exist.", dir));
                 throw new IOException("File does not exist");
@@ -70,7 +65,9 @@ public class FileManager {
                     Logger.debug(e);
                 }
                 return Stream.empty();
-            }).collect(Collectors.toList());
+            })
+            .map(ServerSync.rootDir::relativize)
+            .collect(Collectors.toList());
         Logger.debug(String.format("All files: %s", PrettyCollection.get(allFiles)));
 
         List<Path> ignoredFiles = allFiles
@@ -86,11 +83,15 @@ public class FileManager {
         Logger.debug(String.format("Filtered files: %s", PrettyCollection.get(filteredFiles)));
 
         return filteredFiles.stream()
-                            .filter(Files::exists)
-                            .collect(Collectors.toConcurrentMap(Path::toString, FileHash::hashFile));
+                            .filter(path -> Files.exists(ServerSync.rootDir.resolve(path)))
+                            .collect(
+                                Collectors.toConcurrentMap(
+                                    Path::toString,
+                                    path -> FileHash.hashFile(ServerSync.rootDir.resolve(path))
+                                ));
     }
 
-    public static void removeEmptyDirectories(List<Path> directories, Function<Path> emptyDirectoryCallback) {
+    public static void removeEmptyDirectories(List<Path> directories, Consumer<Path> emptyDirectoryCallback) {
         directories.forEach(path -> {
             try {
                 Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
@@ -101,7 +102,7 @@ public class FileManager {
                                 Files.delete(dir);
 
                                 if (emptyDirectoryCallback != null) {
-                                    emptyDirectoryCallback.f(dir);
+                                    emptyDirectoryCallback.accept(dir);
                                 }
                             } catch (DirectoryNotEmptyException dne) {
                                 // expected

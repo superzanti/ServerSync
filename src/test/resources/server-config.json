@@ -27,6 +27,12 @@
         "pattern": "**/other.bing"
       },
       "**/basic.thing"
+    ],
+    "redirect_files": [
+      {
+        "pattern": "**/*.jar",
+        "redirectTo": "redirected-files"
+      }
     ]
   },
   "misc": {
