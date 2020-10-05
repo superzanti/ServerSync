@@ -49,6 +49,8 @@ public class ServerSync implements Callable<Integer> {
     private int serverPort = -1;
     @Option(names = {"-i", "--ignore"}, arity = "1..*", description = "A glob pattern or series of patterns for files to ignore")
     private String[] ignorePatterns;
+    @Option(names = {"-l", "--lang"}, description = "A language code to set the UI language e.g. zh_CN or en_US")
+    private String languageCode;
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new ServerSync()).execute(args);
@@ -70,6 +72,11 @@ public class ServerSync implements Callable<Integer> {
 
     private void commonInit() {
         Locale locale = SyncConfig.getConfig().LOCALE;
+        if (languageCode != null) {
+            String[] lParts = languageCode.split("[_-]");
+            locale = new Locale(lParts[0], lParts[1]);
+            SyncConfig.getConfig().LOCALE = locale;
+        }
         if (serverAddress != null) {
             SyncConfig.getConfig().SERVER_IP = serverAddress;
         }
