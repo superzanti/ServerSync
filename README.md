@@ -7,18 +7,13 @@
 
 ServerSync
 =========
-This is an open source utility that allows for easy mod management. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. This method avoids a lot of complaining. As a server admin constantly changing configs/updating mods it can get to be quite a pain pushing these updates. Some users have trouble finding the minecraft folder let alone putting mods in the right place.
+A utility for easy mod management. The client will always be able to connect to your server with less instruction required on how to do so.
 
-Clients will need to run serversync.jar before starting Minecraft to sync with their desired server, sync on connect from within Minecraft is desirable but is currently outside the scope of this project.
+Clients will need to run serversync.jar before starting Minecraft to sync with their desired server (can be [automated](https://github.com/superzanti/ServerSync/wiki/Automation)), sync on connect from within Minecraft is desirable but is currently outside the scope of this project.
 
 Technically you could sync any game/filesystem using serversync however it does have some specific funtionality intended for use with Minecraft.
 
-Currently ServerSync has support for:
-* Client only mods
-* Configs
-* Anything else, config supports adding custom directories to sync
-
-If you don't feel like compiling from source and simply want to download a jar file see the releases tab, I update these periodically when theres a large enough addition/change. Please read the disclaimer before downloading.
+If you don't feel like compiling from the source code and simply want to download a jar file see the [Releases](https://github.com/superzanti/ServerSync/releases).
 
 Honorable Mentions:
 - [P3rf3ctXZer0](https://github.com/P3rf3ctXZer0): Extremely useful feedback & testing
