@@ -2,6 +2,9 @@
 
 [Quick start guide](https://github.com/superzanti/ServerSync/wiki/Quick-start)
 
+[Releases](https://github.com/superzanti/ServerSync/releases)  
+[Experimental Releases](https://github.com/rheimus/ServerSync/releases)
+
 ServerSync
 =========
 This is an open source utility that allows for easy mod management. The client will always be able to connect to your server and you will never again have to send them the new files and tell them to update. This method avoids a lot of complaining. As a server admin constantly changing configs/updating mods it can get to be quite a pain pushing these updates. Some users have trouble finding the minecraft folder let alone putting mods in the right place.
@@ -33,38 +36,32 @@ This utility allows ANY server running it to put ANY file in your game folder, s
 FREQUENTLY ASKED QUESTIONS:
 -----------
 * "This mod isn't doing anything!"
-  * This version of serversync is run independant of minecraft (minecraft should be closed when running serversync), I did this as minecraft did not need to be running for the program to work and the previous method required you to open and close minecraft several times which if you have any more than 2-3 mods then loading time gets very taxing.
-  * Run serversync.jar from your minecraft folder or create a shortcut, serversync will auto populate server details from the config if present
+  * This version of serversync is run independent of minecraft (minecraft should be closed when running serversync), I did this as minecraft did not need to be running for the program to work and the previous method required you to open and close minecraft several times which if you have any more than 2-3 mods then loading time gets very taxing.
 * "I can't connect to my server"
-  * Check that the ip/port details are correct on both server and client
-  * Are you using your external/internal IP address apropriately?
+  * Check the ip and port details are correct on both server and client.
+  * Are you using your external/internal IP address?
   * Are you trying to transfer a file larger than your max file size?
-  * Are you ignoring a file that is neccecary to connect to the server?
+  * Are you ignoring a file that is necessary to connect to the server?
 * "This is so insecure I hate it!"
-  * As per the disclaimer this is not intended to be a super secure system, it's more for personal use. Want to play with your kids/partner but you dont feel like teaching all of them exactly how to update mods.
-  * Please direct any useful security material to the issues, shall look into it
+  * As per the disclaimer this is not intended to be a super secure system, it's more for personal use.
+  * Please direct any useful security material to the issues, shall look into it.
 * "Can you add feature X? Or fix bug Y?"
-  * Probably. Submit it to the issues and I'll check it out.
-* "I have files such as optifine that I don't want the server to delete"
-  * Specify this in the configs IGNORE_LIST
-  * Add client only mods to the clientmods directory on the server if you are a server admin, note that clients can refuse these
-  * Mods in the clientmods folder are automatically ignored in the deletion phase
+  * Probably. Submit it to the issues, and I'll check it out.
+* "I have files such as Optifine that I don't want the server to delete"
+  * check out the wiki, there are docs on how to [ignore files](https://github.com/superzanti/ServerSync/wiki/Ignore-&-include-lists-examples)
 
-What does it do exactly?
+What does it do?
 -----------
+ServerSync is a Server <-> Client app, both are bundled into the same file.
 
-* The server starts up and begins listening on the port defined in the config file
-* When a connection is made to a client the server listens for messages generated for this client
-* On receiving a message the server will react appropriately or send an error back to the client
-* After iterating through all of the server files the client will then iterate through all of it's own files
-* If the client has a file that the server does not barring ignore rules, it will delete it.
+The server configures what is required for clients to connect and serves files.
 
-What you should expect to see
+The client requests information from the server and downloads / removes files based on what is required to connect.
+
+How do I use it?
 --------------
-
-When the program starts up you will see a very lightweight console with general information on progress etc.
-
-Error messages will appear if the server cannot be found or there is some exception in the mod while downloading updates. All these errors should be fairly self explanatory and easy to fix.
+ServerSync can be used either as a command line tool or a user interface, running with no arguments assumes that you want to start the GUI.  
+See: [CLI Wiki](https://github.com/superzanti/ServerSync/wiki/Command-line-arguments) & [Quick Start](https://github.com/superzanti/ServerSync/wiki/Quick-start)
 
 
 Working with the code
