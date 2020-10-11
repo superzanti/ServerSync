@@ -75,10 +75,9 @@ public class ClientWorker implements Runnable {
 
     private void closeWorker() {
         Logger.debug("Closing client worker");
-        if (server == null) {
-            return;
+        if (server != null) {
+            server.close();
         }
-        server.close();
 
         if (!updateHappened && !errorInUpdates) {
             Logger.log(ServerSync.strings.getString("update_not_needed"));
