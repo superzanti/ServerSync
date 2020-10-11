@@ -21,7 +21,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.concurrent.Callable;
 
-@Command(name = "ServerSync", mixinStandardHelpOptions = true, version = "3.6.0", description = "A utility for synchronizing a server<->client style game.")
+@Command(name = "ServerSync", mixinStandardHelpOptions = true, version = RefStrings.VERSION, description = "A utility for synchronizing a server<->client style game.")
 public class ServerSync implements Callable<Integer> {
 
     /* AWT EVENT DISPATCHER THREAD */
