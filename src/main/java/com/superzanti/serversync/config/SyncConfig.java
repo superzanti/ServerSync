@@ -2,9 +2,11 @@ package com.superzanti.serversync.config;
 
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.files.FileRedirect;
+import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.EServerMode;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -66,6 +68,11 @@ public class SyncConfig {
     public void updateServerDetails(String ip, int port) {
         SERVER_IP = ip;
         SERVER_PORT = port;
-        System.out.println("NOT IMPLEMENTED!");
+        try {
+            ConfigLoader.save(EConfigType.CLIENT);
+        } catch (IOException e) {
+            Logger.error("Failed to save last used server details to client config file");
+            Logger.debug(e);
+        }
     }
 }
