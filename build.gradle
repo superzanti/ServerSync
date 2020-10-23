@@ -2,7 +2,7 @@ import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
 
 plugins {
     id 'edu.sc.seis.launch4j' version '2.4.6'
-    id 'com.github.johnrengelman.shadow' version '5.2.0'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'java'
     id 'application'
     id 'eclipse'
@@ -118,6 +118,14 @@ task cleanProject {
         def f = file("$rootDir/$name")
         if (f.exists() && f.canWrite()) {
             f.deleteDir()
+        }
+    }
+}
+sourceSets {
+    main {
+        resources {
+            srcDirs = ["src/main/java"]
+            includes = ["**/*.css"]
         }
     }
 }
