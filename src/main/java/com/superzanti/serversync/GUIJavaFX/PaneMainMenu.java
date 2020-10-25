@@ -1,5 +1,6 @@
 package com.superzanti.serversync.GUIJavaFX;
 
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -23,8 +24,10 @@ public class PaneMainMenu extends BorderPane {
         HBox hbx_filters = new HBox();
         hbx_filters.setAlignment(Pos.BASELINE_RIGHT);
         hbx_filters.getChildren().addAll(label_filters, label_u, cb_u, label_i, cb_i, label_d, cb_d);
+        this.setMargin(hbx_filters, new Insets(10, 10, 0, 0));
         this.setTop(hbx_filters);
 
+        this.setMargin(getTableView(), new Insets(10, 10, 10, 10));
         this.setCenter(getTableView());
 
         GridPane gp = new GridPane();
@@ -43,15 +46,17 @@ public class PaneMainMenu extends BorderPane {
         gp.setColumnIndex(label_port, 1);
 
         TextField field_port = new TextField ();
-        field_port.setPromptText("25565");
+        field_port.setPromptText("ex: 25565");
         gp.setRowIndex(field_port, 1);
         gp.setColumnIndex(field_port, 1);
 
-        Button btn_download = new Button("Download");
+        Button btn_download = new Button("Update");
         gp.setRowIndex(btn_download, 1);
         gp.setColumnIndex(btn_download, 2);
 
         gp.getChildren().addAll(label_ip, label_port, field_ip, field_port, btn_download);
+        gp.setAlignment(Pos.CENTER);
+        this.setMargin(gp, new Insets(0, 0, 10, 0));
         this.setBottom(gp);
     }
 
