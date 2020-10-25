@@ -8,9 +8,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
-public class Main extends Application {
-
-    private static Stage primaryStage;
+public class Gui_JavaFX extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
