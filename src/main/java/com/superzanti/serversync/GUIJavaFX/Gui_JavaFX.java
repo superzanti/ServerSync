@@ -15,7 +15,6 @@ public class Gui_JavaFX extends Application {
 
         StackMainMenu root = new StackMainMenu();
         Scene scene = new Scene(root, 400,400);
-        scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.setTitle("ServerSync");
         primaryStage.show();
