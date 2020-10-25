@@ -1,5 +1,9 @@
 package com.superzanti.serversync.GUIJavaFX;
 
+import com.superzanti.serversync.client.ClientWorker;
+import com.superzanti.serversync.config.SyncConfig;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -7,9 +11,15 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 
+import javax.swing.*;
+
 public class PaneMainMenu extends BorderPane {
 
-    TableView table;
+    private SyncConfig config = SyncConfig.getConfig();
+
+    private TableView table;
+    private Button btnUpdate;
+    private TextField fieldIp, fieldPort;
 
     public PaneMainMenu(){
         Label label_filters = new Label("Filters          ");
@@ -36,25 +46,20 @@ public class PaneMainMenu extends BorderPane {
         gp.setRowIndex(label_ip, 0);
         gp.setColumnIndex(label_ip, 0);
 
-        TextField field_ip = new TextField ();
-        field_ip.setPromptText("ex: 127.198.0.10");
-        gp.setRowIndex(field_ip, 1);
-        gp.setColumnIndex(field_ip, 0);
+        gp.setRowIndex(getFieldIp(), 1);
+        gp.setColumnIndex(getFieldIp(), 0);
 
         Label label_port = new Label("Port:");
         gp.setRowIndex(label_port, 0);
         gp.setColumnIndex(label_port, 1);
 
-        TextField field_port = new TextField ();
-        field_port.setPromptText("ex: 25565");
-        gp.setRowIndex(field_port, 1);
-        gp.setColumnIndex(field_port, 1);
+        gp.setRowIndex(getFieldPort(), 1);
+        gp.setColumnIndex(getFieldPort(), 1);
 
-        Button btn_download = new Button("Update");
-        gp.setRowIndex(btn_download, 1);
-        gp.setColumnIndex(btn_download, 2);
+        gp.setRowIndex(getBtnUpdate(), 1);
+        gp.setColumnIndex(getBtnUpdate(), 2);
 
-        gp.getChildren().addAll(label_ip, label_port, field_ip, field_port, btn_download);
+        gp.getChildren().addAll(label_ip, label_port, getFieldIp(), getFieldPort(), getBtnUpdate());
         gp.setAlignment(Pos.CENTER);
         this.setMargin(gp, new Insets(0, 0, 10, 0));
         this.setBottom(gp);
@@ -82,6 +87,80 @@ public class PaneMainMenu extends BorderPane {
         }
         return table;
     }
+    public Button getBtnUpdate(){
+        if(btnUpdate == null){
+            btnUpdate = new Button("Update");
+            btnUpdate.setTooltip(new Tooltip("Synchronize client & server"));
+            btnUpdate.setOnAction(new EventHandler<ActionEvent>() {
+                @Override public void handle(ActionEvent e) {
+                    int port = getPort();
+                    String ip = getFieldIp().getText();
+                    boolean error = false;
 
+                    /* TODO
+                    if (ip.equals("") || port == 90000) {
+                        //updateText("No config found, requesting details");
+
+                        if (ip.equals("")) {
+                            ip = JOptionPane.showInputDialog("Server IP address");
+                            setIPAddress(ip);
+                        }
+
+                        if (port == 90000) {
+                            String serverPort = JOptionPane.showInputDialog("Server Port (numbers only)");
+                            port = Integer.parseInt(serverPort);
+
+                            if (setPort(port)) {
+                                error = true;
+                            }
+                        }
+                    }
+                    */
+                    if (!error) {
+                        config.SERVER_IP = ip;
+                        config.SERVER_PORT = port;
+                        //TODO updateText("Starting update process...");
+
+                        new Thread(new ClientWorker()).start();
+                    }
+                }
+            });
+        }
+        return btnUpdate;
+    }
+    public TextField getFieldIp(){
+        if(fieldIp == null){
+            fieldIp = new TextField ();
+            fieldIp.setPromptText("ex: 127.198.0.10");
+        }
+        return fieldIp;
+    }
+    public TextField getFieldPort(){
+        if(fieldPort == null){
+            fieldPort = new TextField ();
+            fieldPort.setPromptText("ex: 25565");
+        }
+        return fieldPort;
+    }
+    public int getPort() {
+        int port;
+        try {
+            port = Integer.parseInt(fieldPort.getText());
+            if (!(port <= 49151 && port > 0)) {
+                //updateText("Port out of range, valid range: 1 - 49151");
+            }
+        } catch (NumberFormatException e) {
+            //updateText("Invalid port");
+            port = 90000;
+        }
+
+        return port;
+    }
+    /*public Button getBtnUpdate(){
+        if(btnUpdate == null){
+
+        }
+        return btnUpdate;
+    }*/
 }
 
