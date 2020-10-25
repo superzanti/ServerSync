@@ -1,0 +1,96 @@
+package com.superzanti.serversync.GUIJavaFX;
+
+import com.superzanti.serversync.config.ConfigLoader;
+import com.superzanti.serversync.config.JsonConfig;
+import com.superzanti.serversync.config.SyncConfig;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+
+import java.io.IOException;
+
+public class PaneOptions extends GridPane {
+
+    public PaneOptions(){
+
+        /** CLIENT */
+        Label labelClient = new Label("Client (by  default):");
+        this.setRowIndex(labelClient, 0);
+        this.setColumnIndex(labelClient, 0);
+
+        Label labelAdress = new Label("address: ");
+        this.setRowIndex(labelAdress, 1);
+        this.setColumnIndex(labelAdress, 0);
+
+        TextField fieldAdress = new TextField();
+        fieldAdress.setText(SyncConfig.getConfig().SERVER_IP);
+        this.setRowIndex(fieldAdress, 1);
+        this.setColumnIndex(fieldAdress, 1);
+
+        Label labelPort = new Label("port: ");
+        this.setRowIndex(labelPort, 2);
+        this.setColumnIndex(labelPort, 0);
+
+        TextField fieldPort = new TextField();
+        fieldPort.setText(String.valueOf(SyncConfig.getConfig().SERVER_PORT));
+        this.setRowIndex(fieldPort, 2);
+        this.setColumnIndex(fieldPort, 1);
+
+        Label labelRefuse = new Label("refuse_client_mods: ");
+        this.setRowIndex(labelRefuse, 3);
+        this.setColumnIndex(labelRefuse, 0);
+
+        CheckBox cbxRefuse = new CheckBox();
+        if(SyncConfig.getConfig().REFUSE_CLIENT_MODS){
+            cbxRefuse.setSelected(true);
+        }else{
+            cbxRefuse.setSelected(false);
+        }
+        this.setRowIndex(cbxRefuse, 3);
+        this.setColumnIndex(cbxRefuse, 1);
+
+        Label labelIgnore = new Label("Ignore list: ");
+        this.setRowIndex(labelIgnore, 4);
+        this.setColumnIndex(labelIgnore, 0);
+
+        ListView<String> ignoreList = new ListView<String>();
+        ObservableList<String> items = FXCollections.observableArrayList (SyncConfig.getConfig().FILE_IGNORE_LIST);
+        ignoreList.setItems(items);
+        this.setRowIndex(ignoreList, 5);
+        this.setColumnIndex(ignoreList, 0);
+
+        this.getChildren().addAll(labelClient, labelAdress, labelPort, labelRefuse, cbxRefuse, fieldAdress, fieldPort);
+        this.getChildren().addAll(labelIgnore, ignoreList);
+
+
+        /** SERVER */
+        Label labelServer = new Label("Server (by  default):");
+        this.setRowIndex(labelServer, 1);
+        this.setColumnIndex(labelServer, 1);
+
+        //this.getChildren().addAll(labelServer);
+
+        /** SAVE BUTTON */
+        Button btnSave = new Button("Save");
+        btnSave.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                SyncConfig.getConfig().SERVER_IP = fieldAdress.getText();
+                SyncConfig.getConfig().SERVER_PORT = Integer.parseInt(fieldPort.getText());
+                SyncConfig.getConfig().REFUSE_CLIENT_MODS = cbxRefuse.isSelected();
+                try {
+                    JsonConfig.saveClient(ConfigLoader.v2ClientConfig);
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+            }
+        });
+
+        this.setRowIndex(btnSave, 6);
+        this.setColumnIndex(btnSave, 0);
+
+        this.getChildren().addAll(btnSave);
+    }
+}

@@ -2,6 +2,7 @@ package com.superzanti.serversync.GUIJavaFX;
 
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.config.SyncConfig;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -12,6 +13,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 
 import javax.swing.*;
+import javax.xml.soap.Text;
 
 public class PaneMainMenu extends BorderPane {
 
@@ -20,6 +22,7 @@ public class PaneMainMenu extends BorderPane {
     private TableView table;
     private Button btnUpdate;
     private TextField fieldIp, fieldPort;
+    private TextArea textArea;
 
     public PaneMainMenu(){
         Label label_filters = new Label("Filters          ");
@@ -38,8 +41,8 @@ public class PaneMainMenu extends BorderPane {
         this.setTop(hbx_filters);
 
         this.setMargin(getTableView(), new Insets(10, 10, 10, 10));
-        this.setCenter(getTableView());
-
+        //this.setCenter(getTableView());
+        this.setCenter(getTextArea());
         GridPane gp = new GridPane();
 
         Label label_ip = new Label("IP:");
@@ -96,8 +99,6 @@ public class PaneMainMenu extends BorderPane {
                     int port = getPort();
                     String ip = getFieldIp().getText();
                     boolean error = false;
-
-                    /* TODO
                     if (ip.equals("") || port == 90000) {
                         //updateText("No config found, requesting details");
 
@@ -115,12 +116,10 @@ public class PaneMainMenu extends BorderPane {
                             }
                         }
                     }
-                    */
                     if (!error) {
                         config.SERVER_IP = ip;
                         config.SERVER_PORT = port;
                         //TODO updateText("Starting update process...");
-
                         new Thread(new ClientWorker()).start();
                     }
                 }
@@ -155,6 +154,28 @@ public class PaneMainMenu extends BorderPane {
         }
 
         return port;
+    }
+    public boolean setPort(int port) {
+        if (!(port <= 49151 && port > 0)) {
+            updateText("Port out of range, valid range: 1 - 49151");
+            return false;
+        }
+
+        getFieldPort().setText(String.valueOf(port));
+        return true;
+    }
+    public void setIPAddress(String ip) {
+        Platform.runLater(() -> fieldPort.setText(ip));
+    }
+    public void updateText(String text) {
+        Platform.runLater(() -> textArea.setText(text));
+    }
+    public TextArea getTextArea(){
+        if(textArea == null){
+            textArea = new TextArea();
+            textArea.setDisable(true);
+        }
+        return textArea;
     }
     /*public Button getBtnUpdate(){
         if(btnUpdate == null){

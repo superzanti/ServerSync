@@ -1,5 +1,6 @@
 package com.superzanti.serversync;
 
+import com.superzanti.serversync.GUIJavaFX.Gui_JavaFX;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.config.ConfigLoader;
 import com.superzanti.serversync.config.SyncConfig;
@@ -147,10 +148,19 @@ public class ServerSync implements Callable<Integer> {
             }
             System.exit(0);
         } else {
+            /*
             clientGUI = new GUI_Client();
             clientGUI.setIPAddress(config.SERVER_IP);
             clientGUI.setPort(config.SERVER_PORT);
             clientGUI.build(config.LOCALE);
+            */
+
+            new Thread() {
+                @Override
+                public void run() {
+                    javafx.application.Application.launch(Gui_JavaFX.class);
+                }
+            }.start();
         }
     }
 }
