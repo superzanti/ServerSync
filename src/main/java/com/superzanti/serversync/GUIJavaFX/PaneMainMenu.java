@@ -12,9 +12,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 
-import javax.swing.*;
-import javax.xml.soap.Text;
-
 public class PaneMainMenu extends BorderPane {
 
     private SyncConfig config = SyncConfig.getConfig();
@@ -22,7 +19,6 @@ public class PaneMainMenu extends BorderPane {
     private TableView table;
     private Button btnUpdate;
     private TextField fieldIp, fieldPort;
-    private TextArea textArea;
 
     public PaneMainMenu(){
         Label label_filters = new Label("Filters          ");
@@ -41,8 +37,8 @@ public class PaneMainMenu extends BorderPane {
         this.setTop(hbx_filters);
 
         this.setMargin(getTableView(), new Insets(10, 10, 10, 10));
-        //this.setCenter(getTableView());
-        this.setCenter(getTextArea());
+        this.setCenter(getTableView());
+
         GridPane gp = new GridPane();
 
         Label label_ip = new Label("IP:");
@@ -103,13 +99,13 @@ public class PaneMainMenu extends BorderPane {
                         //updateText("No config found, requesting details");
 
                         if (ip.equals("")) {
-                            ip = JOptionPane.showInputDialog("Server IP address");
-                            setIPAddress(ip);
+                            //TODO ip = JOptionPane.showInputDialog("Server IP address");
+                            //setIPAddress(ip);
                         }
 
                         if (port == 90000) {
-                            String serverPort = JOptionPane.showInputDialog("Server Port (numbers only)");
-                            port = Integer.parseInt(serverPort);
+                            //TODO String serverPort = JOptionPane.showInputDialog("Server Port (numbers only)");
+                            //port = Integer.parseInt(serverPort);
 
                             if (setPort(port)) {
                                 error = true;
@@ -146,10 +142,10 @@ public class PaneMainMenu extends BorderPane {
         try {
             port = Integer.parseInt(fieldPort.getText());
             if (!(port <= 49151 && port > 0)) {
-                //updateText("Port out of range, valid range: 1 - 49151");
+                updateText("Port out of range, valid range: 1 - 49151");
             }
         } catch (NumberFormatException e) {
-            //updateText("Invalid port");
+            updateText("Invalid port");
             port = 90000;
         }
 
@@ -168,14 +164,7 @@ public class PaneMainMenu extends BorderPane {
         Platform.runLater(() -> fieldPort.setText(ip));
     }
     public void updateText(String text) {
-        Platform.runLater(() -> textArea.setText(text));
-    }
-    public TextArea getTextArea(){
-        if(textArea == null){
-            textArea = new TextArea();
-            textArea.setDisable(true);
-        }
-        return textArea;
+        Gui_JavaFX.getStackLoginPane().getPaneLogs().updateTextArea(text);
     }
     /*public Button getBtnUpdate(){
         if(btnUpdate == null){

@@ -1,25 +1,28 @@
 package com.superzanti.serversync.GUIJavaFX;
 
 
+import com.superzanti.serversync.RefStrings;
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 public class Gui_JavaFX extends Application {
 
+    public static StackMainMenu root = new StackMainMenu();
+
     @Override
     public void start(Stage primaryStage) throws Exception{
-
-        StackMainMenu root = new StackMainMenu();
         Scene scene = new Scene(root, 400,400);
         primaryStage.setScene(scene);
-        primaryStage.setTitle("ServerSync");
+        primaryStage.setTitle(RefStrings.NAME+ " - " + RefStrings.VERSION);
         primaryStage.show();
     }
-
+    public static StackMainMenu getStackLoginPane() {
+        if(root==null) {
+            root=new StackMainMenu();
+        }
+        return root;
+    }
 
     public static void main(String[] args) {
         launch(args);

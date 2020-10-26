@@ -7,17 +7,20 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.text.Font;
 
 import java.io.IOException;
 
 public class PaneOptions extends GridPane {
 
     public PaneOptions(){
-
+        this.setPadding(new Insets(10,10,10,10));
         /** CLIENT */
-        Label labelClient = new Label("Client (by  default):");
+        Label labelClient = new Label("Client (Options by default):");
+        labelClient.setFont(new Font("Arial", 16));
         this.setRowIndex(labelClient, 0);
         this.setColumnIndex(labelClient, 0);
 
@@ -67,7 +70,7 @@ public class PaneOptions extends GridPane {
 
 
         /** SERVER */
-        Label labelServer = new Label("Server (by  default):");
+        Label labelServer = new Label("Server (Options by  default):");
         this.setRowIndex(labelServer, 1);
         this.setColumnIndex(labelServer, 1);
 
@@ -89,7 +92,7 @@ public class PaneOptions extends GridPane {
         });
 
         this.setRowIndex(btnSave, 6);
-        this.setColumnIndex(btnSave, 0);
+        this.setColumnIndex(btnSave, 1);
 
         this.getChildren().addAll(btnSave);
     }
