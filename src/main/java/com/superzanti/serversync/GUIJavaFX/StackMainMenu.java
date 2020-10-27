@@ -67,13 +67,16 @@ public class StackMainMenu extends BorderPane {
         return sync;
     }
     private void displayPanel(int n) {
-        for(Node node: stack.getChildren()) {
-            node.setVisible(false);
-        }
+        if(stack.getChildren().size() >0){
+            for(Node node: stack.getChildren()) {
+                node.setVisible(false);
+            }
         /*for(Button btn: buttons) {
             btn.setStyle("-fx-background-color: #A9A9A9");;
         }
         buttons.get(n).setStyle(defaultStyle);;*/
-        stack.getChildren().get(n).setVisible(true);
+            stack.getChildren().get(n).setVisible(true);
+        }
+
     }
 }
