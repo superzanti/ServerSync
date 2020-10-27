@@ -96,7 +96,7 @@ public class PaneSync extends BorderPane {
                     String ip = getFieldIp().getText();
                     boolean error = false;
                     if (ip.equals("") || port == 90000) {
-                        //updateText("No config found, requesting details");
+                        updateLogsArea("No config found, requesting details");
 
                         if (ip.equals("")) {
                             //TODO ip = JOptionPane.showInputDialog("Server IP address");
@@ -115,7 +115,7 @@ public class PaneSync extends BorderPane {
                     if (!error) {
                         config.SERVER_IP = ip;
                         config.SERVER_PORT = port;
-                        updateText("Starting update process...");
+                        updateLogsArea("Starting update process...");
                         new Thread(new ClientWorker()).start();
                     }
                 }
@@ -142,10 +142,10 @@ public class PaneSync extends BorderPane {
         try {
             port = Integer.parseInt(fieldPort.getText());
             if (!(port <= 49151 && port > 0)) {
-                updateText("Port out of range, valid range: 1 - 49151");
+                updateLogsArea("Port out of range, valid range: 1 - 49151");
             }
         } catch (NumberFormatException e) {
-            updateText("Invalid port");
+            updateLogsArea("Invalid port");
             port = 90000;
         }
 
@@ -153,7 +153,7 @@ public class PaneSync extends BorderPane {
     }
     public boolean setPort(int port) {
         if (!(port <= 49151 && port > 0)) {
-            updateText("Port out of range, valid range: 1 - 49151");
+            updateLogsArea("Port out of range, valid range: 1 - 49151");
             return false;
         }
         Platform.runLater(() -> fieldPort.setText(String.valueOf(port)));
@@ -162,8 +162,8 @@ public class PaneSync extends BorderPane {
     public void setIPAddress(String ip) {
         Platform.runLater(() -> fieldIp.setText(ip));
     }
-    public void updateText(String text) {
-        Gui_JavaFX.getStackLoginPane().getPaneLogs().updateTextArea(text);
+    public void updateLogsArea(String text) {
+        Gui_JavaFX.getStackLoginPane().getPaneLogs().updateLogsArea(text);
     }
     /*public Button getBtnUpdate(){
         if(btnUpdate == null){

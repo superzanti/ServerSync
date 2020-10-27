@@ -3,6 +3,8 @@ package com.superzanti.serversync.GUIJavaFX;
 import com.superzanti.serversync.config.ConfigLoader;
 import com.superzanti.serversync.config.JsonConfig;
 import com.superzanti.serversync.config.SyncConfig;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -91,9 +93,10 @@ public class PaneOptions extends GridPane {
 
                     try {
                         JsonConfig.saveClient(ConfigLoader.v2ClientConfig);
-                        Gui_JavaFX.getStackLoginPane().getPaneLogs().updateTextArea("Options saved");
+                        updateLogsArea("Options saved");
+                        btnSave.setDisable(true);
                     } catch (IOException ioException) {
-                        Gui_JavaFX.getStackLoginPane().getPaneLogs().updateTextArea(ioException.toString());
+                        updateLogsArea(ioException.toString());
                     }
                 }
             }
@@ -103,5 +106,8 @@ public class PaneOptions extends GridPane {
         this.setColumnIndex(btnSave, 1);
 
         this.getChildren().addAll(btnSave);
+    }
+    public void updateLogsArea(String text) {
+        Gui_JavaFX.getStackLoginPane().getPaneLogs().updateLogsArea(text);
     }
 }

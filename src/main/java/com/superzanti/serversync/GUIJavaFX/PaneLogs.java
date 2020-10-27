@@ -18,7 +18,7 @@ public class PaneLogs extends BorderPane {
         this.setCenter(txtArea);
     }
 
-    public void updateTextArea(String text) {
+    public void updateLogsArea(String text) {
         String time = "["+LocalDateTime.now().getHour() + ":"+ LocalDateTime.now().getMinute()+"] ";
         txt +=  time + text +"\n";
         txtArea.setText(txt);
