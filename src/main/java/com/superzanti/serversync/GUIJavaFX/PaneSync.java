@@ -12,7 +12,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 
-public class PaneMainMenu extends BorderPane {
+public class PaneSync extends BorderPane {
 
     private SyncConfig config = SyncConfig.getConfig();
 
@@ -20,7 +20,7 @@ public class PaneMainMenu extends BorderPane {
     private Button btnUpdate;
     private TextField fieldIp, fieldPort;
 
-    public PaneMainMenu(){
+    public PaneSync(){
         Label label_filters = new Label("Filters          ");
 
         Label label_u = new Label("U: ");
@@ -115,7 +115,7 @@ public class PaneMainMenu extends BorderPane {
                     if (!error) {
                         config.SERVER_IP = ip;
                         config.SERVER_PORT = port;
-                        //TODO updateText("Starting update process...");
+                        updateText("Starting update process...");
                         new Thread(new ClientWorker()).start();
                     }
                 }
@@ -126,14 +126,14 @@ public class PaneMainMenu extends BorderPane {
     public TextField getFieldIp(){
         if(fieldIp == null){
             fieldIp = new TextField ();
-            fieldIp.setPromptText("ex: 127.198.0.10");
+            fieldIp.setText(SyncConfig.getConfig().SERVER_IP);
         }
         return fieldIp;
     }
     public TextField getFieldPort(){
         if(fieldPort == null){
             fieldPort = new TextField ();
-            fieldPort.setPromptText("ex: 25565");
+            fieldPort.setText(String.valueOf(SyncConfig.getConfig().SERVER_PORT));
         }
         return fieldPort;
     }
@@ -156,12 +156,11 @@ public class PaneMainMenu extends BorderPane {
             updateText("Port out of range, valid range: 1 - 49151");
             return false;
         }
-
-        getFieldPort().setText(String.valueOf(port));
+        Platform.runLater(() -> fieldPort.setText(String.valueOf(port)));
         return true;
     }
     public void setIPAddress(String ip) {
-        Platform.runLater(() -> fieldPort.setText(ip));
+        Platform.runLater(() -> fieldIp.setText(ip));
     }
     public void updateText(String text) {
         Gui_JavaFX.getStackLoginPane().getPaneLogs().updateTextArea(text);

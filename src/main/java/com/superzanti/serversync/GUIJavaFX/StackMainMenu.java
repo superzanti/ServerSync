@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 public class StackMainMenu extends BorderPane {
 
-    private PaneMainMenu menu = new PaneMainMenu();
+    private PaneSync sync = new PaneSync();
     private PaneLogs logs = new PaneLogs();
     private PaneOptions options = new PaneOptions();
 
@@ -48,7 +48,7 @@ public class StackMainMenu extends BorderPane {
         this.setTop(tabPane);
 
         options.setVisible(false);
-        stack.getChildren().addAll(menu, logs, options);
+        stack.getChildren().addAll(sync, logs, options);
 
         this.setCenter(stack);
 
@@ -59,6 +59,12 @@ public class StackMainMenu extends BorderPane {
             logs = new PaneLogs();
         }
         return logs;
+    }
+    public PaneSync getPaneSync() {
+        if(sync==null) {
+            sync = new PaneSync();
+        }
+        return sync;
     }
     private void displayPanel(int n) {
         for(Node node: stack.getChildren()) {

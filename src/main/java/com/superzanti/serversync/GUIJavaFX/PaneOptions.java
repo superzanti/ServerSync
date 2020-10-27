@@ -80,13 +80,21 @@ public class PaneOptions extends GridPane {
         Button btnSave = new Button("Save");
         btnSave.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
-                SyncConfig.getConfig().SERVER_IP = fieldAdress.getText();
-                SyncConfig.getConfig().SERVER_PORT = Integer.parseInt(fieldPort.getText());
-                SyncConfig.getConfig().REFUSE_CLIENT_MODS = cbxRefuse.isSelected();
-                try {
-                    JsonConfig.saveClient(ConfigLoader.v2ClientConfig);
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
+                int port = Integer.parseInt(fieldPort.getText());
+                String ip = fieldAdress.getText();
+                if(Gui_JavaFX.getStackLoginPane().getPaneSync().setPort(port)){
+                    Gui_JavaFX.getStackLoginPane().getPaneSync().setIPAddress(ip);
+
+                    SyncConfig.getConfig().SERVER_IP = ip;
+                    SyncConfig.getConfig().SERVER_PORT = port;
+                    SyncConfig.getConfig().REFUSE_CLIENT_MODS = cbxRefuse.isSelected();
+
+                    try {
+                        JsonConfig.saveClient(ConfigLoader.v2ClientConfig);
+                        Gui_JavaFX.getStackLoginPane().getPaneLogs().updateTextArea("Options saved");
+                    } catch (IOException ioException) {
+                        Gui_JavaFX.getStackLoginPane().getPaneLogs().updateTextArea(ioException.toString());
+                    }
                 }
             }
         });

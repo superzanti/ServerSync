@@ -6,6 +6,8 @@ import javafx.geometry.Insets;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 
+import java.time.LocalDateTime;
+
 public class PaneLogs extends BorderPane {
 
     private TextArea txtArea = new TextArea();
@@ -17,7 +19,8 @@ public class PaneLogs extends BorderPane {
     }
 
     public void updateTextArea(String text) {
-        txt += text +"\n";
+        String time = "["+LocalDateTime.now().getHour() + ":"+ LocalDateTime.now().getMinute()+"] ";
+        txt +=  time + text +"\n";
         txtArea.setText(txt);
     }
 }
