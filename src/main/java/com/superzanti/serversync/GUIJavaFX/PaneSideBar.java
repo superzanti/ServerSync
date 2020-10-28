@@ -14,8 +14,8 @@ public class PaneSideBar extends VBox {
         btnSync.getStyleClass().add("sidebar-button");
         Image syncIcon = new Image(getClass().getResourceAsStream("/sidebar/sync.png"));
         ImageView syncIconView = new ImageView(syncIcon);
-        syncIconView.setFitHeight(15);
-        syncIconView.setFitWidth(15);
+        syncIconView.setFitHeight(18);
+        syncIconView.setFitWidth(18);
         syncIconView.getStyleClass().add("sidebar-icon");
         btnSync.setGraphic(syncIconView);
         btnSync.setOnAction(new EventHandler<ActionEvent>() {
@@ -29,8 +29,8 @@ public class PaneSideBar extends VBox {
         btnLogs.getStyleClass().add("sidebar-button");
         Image logsIcon = new Image(getClass().getResourceAsStream("/sidebar/desktop.png"));
         ImageView logsIconView = new ImageView(logsIcon);
-        logsIconView.setFitHeight(15);
-        logsIconView.setFitWidth(15);
+        logsIconView.setFitHeight(18);
+        logsIconView.setFitWidth(18);
         btnLogs.setGraphic(logsIconView);
         btnLogs.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
@@ -43,8 +43,8 @@ public class PaneSideBar extends VBox {
         btnOptions.getStyleClass().add("sidebar-button");
         Image optionsIcon = new Image(getClass().getResourceAsStream("/sidebar/build.png"));
         ImageView optionsIconView = new ImageView(optionsIcon);
-        optionsIconView.setFitHeight(15);
-        optionsIconView.setFitWidth(15);
+        optionsIconView.setFitHeight(18);
+        optionsIconView.setFitWidth(18);
         btnOptions.setGraphic(optionsIconView);
         btnOptions.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
