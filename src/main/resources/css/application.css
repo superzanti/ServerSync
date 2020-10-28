@@ -1,6 +1,22 @@
+/*
+dark blue
+-bg-primary: #23232e;
+-bg-secondary: #141418;
+
+green
+-bg-primary: #4CAF50;
+-bg-secondary: #008000;
+*/
+* {
+    -text-primary: #b6b6b6;
+    -text-secondary: #ececec;
+    -bg-primary: #23232e;
+    -bg-secondary: #141418;
+
+}
 .sidebar-button {
-    -fx-background-color: #4CAF50;
-    -fx-text-fill: white;
+    -fx-background-color: -bg-primary;
+    -fx-text-fill: -text-primary;
     -fx-border: none;
     -fx-background-radius: 0;
     -fx-alignment: center-left;
@@ -8,20 +24,13 @@
 }
 
 .sidebar-button:hover {
-    -fx-background-color: #008000;
-    -fx-color: #f1f1f1;
+    -fx-background-color: -bg-secondary;
+    -fx-text-fill: -text-secondary;
+    -fx-font-size: 17px;
 }
-
+.sidebar-vbx {
+    -fx-background-color: -bg-primary;
+}
 .btnSync {
-    -fx-text-fill: white;
-    -fx-background-color: #4CAF50;
-    -fx-border: none;
-    -fx-color: white;
-    -fx-padding: 1px 1px;
-    -fx-text-align: center;
-    -fx-text-decoration: none;
-    -fx-display: inline-block;
-    -fx-font-size: 16px;
-    -fx-margin: 4px 2px;
-    -fx-cursor: pointer;
+
 }

@@ -16,6 +16,7 @@ public class PaneSideBar extends VBox {
         ImageView syncIconView = new ImageView(syncIcon);
         syncIconView.setFitHeight(15);
         syncIconView.setFitWidth(15);
+        syncIconView.getStyleClass().add("sidebar-icon");
         btnSync.setGraphic(syncIconView);
         btnSync.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
@@ -51,7 +52,7 @@ public class PaneSideBar extends VBox {
             }
         });
 
-        this.setStyle("-fx-background-color: grey");
+        this.getStyleClass().add("sidebar-vbx");
         this.getChildren().addAll(btnSync, btnLogs, btnOptions);
     }
 }
