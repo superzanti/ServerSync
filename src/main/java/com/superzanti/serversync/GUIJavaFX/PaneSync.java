@@ -17,7 +17,7 @@ public class PaneSync extends BorderPane {
     private SyncConfig config = SyncConfig.getConfig();
 
     private TableView table;
-    private Button btnUpdate;
+    private Button btnSync;
     private TextField fieldIp, fieldPort;
 
     public PaneSync(){
@@ -55,10 +55,10 @@ public class PaneSync extends BorderPane {
         gp.setRowIndex(getFieldPort(), 1);
         gp.setColumnIndex(getFieldPort(), 1);
 
-        gp.setRowIndex(getBtnUpdate(), 1);
-        gp.setColumnIndex(getBtnUpdate(), 2);
+        gp.setRowIndex(getBtnSync(), 1);
+        gp.setColumnIndex(getBtnSync(), 2);
 
-        gp.getChildren().addAll(label_ip, label_port, getFieldIp(), getFieldPort(), getBtnUpdate());
+        gp.getChildren().addAll(label_ip, label_port, getFieldIp(), getFieldPort(), getBtnSync());
         gp.setAlignment(Pos.CENTER);
         this.setMargin(gp, new Insets(0, 0, 10, 0));
         this.setBottom(gp);
@@ -86,11 +86,12 @@ public class PaneSync extends BorderPane {
         }
         return table;
     }
-    public Button getBtnUpdate(){
-        if(btnUpdate == null){
-            btnUpdate = new Button("Update");
-            btnUpdate.setTooltip(new Tooltip("Synchronize client & server"));
-            btnUpdate.setOnAction(new EventHandler<ActionEvent>() {
+    public Button getBtnSync(){
+        if(btnSync == null){
+            btnSync = new Button("Sync");
+            btnSync.getStyleClass().add("btnSync");
+            btnSync.setTooltip(new Tooltip("Synchronize client & server"));
+            btnSync.setOnAction(new EventHandler<ActionEvent>() {
                 @Override public void handle(ActionEvent e) {
                     int port = getPort();
                     String ip = getFieldIp().getText();
@@ -121,7 +122,7 @@ public class PaneSync extends BorderPane {
                 }
             });
         }
-        return btnUpdate;
+        return btnSync;
     }
     public TextField getFieldIp(){
         if(fieldIp == null){
@@ -163,7 +164,7 @@ public class PaneSync extends BorderPane {
         Platform.runLater(() -> fieldIp.setText(ip));
     }
     public void updateLogsArea(String text) {
-        Gui_JavaFX.getStackLoginPane().getPaneLogs().updateLogsArea(text);
+        Gui_JavaFX.getStackMainPane().getPaneLogs().updateLogsArea(text);
     }
     /*public Button getBtnUpdate(){
         if(btnUpdate == null){

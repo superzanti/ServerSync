@@ -1,6 +1,5 @@
 package com.superzanti.serversync.GUIJavaFX;
 
-
 import com.superzanti.serversync.RefStrings;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -12,12 +11,13 @@ public class Gui_JavaFX extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        Scene scene = new Scene(root, 400,400);
+        Scene scene = new Scene(root, 800,400);
+        scene.getStylesheets().add(this.getClass().getResource("/css/application.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.setTitle(RefStrings.NAME+ " - " + RefStrings.VERSION);
         primaryStage.show();
     }
-    public static StackMainMenu getStackLoginPane() {
+    public static StackMainMenu getStackMainPane() {
         if(root==null) {
             root=new StackMainMenu();
         }

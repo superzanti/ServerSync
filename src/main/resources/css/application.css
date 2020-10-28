@@ -1,0 +1,27 @@
+.sidebar-button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-border: none;
+    -fx-background-radius: 0;
+    -fx-alignment: center-left;
+    -fx-font-size: 16px;
+}
+
+.sidebar-button:hover {
+    -fx-background-color: #008000;
+    -fx-color: #f1f1f1;
+}
+
+.btnSync {
+    -fx-text-fill: white;
+    -fx-background-color: #4CAF50;
+    -fx-border: none;
+    -fx-color: white;
+    -fx-padding: 1px 1px;
+    -fx-text-align: center;
+    -fx-text-decoration: none;
+    -fx-display: inline-block;
+    -fx-font-size: 16px;
+    -fx-margin: 4px 2px;
+    -fx-cursor: pointer;
+}

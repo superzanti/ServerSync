@@ -1,7 +1,5 @@
 package com.superzanti.serversync.GUIJavaFX;
 
-
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;

@@ -3,8 +3,6 @@ package com.superzanti.serversync.GUIJavaFX;
 import com.superzanti.serversync.config.ConfigLoader;
 import com.superzanti.serversync.config.JsonConfig;
 import com.superzanti.serversync.config.SyncConfig;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -84,8 +82,8 @@ public class PaneOptions extends GridPane {
             @Override public void handle(ActionEvent e) {
                 int port = Integer.parseInt(fieldPort.getText());
                 String ip = fieldAdress.getText();
-                if(Gui_JavaFX.getStackLoginPane().getPaneSync().setPort(port)){
-                    Gui_JavaFX.getStackLoginPane().getPaneSync().setIPAddress(ip);
+                if(Gui_JavaFX.getStackMainPane().getPaneSync().setPort(port)){
+                    Gui_JavaFX.getStackMainPane().getPaneSync().setIPAddress(ip);
 
                     SyncConfig.getConfig().SERVER_IP = ip;
                     SyncConfig.getConfig().SERVER_PORT = port;
@@ -108,6 +106,6 @@ public class PaneOptions extends GridPane {
         this.getChildren().addAll(btnSave);
     }
     public void updateLogsArea(String text) {
-        Gui_JavaFX.getStackLoginPane().getPaneLogs().updateLogsArea(text);
+        Gui_JavaFX.getStackMainPane().getPaneLogs().updateLogsArea(text);
     }
 }

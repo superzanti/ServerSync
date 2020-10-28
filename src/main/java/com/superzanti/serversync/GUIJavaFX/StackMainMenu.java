@@ -2,10 +2,9 @@ package com.superzanti.serversync.GUIJavaFX;
 
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+
 
 import java.util.ArrayList;
 
@@ -20,32 +19,8 @@ public class StackMainMenu extends BorderPane {
     private String defaultStyle = new Button().getStyle();
 
     public StackMainMenu() {
-        TabPane tabPane = new TabPane();
-        Tab tabSync = new Tab("Sync");
-        tabSync.setOnSelectionChanged(event -> {
-            if (tabSync.isSelected()) {
-                displayPanel(0);
-            }
-        });
-        Tab tabLogs = new Tab("Logs");
-        tabLogs.setOnSelectionChanged(event -> {
-            if (tabLogs.isSelected()) {
-                displayPanel(1);
-            }
-        });
-        Tab tabOptions = new Tab("Options");
-        tabOptions.setOnSelectionChanged(event -> {
-            if (tabOptions.isSelected()) {
-                displayPanel(2);
-            }
-        });
-
-        tabPane.getTabs().add(tabSync);
-        tabPane.getTabs().add(tabLogs);
-        tabPane.getTabs().add(tabOptions);
-        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-
-        this.setTop(tabPane);
+        PaneSideBar sideBar = new PaneSideBar();
+        this.setLeft(sideBar);
 
         options.setVisible(false);
         stack.getChildren().addAll(sync, logs, options);
@@ -66,7 +41,7 @@ public class StackMainMenu extends BorderPane {
         }
         return sync;
     }
-    private void displayPanel(int n) {
+    public void displayPanel(int n) {
         if(stack.getChildren().size() >0){
             for(Node node: stack.getChildren()) {
                 node.setVisible(false);
