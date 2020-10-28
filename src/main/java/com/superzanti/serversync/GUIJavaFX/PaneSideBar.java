@@ -12,7 +12,7 @@ public class PaneSideBar extends VBox {
         Button btnSync = new Button("Sync");
         btnSync.setPrefWidth(125);
         btnSync.getStyleClass().add("sidebar-button");
-        Image syncIcon = new Image(getClass().getResourceAsStream("/sidebar/sync.png"));
+        Image syncIcon = new Image(getClass().getResourceAsStream("/sidebar/sync_blue.png"));
         ImageView syncIconView = new ImageView(syncIcon);
         syncIconView.setFitHeight(18);
         syncIconView.setFitWidth(18);
@@ -27,7 +27,7 @@ public class PaneSideBar extends VBox {
         Button btnLogs = new Button("Logs");
         btnLogs.setPrefWidth(125);
         btnLogs.getStyleClass().add("sidebar-button");
-        Image logsIcon = new Image(getClass().getResourceAsStream("/sidebar/desktop.png"));
+        Image logsIcon = new Image(getClass().getResourceAsStream("/sidebar/desktop_blue.png"));
         ImageView logsIconView = new ImageView(logsIcon);
         logsIconView.setFitHeight(18);
         logsIconView.setFitWidth(18);
@@ -41,7 +41,7 @@ public class PaneSideBar extends VBox {
         Button btnOptions = new Button("Options");
         btnOptions.setPrefWidth(125);
         btnOptions.getStyleClass().add("sidebar-button");
-        Image optionsIcon = new Image(getClass().getResourceAsStream("/sidebar/build.png"));
+        Image optionsIcon = new Image(getClass().getResourceAsStream("/sidebar/build_blue.png"));
         ImageView optionsIconView = new ImageView(optionsIcon);
         optionsIconView.setFitHeight(18);
         optionsIconView.setFitWidth(18);
