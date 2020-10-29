@@ -42,7 +42,7 @@ public class PaneOptions extends GridPane {
         this.setRowIndex(fieldPort, 2);
         this.setColumnIndex(fieldPort, 1);
 
-        Label labelRefuse = new Label("refuse_client_mods: ");
+        Label labelRefuse = new Label("Refuse client mods: ");
         this.setRowIndex(labelRefuse, 3);
         this.setColumnIndex(labelRefuse, 0);
 
