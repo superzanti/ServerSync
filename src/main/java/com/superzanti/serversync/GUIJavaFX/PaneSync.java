@@ -113,7 +113,7 @@ public class PaneSync extends BorderPane {
     public Button getBtnSync(){
         if(btnSync == null){
             btnSync = new Button("Sync");
-            btnSync.getStyleClass().add("btnSync");
+            btnSync.getStyleClass().add("btn");
             btnSync.setTooltip(new Tooltip("Synchronize client & server"));
             btnSync.setOnAction(new EventHandler<ActionEvent>() {
                 @Override public void handle(ActionEvent e) {
@@ -151,7 +151,8 @@ public class PaneSync extends BorderPane {
 
     public Button getBtnCheckUpdate(){
         if(btnCheckUpdate == null){
-            btnCheckUpdate = new Button("Check Update");
+            btnCheckUpdate = new Button("Check for updates");
+            btnCheckUpdate.getStyleClass().add("btn");
             btnCheckUpdate.getStyleClass().add("btnCheckUpdate");
             btnCheckUpdate.setTooltip(new Tooltip("Check update in table"));
             btnCheckUpdate.setOnAction(new EventHandler<ActionEvent>() {

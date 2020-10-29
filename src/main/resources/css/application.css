@@ -12,6 +12,8 @@ green
 }
 .root {
     -fx-background-color: -fx-primary;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
     -fx-primary : #2A2E37;
     -fx-secondary : #4DB3B3;
     -fx-primarytext : #B2B2B2;
@@ -37,7 +39,7 @@ green
 .sidebar-vbx {
     -fx-background-color: -fx-sidebar-primary;
 }
-.btnSync {
+.btn {
     -fx-text-fill: -fx-primarytext;
     -fx-background-color: -fx-primary;
     -fx-border-color: -fx-secondary;
@@ -45,12 +47,25 @@ green
     -fx-background-radius: 20px;
     -fx-font-size: 12pt;
 }
-.btnSync:hover, .btnSync:focused{
+.btn:hover, .btn:focused{
     -fx-border-color: -fx-secondary;
     -fx-background-color: -fx-secondary;
     -fx-text-fill: -fx-primary;
 }
-
+.text-field
+{
+    -fx-text-fill: -fx-primarytext;
+    -fx-font-size : 12pt;
+    -fx-control-inner-background: derive(-fx-primary, 10%);
+    -fx-text-fill: derive(-fx-secondary, 20%);
+    -fx-border-color: -fx-primary -fx-primary -fx-sidebar-primary -fx-primary;
+    -fx-background-radius: 0;
+    -fx-border-width: 2;
+}
+.text-field:hover, .text-field:focused
+{
+    -fx-border-color: -fx-primary -fx-primary -fx-secondary -fx-primary;
+}
 /*Text styling*/
 .label
 {

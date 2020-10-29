@@ -78,6 +78,7 @@ public class PaneOptions extends GridPane {
 
         /** SAVE BUTTON */
         Button btnSave = new Button("Save");
+        btnSave.getStyleClass().add("btn");
         btnSave.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
                 int port = Integer.parseInt(fieldPort.getText());
