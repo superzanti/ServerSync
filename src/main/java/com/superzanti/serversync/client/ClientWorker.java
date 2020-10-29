@@ -43,13 +43,17 @@ public class ClientWorker implements Runnable {
         }
 
         ServerInfo serverInfo = server.info;
+        System.out.println(serverInfo.syncMode);
 
-        switch (serverInfo.syncMode) {
+        switch (config.SYNC_MODE) {
             case 1:
                 Mode1Sync.forServer(server).run();
                 break;
             case 2:
                 Mode2Sync.forServer(server).run();
+                break;
+            case 3:
+                Mode3Sync.forServer(server).run();
                 break;
             default:
                 Logger.error(String.format("Unknown server mode: %d", serverInfo.syncMode));

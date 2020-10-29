@@ -1,24 +1,32 @@
 package com.superzanti.serversync.GUIJavaFX;
 
 import com.superzanti.serversync.client.ClientWorker;
+import com.superzanti.serversync.config.Mod;
 import com.superzanti.serversync.config.SyncConfig;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+
+import java.awt.print.Book;
 
 public class PaneSync extends BorderPane {
 
     private SyncConfig config = SyncConfig.getConfig();
 
     private TableView table;
-    private Button btnSync;
+    private Button btnSync,btnCheckUpdate;
     private TextField fieldIp, fieldPort;
+    private ObservableList<Mod> observMods = FXCollections.observableArrayList();
+
 
     public PaneSync(){
         Label label_filters = new Label("Filters          ");
@@ -58,34 +66,50 @@ public class PaneSync extends BorderPane {
         gp.setRowIndex(getBtnSync(), 1);
         gp.setColumnIndex(getBtnSync(), 2);
 
-        gp.getChildren().addAll(label_ip, label_port, getFieldIp(), getFieldPort(), getBtnSync());
+        gp.setRowIndex(getBtnCheckUpdate(), 1);
+        gp.setColumnIndex(getBtnCheckUpdate(), 3);
+
+        gp.getChildren().addAll(label_ip, label_port, getFieldIp(), getFieldPort(), getBtnSync(),getBtnCheckUpdate());
         gp.setAlignment(Pos.CENTER);
         this.setMargin(gp, new Insets(0, 0, 10, 0));
         this.setBottom(gp);
     }
 
+    public void setObservMods(ObservableList<Mod> observMods){
+        table.getItems().clear();
+        table.setItems(observMods);
+    }
+
     public TableView getTableView(){
         if(table == null) {
+
             table = new TableView();
             table.setEditable(true);
             table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
             //Create column
-            TableColumn colFileName = new TableColumn("File name");
-            TableColumn colOutdated = new TableColumn("Outdated");
-            TableColumn colIgnored = new TableColumn("Ignored");
+            TableColumn<Mod, String> colFileName = new TableColumn<>("File name");
+            TableColumn<Mod, String> colOutdated = new TableColumn("Outdated");
+            TableColumn<Mod, Boolean> colIgnored = new TableColumn("Ignored");
 
             colFileName.prefWidthProperty().bind(table.widthProperty().multiply(0.5));
+            colFileName.setCellValueFactory(
+                    new PropertyValueFactory<>("name"));
             colOutdated.prefWidthProperty().bind(table.widthProperty().multiply(0.3));
+            colOutdated.setCellValueFactory(
+                    new PropertyValueFactory<>("validValue"));
             colIgnored.prefWidthProperty().bind(table.widthProperty().multiply(0.2));
+            colIgnored.setCellValueFactory(
+                    new PropertyValueFactory<>("ignoreValue"));
 
             table.getColumns().addAll(colFileName, colOutdated, colIgnored);
 
-            //table.setItems(listQuestObser);
-
+            table.setItems(observMods);
         }
+
         return table;
     }
+
     public Button getBtnSync(){
         if(btnSync == null){
             btnSync = new Button("Sync");
@@ -124,6 +148,23 @@ public class PaneSync extends BorderPane {
         }
         return btnSync;
     }
+
+    public Button getBtnCheckUpdate(){
+        if(btnCheckUpdate == null){
+            btnCheckUpdate = new Button("Check Update");
+            btnCheckUpdate.getStyleClass().add("btnCheckUpdate");
+            btnCheckUpdate.setTooltip(new Tooltip("Check update in table"));
+            btnCheckUpdate.setOnAction(new EventHandler<ActionEvent>() {
+                @Override public void handle(ActionEvent e) {
+
+                    SyncConfig.getConfig().SYNC_MODE = 3;
+                    new Thread(new ClientWorker()).start();
+                }
+            });
+        }
+        return btnCheckUpdate;
+    }
+
     public TextField getFieldIp(){
         if(fieldIp == null){
             fieldIp = new TextField ();
