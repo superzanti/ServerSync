@@ -33,7 +33,7 @@ green
     -fx-background-color: derive(-fx-sidebar-primary, -60%);
     -fx-text-fill: derive(-fx-secondarytext, 60%);
     -fx-font-size: 17px;
-    -fx-border-style: groove;
+    -fx-border-style: solid;
     -fx-border-color: -fx-secondary;
 }
 .sidebar-vbx {
@@ -47,7 +47,7 @@ green
     -fx-background-radius: 20px;
     -fx-font-size: 12pt;
 }
-.btn:hover, .btn:focused{
+.btn:hover{
     -fx-border-color: -fx-secondary;
     -fx-background-color: -fx-secondary;
     -fx-text-fill: -fx-primary;

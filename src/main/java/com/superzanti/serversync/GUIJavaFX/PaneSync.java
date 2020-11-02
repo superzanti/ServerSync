@@ -15,8 +15,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-
-import java.awt.print.Book;
+import javafx.scene.control.Alert.AlertType;
 
 public class PaneSync extends BorderPane {
 
@@ -25,6 +24,7 @@ public class PaneSync extends BorderPane {
     private TableView table;
     private Button btnSync,btnCheckUpdate;
     private TextField fieldIp, fieldPort;
+    private Alert alertWarning;
     private ObservableList<Mod> observMods = FXCollections.observableArrayList();
 
 
@@ -109,7 +109,24 @@ public class PaneSync extends BorderPane {
 
         return table;
     }
-
+    public Boolean checkIpAndPort(String ip, int port){
+        boolean valid = true;
+        if (ip.equals("") && !setPort(port)) {
+            updateLogsArea("No config found, requesting details");
+            displayAlert("Bad config", "IP field is wrong \nPort out of range, valid range: 1 - 49151");
+            valid = false;
+        }
+        else if (ip.equals("")) {
+            updateLogsArea("The ip field is empty");
+            displayAlert("Wrong IP", "The IP field is empty");
+            valid = false;
+        }else if(!setPort(port)) {
+            updateLogsArea("The ip field is empty");
+            displayAlert("Wrong port", "Port out of range, valid range: 1 - 49151");
+            valid = false;
+        }
+        return valid;
+    }
     public Button getBtnSync(){
         if(btnSync == null){
             btnSync = new Button("Sync");
@@ -119,25 +136,7 @@ public class PaneSync extends BorderPane {
                 @Override public void handle(ActionEvent e) {
                     int port = getPort();
                     String ip = getFieldIp().getText();
-                    boolean error = false;
-                    if (ip.equals("") || port == 90000) {
-                        updateLogsArea("No config found, requesting details");
-
-                        if (ip.equals("")) {
-                            //TODO ip = JOptionPane.showInputDialog("Server IP address");
-                            //setIPAddress(ip);
-                        }
-
-                        if (port == 90000) {
-                            //TODO String serverPort = JOptionPane.showInputDialog("Server Port (numbers only)");
-                            //port = Integer.parseInt(serverPort);
-
-                            if (setPort(port)) {
-                                error = true;
-                            }
-                        }
-                    }
-                    if (!error) {
+                    if (checkIpAndPort(ip, port)){
                         config.SERVER_IP = ip;
                         config.SERVER_PORT = port;
                         updateLogsArea("Starting update process...");
@@ -148,7 +147,6 @@ public class PaneSync extends BorderPane {
         }
         return btnSync;
     }
-
     public Button getBtnCheckUpdate(){
         if(btnCheckUpdate == null){
             btnCheckUpdate = new Button("Check for updates");
@@ -157,7 +155,6 @@ public class PaneSync extends BorderPane {
             btnCheckUpdate.setTooltip(new Tooltip("Check update in table"));
             btnCheckUpdate.setOnAction(new EventHandler<ActionEvent>() {
                 @Override public void handle(ActionEvent e) {
-
                     SyncConfig.getConfig().SYNC_MODE = 3;
                     new Thread(new ClientWorker()).start();
                 }
@@ -165,7 +162,6 @@ public class PaneSync extends BorderPane {
         }
         return btnCheckUpdate;
     }
-
     public TextField getFieldIp(){
         if(fieldIp == null){
             fieldIp = new TextField ();
@@ -184,12 +180,9 @@ public class PaneSync extends BorderPane {
         int port;
         try {
             port = Integer.parseInt(fieldPort.getText());
-            if (!(port <= 49151 && port > 0)) {
-                updateLogsArea("Port out of range, valid range: 1 - 49151");
-            }
         } catch (NumberFormatException e) {
             updateLogsArea("Invalid port");
-            port = 90000;
+            port = -1;
         }
 
         return port;
@@ -208,11 +201,12 @@ public class PaneSync extends BorderPane {
     public void updateLogsArea(String text) {
         Gui_JavaFX.getStackMainPane().getPaneLogs().updateLogsArea(text);
     }
-    /*public Button getBtnUpdate(){
-        if(btnUpdate == null){
-
-        }
-        return btnUpdate;
-    }*/
+    public void displayAlert(String header, String content){
+        Alert alert = new Alert(AlertType.WARNING);
+        alert.setTitle("Warning Dialog");
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
 }
 
