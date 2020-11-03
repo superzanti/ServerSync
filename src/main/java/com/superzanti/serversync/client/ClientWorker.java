@@ -43,7 +43,6 @@ public class ClientWorker implements Runnable {
         }
 
         ServerInfo serverInfo = server.info;
-        System.out.println(serverInfo.syncMode);
 
         switch (config.SYNC_MODE) {
             case 1:

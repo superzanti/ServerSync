@@ -5,14 +5,12 @@ import com.superzanti.serversync.config.Mod;
 import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.files.FileHash;
 import com.superzanti.serversync.files.FileManifest;
+import com.superzanti.serversync.files.ManifestEntry;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.Valid;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
+import javafx.application.Platform;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 
 public class Mode3Sync implements  Runnable{
 
@@ -29,50 +27,48 @@ public class Mode3Sync implements  Runnable{
     @Override
     public void run() {
         FileManifest manifest = server.fetchManifest();
-       // System.out.println(manifest.entries.toString());
-        //System.out.println("zeub");
 
-        ObservableList<Mod> observMods = FXCollections.observableArrayList();
-        //Mod e = new Mod("BLA");
-        //observMods.add(e);
+        Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().clear();
+        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(0);
+        double n = manifest.entries.size();
+        double count = 0;
+        Mod mod = null;
+        for(ManifestEntry entry : manifest.entries){
+            Path file = entry.resolvePath();
+            Logger.debug(String.format("Starting check for file: %s", file));
+            if (!entry.redirectTo.equals("")) {
+                Logger.debug(String.format(
+                        "File: %s, redirected from: %s to %s",
+                        file.getFileName(),
+                        entry.path,
+                        file
+                ));
+            }
 
-        manifest.entries
-                .forEach(entry -> {
-                    Path file = entry.resolvePath();
-                    Logger.debug(String.format("Starting check for file: %s", file));
-                    if (!entry.redirectTo.equals("")) {
-                        Logger.debug(String.format(
-                                "File: %s, redirected from: %s to %s",
-                                file.getFileName(),
-                                entry.path,
-                                file
-                        ));
-                    }
+           mod = new Mod(entry.path);
 
-                    Mod mod = new Mod(entry.path);
+            if(Files.exists(file)){
 
-                    if(Files.exists(file)){
+                String hash = FileHash.hashFile(file);
 
-                        String hash = FileHash.hashFile(file);
+                if (entry.hash.equals(hash)) {
 
-                        if (entry.hash.equals(hash)) {
+                    mod.setValidValue(Valid.UPTODATE);
+                }else{
 
-                            mod.setValidValue(Valid.UPTODATE);
-                        }else{
+                    mod.setValidValue(Valid.OUTDATED);
+                }
+            }else{
+                mod.setValidValue(Valid.INVALID);
+            }
 
-                            mod.setValidValue(Valid.OUTDATED);
-                        }
-                    }else{
-                        mod.setValidValue(Valid.INVALID);
-                    }
+            Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().add(mod);
 
-                    observMods.add(mod);
-
-                });
-
-        System.out.println(observMods.toString());
-
-        Gui_JavaFX.getStackMainPane().getPaneSync().setObservMods(observMods);
+            count++;
+            Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);
+            Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setText(entry.path);
+            Platform.runLater(() -> Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().update());
+        }
 
         SyncConfig.getConfig().SYNC_MODE = 2;
     }

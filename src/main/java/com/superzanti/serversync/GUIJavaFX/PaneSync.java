@@ -26,7 +26,7 @@ public class PaneSync extends BorderPane {
     private TextField fieldIp, fieldPort;
     private Alert alertWarning;
     private ObservableList<Mod> observMods = FXCollections.observableArrayList();
-
+    private PaneProgressBar paneProgressBar;
 
     public PaneSync(){
         Label label_filters = new Label("Filters          ");
@@ -37,12 +37,14 @@ public class PaneSync extends BorderPane {
         CheckBox cb_i = new CheckBox();
         Label label_d = new Label("D: ");
         CheckBox cb_d = new CheckBox();
+        paneProgressBar = new PaneProgressBar();
 
         HBox hbx_filters = new HBox();
         hbx_filters.setAlignment(Pos.BASELINE_RIGHT);
         hbx_filters.getChildren().addAll(label_filters, label_u, cb_u, label_i, cb_i, label_d, cb_d);
         this.setMargin(hbx_filters, new Insets(10, 10, 0, 0));
-        this.setTop(hbx_filters);
+        //this.setTop(hbx_filters);
+        this.setTop(getPaneProgressBar());
 
         this.setMargin(getTableView(), new Insets(10, 10, 10, 10));
         this.setCenter(getTableView());
@@ -75,9 +77,15 @@ public class PaneSync extends BorderPane {
         this.setBottom(gp);
     }
 
-    public void setObservMods(ObservableList<Mod> observMods){
-        table.getItems().clear();
-        table.setItems(observMods);
+    public ObservableList<Mod> getObservMods(){
+        return observMods;
+    }
+
+    public PaneProgressBar getPaneProgressBar(){
+        if(paneProgressBar == null){
+            paneProgressBar = new PaneProgressBar();
+        }
+        return paneProgressBar;
     }
 
     public TableView getTableView(){
@@ -105,6 +113,8 @@ public class PaneSync extends BorderPane {
             table.getColumns().addAll(colFileName, colOutdated, colIgnored);
 
             table.setItems(observMods);
+
+            observMods.add(new Mod("zeub"));
         }
 
         return table;
@@ -136,6 +146,7 @@ public class PaneSync extends BorderPane {
                 @Override public void handle(ActionEvent e) {
                     getBtnSync().setDisable(true);
                     getBtnCheckUpdate().setDisable(true);
+
                     int port = getPort();
                     String ip = getFieldIp().getText();
                     if (checkIpAndPort(ip, port)){
@@ -160,8 +171,21 @@ public class PaneSync extends BorderPane {
             btnCheckUpdate.setTooltip(new Tooltip("Check update in table"));
             btnCheckUpdate.setOnAction(new EventHandler<ActionEvent>() {
                 @Override public void handle(ActionEvent e) {
-                    SyncConfig.getConfig().SYNC_MODE = 3;
-                    new Thread(new ClientWorker()).start();
+                    getBtnSync().setDisable(true);
+                    getBtnCheckUpdate().setDisable(true);
+
+                    int port = getPort();
+                    String ip = getFieldIp().getText();
+                    if (checkIpAndPort(ip, port)){
+                        config.SERVER_IP = ip;
+                        config.SERVER_PORT = port;
+                        updateLogsArea("Starting update process...");
+                        SyncConfig.getConfig().SYNC_MODE = 3;
+                        new Thread(new ClientWorker()).start();
+                    }else{
+                        getBtnSync().setDisable(false);
+                        getBtnCheckUpdate().setDisable(false);
+                    }
                 }
             });
         }
