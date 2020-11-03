@@ -82,12 +82,14 @@ public class Server {
     }
 
     public void close() {
+        /*TODO Need to be fix (since v3.7 alpha)
         try {
             output.writeUTF(EServerMessage.EXIT.toString());
         } catch (IOException e) {
             Logger.error("Failed to close server connection");
             Logger.debug(e);
         }
+         */
         AutoClose.closeResource(clientSocket);
     }
 }
