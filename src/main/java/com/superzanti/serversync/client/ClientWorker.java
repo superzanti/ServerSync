@@ -1,5 +1,6 @@
 package com.superzanti.serversync.client;
 
+import com.superzanti.serversync.GUIJavaFX.Gui_JavaFX;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.communication.response.ServerInfo;
@@ -30,7 +31,6 @@ public class ClientWorker implements Runnable {
     public void run() {
         updateHappened = false;
 
-        disableSyncButton();
         Logger.getLog().clearUserFacingLog();
 
         Client client = new Client(config.SERVER_IP, config.SERVER_PORT);
@@ -89,30 +89,16 @@ public class ClientWorker implements Runnable {
         } else {
             Logger.debug(ServerSync.strings.getString("update_happened"));
         }
-        updateProgress(100);
 
         if (errorInUpdates) {
             Logger.error(ServerSync.strings.getString("update_error"));
         }
 
-        enableSyncButton();
+        enableGuiButton();
     }
 
-    private void updateProgress(int progress) {
-        if (ServerSync.clientGUI != null) {
-            ServerSync.clientGUI.updateProgress(progress);
-        }
-    }
-
-    private void enableSyncButton() {
-        if (ServerSync.clientGUI != null) {
-            ServerSync.clientGUI.enableSyncButton();
-        }
-    }
-
-    private void disableSyncButton() {
-        if (ServerSync.clientGUI != null) {
-            ServerSync.clientGUI.disableSyncButton();
-        }
+    private void enableGuiButton() {
+        Gui_JavaFX.getStackMainPane().getPaneSync().getBtnSync().setDisable(false);
+        Gui_JavaFX.getStackMainPane().getPaneSync().getBtnCheckUpdate().setDisable(false);
     }
 }

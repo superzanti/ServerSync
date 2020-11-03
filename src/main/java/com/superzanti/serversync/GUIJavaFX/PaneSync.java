@@ -134,6 +134,8 @@ public class PaneSync extends BorderPane {
             btnSync.setTooltip(new Tooltip("Synchronize client & server"));
             btnSync.setOnAction(new EventHandler<ActionEvent>() {
                 @Override public void handle(ActionEvent e) {
+                    getBtnSync().setDisable(true);
+                    getBtnCheckUpdate().setDisable(true);
                     int port = getPort();
                     String ip = getFieldIp().getText();
                     if (checkIpAndPort(ip, port)){
@@ -141,6 +143,9 @@ public class PaneSync extends BorderPane {
                         config.SERVER_PORT = port;
                         updateLogsArea("Starting update process...");
                         new Thread(new ClientWorker()).start();
+                    }else{
+                        getBtnSync().setDisable(false);
+                        getBtnCheckUpdate().setDisable(false);
                     }
                 }
             });
