@@ -24,7 +24,6 @@ public class PaneSync extends BorderPane {
     private TableView table;
     private Button btnSync,btnCheckUpdate;
     private TextField fieldIp, fieldPort;
-    private Alert alertWarning;
     private ObservableList<Mod> observMods = FXCollections.observableArrayList();
     private PaneProgressBar paneProgressBar;
 
@@ -114,7 +113,6 @@ public class PaneSync extends BorderPane {
 
             table.setItems(observMods);
 
-            observMods.add(new Mod("zeub"));
         }
 
         return table;
