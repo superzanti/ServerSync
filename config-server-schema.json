@@ -123,11 +123,11 @@
           "examples": [
             [
               {
-                "name": "test-mirror",
+                "path": "test-mirror",
                 "mode": "mirror"
               },
               {
-                "name": "test-push",
+                "path": "test-push",
                 "mode": "push"
               }
             ]
@@ -144,16 +144,16 @@
                 "default": {},
                 "examples": [
                   {
-                    "mode": "mirror",
+                    "path": "mirror",
                     "name": "test-mirror"
                   }
                 ],
                 "required": [
-                  "name"
+                  "path"
                 ],
                 "additionalProperties": true,
                 "properties": {
-                  "name": {
+                  "path": {
                     "$id": "#/properties/rules/properties/directory_include_list/items/anyOf/0/properties/name",
                     "type": "string",
                     "title": "The name schema",

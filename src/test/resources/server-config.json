@@ -9,11 +9,11 @@
   "rules": {
     "directory_include_list": [
       {
-        "name": "test-mirror",
+        "path": "test-mirror",
         "mode": "mirror"
       },
       {
-        "name": "test-push",
+        "path": "test-push",
         "mode": "push"
       },
       "test-default"

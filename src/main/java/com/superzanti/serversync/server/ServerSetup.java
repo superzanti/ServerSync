@@ -1,9 +1,15 @@
 package com.superzanti.serversync.server;
 
+import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.config.IgnoredFilesMatcher;
-import com.superzanti.serversync.files.*;
-import com.superzanti.serversync.util.*;
+import com.superzanti.serversync.files.FileManager;
+import com.superzanti.serversync.files.FileManifest;
+import com.superzanti.serversync.files.FileRedirect;
+import com.superzanti.serversync.files.FileEntry;
+import com.superzanti.serversync.util.BannedIPSReader;
+import com.superzanti.serversync.util.GlobPathMatcher;
+import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.PrettyCollection;
 import com.superzanti.serversync.util.enums.ELocations;
 import com.superzanti.serversync.util.enums.EServerMessage;
 
@@ -32,35 +38,30 @@ public class ServerSetup implements Runnable {
     private final Path bannedIps = Paths.get(ELocations.BANNED_IPS.getValue());
 
     private final Timer timeoutScheduler = new Timer();
-    private final Map<String, String> serverFiles = new HashMap<>(200);
-    private final List<String> managedDirectories = new ArrayList<>(config.DIRECTORY_INCLUDE_LIST);
 
-
-    private final FileManifest manifest = new FileManifest();
+    private FileManifest manifest;
     private final List<String> messages = Arrays.stream(EServerMessage.values())
                                                 .map(EServerMessage::toString)
                                                 .collect(Collectors.toList());
 
-    private void populateManifest(Map<String, String> files) {
-        try {
-            manifest.directories = config.DIRECTORY_INCLUDE_LIST;
-            files.forEach((key, value) -> {
-                Path p = Paths.get(key);
-                Optional<FileRedirect> re = config.REDIRECT_FILES_LIST
-                    .stream()
-                    .filter(r -> GlobPathMatcher.matches(p, r.pattern))
-                    .findFirst();
-                if (re.isPresent()) {
-                    manifest.entries.add(new ManifestEntry(key, value, re.get().redirectTo));
-                } else {
-                    manifest.entries.add(new ManifestEntry(key, value, ""));
-                }
-            });
-            Logger.debug(String.format("Manifest directories: %s", PrettyCollection.get(manifest.directories)));
-            Logger.debug(String.format("Manifest entries: %s", PrettyCollection.get(manifest.entries)));
-        } catch (Exception e) {
-            Logger.debug(e);
-        }
+    private FileManifest populateManifest() throws IOException {
+        FileManifest manifest = new FileManifest();
+        manifest.directories = config.DIRECTORY_INCLUDE_LIST;
+        List<String> dirs = manifest.directories.stream().map(d -> d.path).collect(Collectors.toList());
+        Map<String, String> files = FileManager.getDiffableFilesFromDirectories(dirs);
+        files.forEach((key, value) -> {
+            Path p = Paths.get(key);
+            Optional<FileRedirect> re = config.REDIRECT_FILES_LIST
+                .stream()
+                .filter(r -> GlobPathMatcher.matches(p, r.pattern))
+                .findFirst();
+            if (re.isPresent()) {
+                manifest.files.add(new FileEntry(key, value, re.get().redirectTo));
+            } else {
+                manifest.files.add(new FileEntry(key, value, ""));
+            }
+        });
+        return manifest;
     }
 
 
@@ -72,45 +73,23 @@ public class ServerSetup implements Runnable {
             Logger.log("Starting scan for managed files: " + dateFormatter.format(new Date()));
             Logger.log(String.format("Ignore patterns: %s", PrettyCollection.get(config.FILE_IGNORE_LIST)));
 
-            for (String managedDirectory : managedDirectories) {
-                Files.createDirectories(Paths.get(managedDirectory));
-            }
+            manifest = populateManifest();
 
-            Map<String, String> managedFiles = FileManager.getDiffableFilesFromDirectories(managedDirectories);
-            populateManifest(managedFiles);
+            manifest.directories.stream().map(d -> ServerSync.rootDir.resolve(Paths.get(d.path))).forEach(p -> {
+                if (Files.notExists(p)) {
+                    Logger.error(String.format("Managed directory does not exist: %s", p));
+                    System.exit(1);
+                }
+            });
 
             Logger.log(String.format(
-                "Found %d files in %d directories <%s>",
-                managedFiles.size(),
-                managedDirectories.size(),
-                String.join(", ", managedDirectories)
+                "Found %d files in %d directories",
+                manifest.files.size(),
+                manifest.directories.size()
             ));
-            if (managedFiles.size() > 0) {
-                serverFiles.putAll(managedFiles);
-                Logger.log(String.format("Managed files: %s", PrettyCollection.get(managedFiles)));
-            }
 
-            // Only include configs if some are actually listed
-            // saves wasting time scanning the config directory.
-            if (config.CONFIG_INCLUDE_LIST.size() > 0) {
-                Logger.log(String.format("Starting scan for managed configs: %s", dateFormatter.format(new Date())));
-                Logger.log(String.format("Include patterns: %s", PrettyCollection.get(config.CONFIG_INCLUDE_LIST)));
-                // Add config include files
-                Map<String, String> configIncludeFiles = config.CONFIG_INCLUDE_LIST
-                    .stream()
-                    .parallel()
-                    .map(p -> new PathBuilder().add("config").add(p).toPath())
-                    .filter(path -> Files.exists(path) && !IgnoredFilesMatcher.matches(path))
-                    .collect(Collectors.toConcurrentMap(Path::toString, FileHash::hashFile));
-
-                Logger.log(String.format(
-                    "Found %d included configs in <config>",
-                    configIncludeFiles.size()
-                ));
-                if (configIncludeFiles.size() > 0) {
-                    Logger.log(String.format("Config files: %s", PrettyCollection.get(configIncludeFiles)));
-                    serverFiles.putAll(configIncludeFiles);
-                }
+            if (manifest.directories.size() > 0) {
+                Logger.log(String.format("Managed files: %s", PrettyCollection.get(manifest.files)));
             }
 
             if (shouldPushClientOnlyFiles()) {
@@ -132,7 +111,11 @@ public class ServerSetup implements Runnable {
                     ));
                     if (clientOnlyFiles.size() > 0) {
                         Logger.log(String.format("Client only files: %s", PrettyCollection.get(clientOnlyFiles)));
-                        serverFiles.putAll(clientOnlyFiles);
+                        for (Map.Entry<String, String> clientFile : clientOnlyFiles.entrySet()) {
+                            manifest.files.add(
+                                new FileEntry(clientFile.getValue(), clientFile.getKey(), "mods")
+                            );
+                        }
                     }
                 }
             }

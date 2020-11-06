@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class ManifestEntry implements Serializable {
+public class FileEntry implements Serializable {
     /**
      * Where the file is on the server.
      */
@@ -22,7 +22,7 @@ public class ManifestEntry implements Serializable {
      */
     public final String redirectTo;
 
-    public ManifestEntry(String path, String hash, String mapping) {
+    public FileEntry(String path, String hash, String mapping) {
         this.path = path;
         this.hash = hash;
         this.redirectTo = mapping;
@@ -37,7 +37,7 @@ public class ManifestEntry implements Serializable {
 
     @Override
     public String toString() {
-        return "ManifestEntry{" +
+        return "FileEntry{" +
             "path='" + path + '\'' +
             ", hash='" + hash + '\'' +
             ", redirectTo='" + redirectTo + '\'' +
