@@ -7,7 +7,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
@@ -17,6 +19,7 @@ import java.io.IOException;
 public class PaneOptions extends GridPane {
 
     public PaneOptions(){
+        this.setAlignment(Pos.CENTER);
         this.setPadding(new Insets(10,10,10,10));
         /** CLIENT */
         Label labelClient = new Label("Client (Options by default):");
@@ -76,6 +79,20 @@ public class PaneOptions extends GridPane {
 
         //this.getChildren().addAll(labelServer);
 
+        /** CANCEL BUTTON */
+        Button btnCancel = new Button("Cancel");
+        btnCancel.getStyleClass().add("btn");
+        btnCancel.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                fieldAdress.setText(SyncConfig.getConfig().SERVER_IP );
+                fieldPort.setText(String.valueOf(SyncConfig.getConfig().SERVER_PORT));
+                cbxRefuse.setSelected(SyncConfig.getConfig().REFUSE_CLIENT_MODS);
+            }
+        });
+        this.setRowIndex(btnCancel, 6);
+        this.setColumnIndex(btnCancel, 0);
+        this.setHalignment(btnCancel, HPos.RIGHT);
+
         /** SAVE BUTTON */
         Button btnSave = new Button("Save");
         btnSave.getStyleClass().add("btn");
@@ -93,7 +110,7 @@ public class PaneOptions extends GridPane {
                     try {
                         JsonConfig.saveClient(ConfigLoader.v2ClientConfig);
                         updateLogsArea("Options saved");
-                        btnSave.setDisable(true);
+                        //btnSave.setDisable(true);
                     } catch (IOException ioException) {
                         updateLogsArea(ioException.toString());
                     }
@@ -104,7 +121,7 @@ public class PaneOptions extends GridPane {
         this.setRowIndex(btnSave, 6);
         this.setColumnIndex(btnSave, 1);
 
-        this.getChildren().addAll(btnSave);
+        this.getChildren().addAll(btnCancel, btnSave);
     }
     public void updateLogsArea(String text) {
         Gui_JavaFX.getStackMainPane().getPaneLogs().updateLogsArea(text);
