@@ -1,10 +1,14 @@
 package com.superzanti.serversync.config;
 
 import com.superzanti.serversync.ServerSync;
+import com.superzanti.serversync.files.DirectoryEntry;
+import com.superzanti.serversync.files.EDirectoryMode;
 import com.superzanti.serversync.files.FileRedirect;
+import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.EServerMode;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -26,7 +30,10 @@ public class SyncConfig {
     // SERVER //////////////////////////////
     public int SERVER_PORT = 38067;
     public Boolean PUSH_CLIENT_MODS = false;
-    public List<String> DIRECTORY_INCLUDE_LIST = Collections.singletonList("mods");
+    public List<DirectoryEntry> DIRECTORY_INCLUDE_LIST = Collections.singletonList(new DirectoryEntry(
+        "mods",
+        EDirectoryMode.mirror
+    ));
     public List<FileRedirect> REDIRECT_FILES_LIST = new ArrayList<>();
     public int SYNC_MODE = 2;
     ////////////////////////////////////////
@@ -66,6 +73,11 @@ public class SyncConfig {
     public void updateServerDetails(String ip, int port) {
         SERVER_IP = ip;
         SERVER_PORT = port;
-        System.out.println("NOT IMPLEMENTED!");
+        try {
+            ConfigLoader.save(EConfigType.CLIENT);
+        } catch (IOException e) {
+            Logger.error("Failed to save last used server details to client config file");
+            Logger.debug(e);
+        }
     }
 }

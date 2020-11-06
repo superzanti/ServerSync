@@ -46,6 +46,15 @@ public class ConfigLoader {
         throw new IOException(String.format("Unhandled config type given: %s", type));
     }
 
+    public static void save(EConfigType type) throws IOException {
+        if (EConfigType.SERVER.equals(type)) {
+            JsonConfig.saveServer(v2ServerConfig);
+        }
+        if (EConfigType.CLIENT.equals(type)) {
+            JsonConfig.saveClient(v2ClientConfig);
+        }
+    }
+
     private static void createConfig(EConfigType type) throws IOException {
         if (EConfigType.SERVER.equals(type)) {
             Files.createDirectories(v2ServerConfig.getParent());

@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileManifest implements Serializable {
-    public List<String> directories = new ArrayList<>();
+    public List<DirectoryEntry> directories = new ArrayList<>();
     /**
      * The files that the server wants to manage.
      */
-    public List<ManifestEntry> entries = new ArrayList<>();
+    public List<FileEntry> files = new ArrayList<>();
 }

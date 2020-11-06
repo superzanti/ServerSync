@@ -3,7 +3,7 @@ package com.superzanti.serversync.server;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.files.FileManifest;
-import com.superzanti.serversync.files.ManifestEntry;
+import com.superzanti.serversync.files.FileEntry;
 import com.superzanti.serversync.communication.response.ServerInfo;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.LoggerNG;
@@ -147,7 +147,7 @@ public class ServerWorker implements Runnable {
                  */
                 if (matchMessage(message, EServerMessage.UPDATE_FILE)) {
                     try {
-                        ManifestEntry entry = (ManifestEntry) ois.readObject();
+                        FileEntry entry = (FileEntry) ois.readObject();
                         Path theFile = new PathBuilder().add(entry.path).toPath();
                         if (Files.exists(theFile)) {
                             oos.writeBoolean(true);
@@ -175,8 +175,8 @@ public class ServerWorker implements Runnable {
                     // Client: yes | no
                     // -- (yes) - skip to next file
                     // -- (no) - send filesize -> send file
-                    if (manifest.entries.size() > 0) {
-                        for (ManifestEntry entry : manifest.entries) {
+                    if (manifest.files.size() > 0) {
+                        for (FileEntry entry : manifest.files) {
                             try {
                                 Path relative = Paths.get(entry.path);
                                 Path serverPath = ServerSync.rootDir.resolve(relative);
@@ -231,7 +231,7 @@ public class ServerWorker implements Runnable {
                 // <---->
                 // how many files are managed by the server?
                 if (matchMessage(message, EServerMessage.GET_NUMBER_OF_MANAGED_FILES)) {
-                    oos.writeInt(manifest.entries.size());
+                    oos.writeInt(manifest.files.size());
                     oos.flush();
                     continue;
                 }

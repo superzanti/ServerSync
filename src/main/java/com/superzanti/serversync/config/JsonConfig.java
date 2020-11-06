@@ -1,6 +1,8 @@
 package com.superzanti.serversync.config;
 
 import com.eclipsesource.json.*;
+import com.superzanti.serversync.files.DirectoryEntry;
+import com.superzanti.serversync.files.EDirectoryMode;
 import com.superzanti.serversync.files.FileRedirect;
 
 import java.io.IOException;
@@ -51,9 +53,12 @@ public class JsonConfig {
                 .map(v -> {
                     if (v.isObject()) {
                         // TODO ditching mode for now as we are not using it
-                        return v.asObject().get("name").asString();
+                        return new DirectoryEntry(
+                            v.asObject().get("path").asString(),
+                            EDirectoryMode.valueOf(v.asObject().get("mode").asString().toLowerCase())
+                        );
                     }
-                    return v.asString();
+                    return new DirectoryEntry(v.asString(), EDirectoryMode.mirror);
                 })
                 .collect(Collectors.toList());
 
@@ -134,7 +139,9 @@ public class JsonConfig {
 
         JsonObject rules = new JsonObject();
         JsonArray dirIncludeList = new JsonArray();
-        config.DIRECTORY_INCLUDE_LIST.forEach(dirIncludeList::add);
+        config.DIRECTORY_INCLUDE_LIST.forEach(d -> {
+            dirIncludeList.add(d.toJson());
+        });
         rules.add(PROP_DIRECTORY_INCLUDE_LIST, dirIncludeList);
         JsonArray fileIgnoreList = new JsonArray();
         config.FILE_IGNORE_LIST.forEach(fileIgnoreList::add);
