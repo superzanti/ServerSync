@@ -151,3 +151,15 @@ green
 {
     -fx-base: -fx-primary;
 }
+
+/*Progress bar*/
+
+.progress-bar .track{
+    -fx-background-color: -fx-secondarytext;
+    -fx-background-insets: 2;
+}
+.progress-bar .bar{
+    -fx-background-color: -fx-secondary;
+    -fx-background-insets: 2;
+    -fx-padding: 0.40em;
+}

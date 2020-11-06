@@ -3,6 +3,7 @@ package com.superzanti.serversync.GUIJavaFX;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.config.Mod;
 import com.superzanti.serversync.config.SyncConfig;
+import com.superzanti.serversync.util.enums.Valid;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -112,6 +113,21 @@ public class PaneSync extends BorderPane {
             table.getColumns().addAll(colFileName, colOutdated, colIgnored);
 
             table.setItems(observMods);
+            table.setRowFactory(tv -> new TableRow<Mod>() {
+                @Override
+                public void updateItem(Mod item, boolean empty) {
+                    super.updateItem(item, empty) ;
+                    if (item == null) {
+                        setStyle("");
+                    } else if (item.getValidValue() == Valid.INVALID) {
+                        setStyle("-fx-background-color: #db5461;");
+                    } else if (item.getValidValue() == Valid.OUTDATED) {
+                        setStyle("-fx-background-color: #dfa06e;");
+                    } else {
+                        setStyle("-fx-background-color: #86ba90;");;
+                    }
+                }
+            });
 
         }
 
