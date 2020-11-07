@@ -8,6 +8,7 @@ import com.superzanti.serversync.util.PrettyCollection;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -28,6 +29,10 @@ public class FileManager {
     }
 
     // New version of sync process
+
+    public static Map<String, String> getDiffableFilesFromDirectory(String dir) throws IOException {
+        return getDiffableFilesFromDirectories(Collections.singletonList(dir));
+    }
 
     /**
      * Get all of the **files** present in the list of directories as a diffable map for file comparison.

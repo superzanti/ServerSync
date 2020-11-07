@@ -101,8 +101,8 @@ public class ServerSetup implements Runnable {
                     ));
                     Files.createDirectories(FileManager.clientOnlyFilesDirectory);
                 } else {
-                    Map<String, String> clientOnlyFiles = FileManager.getDiffableFilesFromDirectories(
-                        Collections.singletonList(FileManager.clientOnlyFilesDirectoryName)
+                    Map<String, String> clientOnlyFiles = FileManager.getDiffableFilesFromDirectory(
+                        FileManager.clientOnlyFilesDirectoryName
                     );
                     Logger.log(String.format(
                         "Found %d files in %s",
@@ -110,12 +110,12 @@ public class ServerSetup implements Runnable {
                         FileManager.clientOnlyFilesDirectoryName
                     ));
                     if (clientOnlyFiles.size() > 0) {
-                        Logger.log(String.format("Client only files: %s", PrettyCollection.get(clientOnlyFiles)));
-                        for (Map.Entry<String, String> clientFile : clientOnlyFiles.entrySet()) {
-                            manifest.files.add(
-                                new FileEntry(clientFile.getValue(), clientFile.getKey(), "mods")
-                            );
-                        }
+                        List<FileEntry> cfe = clientOnlyFiles
+                            .entrySet().stream()
+                            .map(f -> new FileEntry(f.getKey(), f.getValue(), "mods"))
+                            .collect(Collectors.toList());
+                        Logger.log(String.format("Client only files: %s", PrettyCollection.get(cfe)));
+                        manifest.files.addAll(cfe);
                     }
                 }
             }

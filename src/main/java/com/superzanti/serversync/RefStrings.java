@@ -3,7 +3,7 @@ package com.superzanti.serversync;
 public class RefStrings {
     public static final String MODID = "com.superzanti.serversync";
     public static final String NAME = "ServerSync";
-    public static final String VERSION = "3.7.0-alpha.3";
+    public static final String VERSION = "3.7.0-alpha.4";
 
     public static final String ERROR_TOKEN = "<E>";
     public static final String DELETE_TOKEN = "<D>";
