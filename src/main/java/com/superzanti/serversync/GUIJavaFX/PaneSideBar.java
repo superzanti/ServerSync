@@ -3,49 +3,58 @@ package com.superzanti.serversync.GUIJavaFX;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.Button;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.SVGPath;
 
 public class PaneSideBar extends VBox {
+    String svgPathSync = "M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z";
+    String svgPathLogs = "M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z";
+    String svgPathBuild = "M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z";
+
     public PaneSideBar(){
-        Button btnSync = new Button("Sync");
+        SVGPath svgSync = new SVGPath();
+        svgSync.setContent(svgPathSync);
+        svgSync.getStyleClass().add("sidebar-icon");
+        svgSync.setScaleX(1.25);
+        svgSync.setScaleY(1.25);
+
+        Button btnSync = new Button(" Sync");
         btnSync.setPrefWidth(125);
         btnSync.getStyleClass().add("sidebar-button");
-        Image syncIcon = new Image(getClass().getResourceAsStream("/sidebar/sync_blue.png"));
-        ImageView syncIconView = new ImageView(syncIcon);
-        syncIconView.setFitHeight(18);
-        syncIconView.setFitWidth(18);
-        syncIconView.getStyleClass().add("sidebar-icon");
-        btnSync.setGraphic(syncIconView);
+        btnSync.setGraphic(svgSync);
         btnSync.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
                 Gui_JavaFX.getStackMainPane().displayPanel(0);
             }
         });
 
+        SVGPath svgLogs = new SVGPath();
+        svgLogs.setContent(svgPathLogs);
+        svgLogs.getStyleClass().add("sidebar-icon");
+        svgLogs.setScaleX(0.9);
+        svgLogs.setScaleY(0.9);
+
         Button btnLogs = new Button("Logs");
         btnLogs.setPrefWidth(125);
         btnLogs.getStyleClass().add("sidebar-button");
-        Image logsIcon = new Image(getClass().getResourceAsStream("/sidebar/desktop_blue.png"));
-        ImageView logsIconView = new ImageView(logsIcon);
-        logsIconView.setFitHeight(18);
-        logsIconView.setFitWidth(18);
-        btnLogs.setGraphic(logsIconView);
+        btnLogs.setGraphic(svgLogs);
         btnLogs.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
                 Gui_JavaFX.getStackMainPane().displayPanel(1);
             }
         });
 
+
+        SVGPath svgOptions = new SVGPath();
+        svgOptions.setContent(svgPathBuild);
+        svgOptions.getStyleClass().add("sidebar-icon");
+        svgOptions.setScaleX(0.9);
+        svgOptions.setScaleY(0.9);
+
         Button btnOptions = new Button("Options");
         btnOptions.setPrefWidth(125);
         btnOptions.getStyleClass().add("sidebar-button");
-        Image optionsIcon = new Image(getClass().getResourceAsStream("/sidebar/build_blue.png"));
-        ImageView optionsIconView = new ImageView(optionsIcon);
-        optionsIconView.setFitHeight(18);
-        optionsIconView.setFitWidth(18);
-        btnOptions.setGraphic(optionsIconView);
+        btnOptions.setGraphic(svgOptions);
         btnOptions.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
                 Gui_JavaFX.getStackMainPane().displayPanel(2);

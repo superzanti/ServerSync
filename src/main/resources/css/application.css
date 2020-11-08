@@ -8,17 +8,16 @@ green
 -bg-secondary: #008000;
 */
 * {
-
+    -fx-primary : #2A2E37; /* Color background */
+    -fx-secondary : #4DB3B3; /* Color button/border/progressbar */
+    -fx-sidebar-primary: #23232e; /* Color background for the sidebar*/
+    -fx-primarytext : #B2B2B2;
+    -fx-secondarytext: #b6b6b6;
 }
 .root {
     -fx-background-color: -fx-primary;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
-    -fx-primary : #2A2E37;
-    -fx-secondary : #4DB3B3;
-    -fx-primarytext : #B2B2B2;
-    -fx-secondarytext: #b6b6b6;
-    -fx-sidebar-primary: #23232e;
 }
 .sidebar-button {
     -fx-background-color: -fx-sidebar-primary;
@@ -28,7 +27,9 @@ green
     -fx-alignment: center-left;
     -fx-font-size: 16px;
 }
-
+.sidebar-icon {
+    -fx-fill: -fx-secondary;
+}
 .sidebar-button:hover {
     -fx-background-color: derive(-fx-sidebar-primary, -60%);
     -fx-text-fill: derive(-fx-secondarytext, 60%);
