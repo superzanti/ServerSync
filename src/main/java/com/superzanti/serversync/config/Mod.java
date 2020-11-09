@@ -27,10 +27,9 @@ public class Mod{
         this.name = name;
     }
 
-    public EValid getValidValue() {
-        return validValue;
+    public String getValidValue() {
+        return validValue.toString();
     }
-
     public void setValidValue(EValid validValue) {
         this.validValue = validValue;
     }

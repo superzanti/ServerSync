@@ -100,33 +100,40 @@ public class PaneSync extends BorderPane {
             TableColumn<Mod, String> colOutdated = new TableColumn("Outdated");
             TableColumn<Mod, Boolean> colIgnored = new TableColumn("Ignored");
 
-            colFileName.prefWidthProperty().bind(table.widthProperty().multiply(0.5));
+            colFileName.prefWidthProperty().bind(table.widthProperty().multiply(0.7));
             colFileName.setCellValueFactory(
                     new PropertyValueFactory<>("name"));
-            colOutdated.prefWidthProperty().bind(table.widthProperty().multiply(0.3));
+            colOutdated.prefWidthProperty().bind(table.widthProperty().multiply(0.2));
             colOutdated.setCellValueFactory(
                     new PropertyValueFactory<>("validValue"));
             colIgnored.prefWidthProperty().bind(table.widthProperty().multiply(0.2));
             colIgnored.setCellValueFactory(
                     new PropertyValueFactory<>("ignoreValue"));
 
-            table.getColumns().addAll(colFileName, colOutdated, colIgnored);
-
+            table.getColumns().addAll(colFileName, colOutdated);
+            table.setSelectionModel(null);
             table.setItems(observMods);
-            table.setRowFactory(tv -> new TableRow<Mod>() {
-                @Override
-                public void updateItem(Mod item, boolean empty) {
-                    super.updateItem(item, empty) ;
-                    if (item == null) {
-                        setStyle("");
-                    } else if (item.getValidValue() == EValid.INVALID) {
-                        setStyle("-fx-background-color: #db5461;");
-                    } else if (item.getValidValue() == EValid.OUTDATED) {
-                        setStyle("-fx-background-color: #dfa06e;");
-                    } else {
-                        setStyle("-fx-background-color: #86ba90;");;
+            colOutdated.setCellFactory(tc -> {
+
+                TableCell<Mod, String> cell =new TableCell<Mod, String>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        setText(item);
+                        if (item == null) {
+                            setStyle("");
+                        } else if (item.equals(EValid.INVALID.toString())) {
+                            setStyle("-fx-text-fill: #db5461;");
+                        } else if (item.equals(EValid.OUTDATED.toString())) {
+                            setStyle("-fx-text-fill: #dfa06e;");
+                        } else if (item.equals(EValid.UPTODATE.toString())) {
+                            setStyle("-fx-text-fill: #86ba90;");
+                        }else {
+                            setStyle("");
+                        }
                     }
-                }
+                };
+                return cell ;
             });
 
         }

@@ -27,6 +27,7 @@ public class Mode2Sync implements Runnable {
     public void run() {
         FileManifest manifest = server.fetchManifest();
 
+        Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().clear();
         Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(0);
         double n = manifest.entries.size();
         double count = 0;
