@@ -48,10 +48,12 @@ public class Mode2Sync implements Runnable {
 
                 if (entry.hash.equals(hash)) {
                     Logger.debug("File already exists");
-                    return;
+                }else{
+                    server.updateIndividualFile(entry, file);
                 }
+            }else{
+                server.updateIndividualFile(entry, file);
             }
-            server.updateIndividualFile(entry, file);
 
             Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().add(new Mod(entry.path, EValid.UPTODATE,false));
 
