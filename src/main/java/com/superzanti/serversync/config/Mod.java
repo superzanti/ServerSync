@@ -1,16 +1,22 @@
 package com.superzanti.serversync.config;
 
-import com.superzanti.serversync.util.enums.Valid;
+import com.superzanti.serversync.util.enums.EValid;
 
 public class Mod{
 
     private String name;
-    private Valid validValue;
+    private EValid validValue;
     private boolean ignoreValue = false;
 
     public Mod(String name) {
         this.name = name;
-        this.validValue = Valid.DEFAULT;
+        this.validValue = EValid.INVALID;
+    }
+
+    public Mod(String name, EValid valid, Boolean b){
+        this.name=name;
+        this.validValue = valid;
+        this.ignoreValue = b;
     }
 
     public String getName() {
@@ -21,11 +27,11 @@ public class Mod{
         this.name = name;
     }
 
-    public Valid getValidValue() {
+    public EValid getValidValue() {
         return validValue;
     }
 
-    public void setValidValue(Valid validValue) {
+    public void setValidValue(EValid validValue) {
         this.validValue = validValue;
     }
 

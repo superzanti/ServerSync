@@ -3,7 +3,7 @@ package com.superzanti.serversync.GUIJavaFX;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.config.Mod;
 import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.util.enums.Valid;
+import com.superzanti.serversync.util.enums.EValid;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -119,9 +119,9 @@ public class PaneSync extends BorderPane {
                     super.updateItem(item, empty) ;
                     if (item == null) {
                         setStyle("");
-                    } else if (item.getValidValue() == Valid.INVALID) {
+                    } else if (item.getValidValue() == EValid.INVALID) {
                         setStyle("-fx-background-color: #db5461;");
-                    } else if (item.getValidValue() == Valid.OUTDATED) {
+                    } else if (item.getValidValue() == EValid.OUTDATED) {
                         setStyle("-fx-background-color: #dfa06e;");
                     } else {
                         setStyle("-fx-background-color: #86ba90;");;

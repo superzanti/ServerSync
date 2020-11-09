@@ -1,10 +1,12 @@
 package com.superzanti.serversync.client;
 
 import com.superzanti.serversync.GUIJavaFX.Gui_JavaFX;
+import com.superzanti.serversync.config.Mod;
 import com.superzanti.serversync.files.FileManifest;
 import com.superzanti.serversync.files.FileHash;
 import com.superzanti.serversync.files.ManifestEntry;
 import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.enums.EValid;
 import javafx.application.Platform;
 
 import java.nio.file.Files;
@@ -49,6 +51,8 @@ public class Mode2Sync implements Runnable {
                 }
             }
             server.updateIndividualFile(entry, file);
+
+            Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().add(new Mod(entry.path, EValid.UPTODATE,false));
 
             count++;
             Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);

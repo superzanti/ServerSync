@@ -7,7 +7,7 @@ import com.superzanti.serversync.files.FileHash;
 import com.superzanti.serversync.files.FileManifest;
 import com.superzanti.serversync.files.ManifestEntry;
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.enums.Valid;
+import com.superzanti.serversync.util.enums.EValid;
 import javafx.application.Platform;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,13 +53,13 @@ public class Mode3Sync implements  Runnable{
 
                 if (entry.hash.equals(hash)) {
 
-                    mod.setValidValue(Valid.UPTODATE);
+                    mod.setValidValue(EValid.UPTODATE);
                 }else{
 
-                    mod.setValidValue(Valid.OUTDATED);
+                    mod.setValidValue(EValid.OUTDATED);
                 }
             }else{
-                mod.setValidValue(Valid.INVALID);
+                mod.setValidValue(EValid.INVALID);
             }
 
             Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().add(mod);
