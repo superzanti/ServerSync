@@ -17,6 +17,8 @@ import javafx.scene.text.Font;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PaneOptions extends GridPane {
 
@@ -35,8 +37,9 @@ public class PaneOptions extends GridPane {
 
         ObservableList<? extends Serializable> themes =
                 FXCollections.observableArrayList(
-                        EThemes.DARK_CYAN.name(),
-                        EThemes.DARK_YELLOW.name()
+                        Stream.of(EThemes.values())
+                                .map(Enum::name)
+                                .collect(Collectors.toList())
                 );
         ComboBox comboBox = new ComboBox(themes);
         comboBox.getSelectionModel().select(0);
@@ -102,7 +105,9 @@ public class PaneOptions extends GridPane {
         btnCancel.getStyleClass().add("btn");
         btnCancel.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
-                Gui_JavaFX.root.setStyle(EThemes.DARK_YELLOW.toString());
+                fieldIp.setText(SyncConfig.getConfig().SERVER_IP);
+                fieldPort.setText(String.valueOf(SyncConfig.getConfig().SERVER_PORT));
+                cbxRefuse.setSelected(SyncConfig.getConfig().REFUSE_CLIENT_MODS);
             }
         });
         this.setRowIndex(btnCancel, 7);
