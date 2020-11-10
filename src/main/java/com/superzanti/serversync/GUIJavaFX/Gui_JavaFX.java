@@ -14,7 +14,7 @@ public class Gui_JavaFX extends Application {
     public void start(Stage primaryStage) throws Exception{
         root.setStyle(EThemes.DARK_CYAN.toString());
 
-        Scene scene = new Scene(root, 800,400);
+        Scene scene = new Scene(root, 1024,576);
         scene.getStylesheets().add(this.getClass().getResource("/css/application.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.setTitle(RefStrings.NAME+ " - " + RefStrings.VERSION);

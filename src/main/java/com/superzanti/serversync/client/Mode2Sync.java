@@ -32,6 +32,11 @@ public class Mode2Sync implements Runnable {
         double n = manifest.entries.size();
         double count = 0;
         for(ManifestEntry entry : manifest.entries){
+            Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);
+            Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText(entry.path);
+            Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setStatusText("Files updated : " +(int)count+"/"+(int)n);
+            Platform.runLater(() -> Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI());
+
             Path file = entry.resolvePath();
             Logger.debug(String.format("Starting check for file: %s", file));
             if (!entry.redirectTo.equals("")) {
@@ -58,9 +63,10 @@ public class Mode2Sync implements Runnable {
             Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().add(new Mod(entry.path, EValid.UPTODATE,false));
 
             count++;
-            Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);
-            Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setText(entry.path);
-            Platform.runLater(() -> Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().update());
         };
+        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);
+        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setStatusText("Files updated : " +(int)count+"/"+(int)n);
+        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText("Done!");
+        Platform.runLater(() -> Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI());
     }
 }

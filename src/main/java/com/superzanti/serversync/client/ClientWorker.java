@@ -52,7 +52,7 @@ public class ClientWorker implements Runnable {
                 Mode2Sync.forServer(server).run();
                 break;
             case 3:
-                Mode3Sync.forServer(server).run();
+                CheckUpdate.forServer(server).run();
                 break;
             default:
                 Logger.error(String.format("Unknown server mode: %d", serverInfo.syncMode));

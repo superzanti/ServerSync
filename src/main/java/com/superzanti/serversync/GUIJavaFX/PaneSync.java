@@ -174,6 +174,8 @@ public class PaneSync extends BorderPane {
                         config.SERVER_IP = ip;
                         config.SERVER_PORT = port;
                         updateLogsArea("Starting update process...");
+                        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText("Getting manifest...");
+                        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI();
                         new Thread(new ClientWorker()).start();
                     }else{
                         getBtnSync().setDisable(false);
@@ -202,6 +204,8 @@ public class PaneSync extends BorderPane {
                         config.SERVER_PORT = port;
                         updateLogsArea("Starting update process...");
                         SyncConfig.getConfig().SYNC_MODE = 3;
+                        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText("Getting manifest...");
+                        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI();
                         new Thread(new ClientWorker()).start();
                     }else{
                         getBtnSync().setDisable(false);

@@ -12,16 +12,16 @@ import javafx.application.Platform;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class Mode3Sync implements  Runnable{
+public class CheckUpdate implements  Runnable{
 
     private final ManifestServer server;
 
-    private Mode3Sync(ManifestServer server) {
+    private CheckUpdate(ManifestServer server) {
         this.server = server;
     }
 
-    public static Mode3Sync forServer(Server server) {
-        return new Mode3Sync(new ManifestServer(server));
+    public static CheckUpdate forServer(Server server) {
+        return new CheckUpdate(new ManifestServer(server));
     }
 
     @Override
@@ -34,6 +34,11 @@ public class Mode3Sync implements  Runnable{
         double count = 0;
         Mod mod = null;
         for(ManifestEntry entry : manifest.entries){
+            Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);
+            Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText(entry.path);
+            Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setStatusText("Files checked : " +(int)count+"/"+(int)n);
+            Platform.runLater(() -> Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI());
+
             Path file = entry.resolvePath();
             Logger.debug(String.format("Starting check for file: %s", file));
             if (!entry.redirectTo.equals("")) {
@@ -65,11 +70,11 @@ public class Mode3Sync implements  Runnable{
             Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().add(mod);
 
             count++;
-            Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);
-            Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setText(entry.path);
-            Platform.runLater(() -> Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().update());
         }
-
+        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);
+        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setStatusText("Files checked : " +(int)count+"/"+(int)n);
+        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText("Done!");
+        Platform.runLater(() -> Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI());
         SyncConfig.getConfig().SYNC_MODE = 2;
     }
 }
