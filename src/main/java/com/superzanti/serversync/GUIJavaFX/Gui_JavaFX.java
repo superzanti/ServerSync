@@ -3,8 +3,11 @@ package com.superzanti.serversync.GUIJavaFX;
 import com.superzanti.serversync.RefStrings;
 import com.superzanti.serversync.util.enums.EThemes;
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 public class Gui_JavaFX extends Application {
 
@@ -18,6 +21,13 @@ public class Gui_JavaFX extends Application {
         scene.getStylesheets().add(this.getClass().getResource("/css/application.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.setTitle(RefStrings.NAME+ " - " + RefStrings.VERSION);
+        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent t) {
+                Platform.exit();
+                System.exit(0);
+            }
+        });
         primaryStage.show();
     }
     public static StackMainMenu getStackMainPane() {
