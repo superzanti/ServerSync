@@ -32,7 +32,7 @@ public class CheckUpdate implements  Runnable{
         Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(0);
         double n = manifest.entries.size();
         double count = 0;
-        Mod mod = null;
+        Mod mod;
         for(ManifestEntry entry : manifest.entries){
             Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);
             Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText(entry.path);
