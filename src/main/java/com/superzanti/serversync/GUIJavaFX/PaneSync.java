@@ -111,7 +111,7 @@ public class PaneSync extends BorderPane {
                     new PropertyValueFactory<>("ignoreValue"));
 
             table.getColumns().addAll(colFileName, colOutdated);
-            table.setSelectionModel(null);
+
             table.setItems(observMods);
             colOutdated.setCellFactory(tc -> {
 

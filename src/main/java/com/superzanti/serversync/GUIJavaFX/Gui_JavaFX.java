@@ -12,7 +12,7 @@ public class Gui_JavaFX extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        root.setStyle(EThemes.DARK_CYAN.toString());
+        root.setStyle(EThemes.BLUE_YELLOW.toString());
 
         Scene scene = new Scene(root, 1024,576);
         scene.getStylesheets().add(this.getClass().getResource("/css/application.css").toExternalForm());
