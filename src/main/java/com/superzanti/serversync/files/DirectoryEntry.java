@@ -1,5 +1,8 @@
 package com.superzanti.serversync.files;
 
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
+
 import java.io.Serializable;
 
 public class DirectoryEntry implements Serializable {
@@ -11,7 +14,7 @@ public class DirectoryEntry implements Serializable {
         this.mode = mode;
     }
 
-    public String toJson() {
-        return String.format("{\"path\":\"%s\",\"mode\":\"%s\"}", path, mode);
+    public JsonObject toJson() {
+        return Json.object().add("path", path).add("mode", mode.toString());
     }
 }
