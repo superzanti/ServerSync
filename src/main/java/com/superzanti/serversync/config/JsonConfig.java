@@ -52,7 +52,6 @@ public class JsonConfig {
                 .stream()
                 .map(v -> {
                     if (v.isObject()) {
-                        // TODO ditching mode for now as we are not using it
                         return new DirectoryEntry(
                             v.asObject().get("path").asString(),
                             EDirectoryMode.valueOf(v.asObject().get("mode").asString().toLowerCase())
