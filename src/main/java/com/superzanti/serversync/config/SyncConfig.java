@@ -30,7 +30,7 @@ public class SyncConfig {
     // SERVER //////////////////////////////
     public int SERVER_PORT = 38067;
     public Boolean PUSH_CLIENT_MODS = false;
-    public List<String> FILE_INCLUDE_LIST = new ArrayList<>(Arrays.asList("mods/test-file.txt", "**/test-redirect-file.txt"));
+    public List<String> FILE_INCLUDE_LIST = new ArrayList<>();
     public List<DirectoryEntry> DIRECTORY_INCLUDE_LIST = Collections.singletonList(new DirectoryEntry(
         "mods",
         EDirectoryMode.mirror

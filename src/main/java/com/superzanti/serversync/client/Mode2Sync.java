@@ -70,6 +70,10 @@ public class Mode2Sync implements Runnable {
         for (DirectoryEntry dir : manifest.directories) {
             if (dir.mode == EDirectoryMode.mirror) {
                 Path dirPath = ServerSync.rootDir.resolve(dir.path);
+                if (Files.notExists(dirPath)) {
+                    // Can happen if a directory is configured to be managed but all of its files are ignored
+                    continue;
+                }
                 List<ActionEntry> dirActions = Files
                     .walk(dirPath)
                     .filter(f -> !Files.isDirectory(f) && !files.contains(f))
@@ -89,8 +93,6 @@ public class Mode2Sync implements Runnable {
         }
         return actions;
     }
-
-    // TODO need a dry run or generate actions map for the new UI
 
     @Override
     public void run() {
@@ -114,7 +116,6 @@ public class Mode2Sync implements Runnable {
 
                     if (entry.hash.equals(hash)) {
                         Logger.debug("File already exists");
-                        return;
                     }
                 }
 

@@ -65,6 +65,7 @@ public class ServerSetup implements Runnable {
 
         List<String> includeMap = filtered
             .stream()
+            // optional get can never be missing as we have just filtered the list by matching patterns
             .map(f -> String.format("%s, Pattern: %s", f.toString(), Glob.getPattern(f, config.FILE_INCLUDE_LIST).get()))
             .collect(Collectors.toList());
         Logger.debug(String.format("Included files: %s", PrettyCollection.get(includeMap)));
@@ -72,6 +73,7 @@ public class ServerSetup implements Runnable {
         List<String> excludeMap = included
             .stream()
             .filter(f -> Glob.matches(f, config.FILE_IGNORE_LIST))
+            // optional get can never be missing as we have just filtered the list by matching patterns
             .map(f -> String.format("%s, Pattern: %s", f.toString(), Glob.getPattern(f, config.FILE_IGNORE_LIST).get()))
             .collect(Collectors.toList());
         Logger.debug(String.format("Ignored files: %s", PrettyCollection.get(excludeMap)));
