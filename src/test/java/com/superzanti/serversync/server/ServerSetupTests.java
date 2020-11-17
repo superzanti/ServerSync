@@ -26,11 +26,11 @@ public class ServerSetupTests {
         config.PUSH_CLIENT_MODS = false;
     }
 
-    @Test
-    @DisplayName("Construction")
-    void construction() {
-        ServerSetup setup = new ServerSetup();
-    }
+//    @Test
+//    @DisplayName("Construction")
+//    void construction() {
+////        ServerSetup setup = new ServerSetup();
+//    }
 
     @Test
     @DisplayName("Questions")
