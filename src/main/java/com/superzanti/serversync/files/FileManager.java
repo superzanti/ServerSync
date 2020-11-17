@@ -21,10 +21,6 @@ public class FileManager {
     public static final Path clientOnlyFilesDirectory = new PathBuilder().add(FileManager.clientOnlyFilesDirectoryName).toPath();
     public static final Path logsDirectory = new PathBuilder().add("logs").toPath();
 
-    static {
-        Logger.debug(String.format("root dir: %s", ServerSync.rootDir.toAbsolutePath().toString()));
-    }
-
     private FileManager() {
     }
 
