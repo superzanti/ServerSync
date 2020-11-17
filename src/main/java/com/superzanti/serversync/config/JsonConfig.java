@@ -24,9 +24,11 @@ public class JsonConfig {
     private static final String PROP_SYNC_MODE = "sync_mode";
     private static final String PROP_PORT = "port";
     private static final String PROP_ADDRESS = "address";
-    private static final String PROP_DIRECTORY_INCLUDE_LIST = "directory_include_list";
-    private static final String PROP_FILE_IGNORE_LIST = "file_ignore_list";
-    private static final String PROP_FILE_REDIRECT_LIST = "redirect_files";
+    private static final String PROP_DIRECTORIES = "directories";
+    private static final String PROP_FILES = "files";
+    private static final String PROP_FILES_INCLUDE = "include";
+    private static final String PROP_FILES_IGNORE = "ignore";
+    private static final String PROP_FILES_REDIRECT = "redirect";
     private static final String PROP_LOCALE = "locale";
 
     public static void forServer(Path json) throws IOException {
@@ -46,7 +48,7 @@ public class JsonConfig {
             config.SYNC_MODE = getInt(general, PROP_SYNC_MODE);
             config.SERVER_PORT = getInt(connection, PROP_PORT);
 
-            JsonArray directoryIncludeList = getArray(rules, PROP_DIRECTORY_INCLUDE_LIST);
+            JsonArray directoryIncludeList = getArray(rules, PROP_DIRECTORIES);
             config.DIRECTORY_INCLUDE_LIST = directoryIncludeList
                 .values()
                 .stream()
@@ -61,8 +63,8 @@ public class JsonConfig {
                 })
                 .collect(Collectors.toList());
 
-            JsonArray fileIgnoreList = getArray(rules, PROP_FILE_IGNORE_LIST);
-            config.FILE_IGNORE_LIST = fileIgnoreList
+            JsonObject files = getObject(rules, PROP_FILES);
+            config.FILE_INCLUDE_LIST = getArray(files, PROP_FILES_INCLUDE)
                 .values()
                 .stream()
                 .map(v -> {
@@ -73,9 +75,18 @@ public class JsonConfig {
                     return v.asString();
                 })
                 .collect(Collectors.toList());
-
-            JsonArray fileRedirectList = getArray(rules, PROP_FILE_REDIRECT_LIST);
-            config.REDIRECT_FILES_LIST = fileRedirectList
+            config.FILE_IGNORE_LIST = getArray(files, PROP_FILES_IGNORE)
+                .values()
+                .stream()
+                .map(v -> {
+                    if (v.isObject()) {
+                        // Ditching description as we don't use it for anything
+                        return v.asObject().get("pattern").asString();
+                    }
+                    return v.asString();
+                })
+                .collect(Collectors.toList());
+            config.REDIRECT_FILES_LIST = getArray(files, PROP_FILES_REDIRECT)
                 .values()
                 .stream()
                 .map(v -> FileRedirect.from(v.asObject()))
@@ -104,8 +115,8 @@ public class JsonConfig {
             config.SERVER_IP = getString(connection, PROP_ADDRESS);
             config.SERVER_PORT = getInt(connection, PROP_PORT);
 
-            JsonArray fileIgnoreList = getArray(rules, PROP_FILE_IGNORE_LIST);
-            config.FILE_IGNORE_LIST = fileIgnoreList
+            JsonObject files = getObject(rules, PROP_FILES);
+            config.FILE_IGNORE_LIST = getArray(files, PROP_FILES_IGNORE)
                 .values()
                 .stream()
                 .map(v -> {
@@ -141,13 +152,18 @@ public class JsonConfig {
         config.DIRECTORY_INCLUDE_LIST.forEach(d -> {
             dirIncludeList.add(d.toJson());
         });
-        rules.add(PROP_DIRECTORY_INCLUDE_LIST, dirIncludeList);
+        rules.add(PROP_DIRECTORIES, dirIncludeList);
+        JsonObject files = new JsonObject();
+        JsonArray fileIncludeList = new JsonArray();
         JsonArray fileIgnoreList = new JsonArray();
+        JsonArray fileRedirectList = new JsonArray();
+        config.FILE_INCLUDE_LIST.forEach(fileIncludeList::add);
         config.FILE_IGNORE_LIST.forEach(fileIgnoreList::add);
-        rules.add(PROP_FILE_IGNORE_LIST, fileIgnoreList);
-        JsonArray redirectFilesList = new JsonArray();
-        config.REDIRECT_FILES_LIST.forEach(f -> redirectFilesList.add(f.toJson()));
-        rules.add(PROP_FILE_REDIRECT_LIST, redirectFilesList);
+        config.REDIRECT_FILES_LIST.forEach(f -> fileRedirectList.add(f.toJson()));
+        files.add(PROP_FILES_INCLUDE, fileIncludeList);
+        files.add(PROP_FILES_IGNORE, fileIgnoreList);
+        files.add(PROP_FILES_REDIRECT, fileRedirectList);
+        rules.add(PROP_FILES, files);
         root.add(CAT_RULES, rules);
 
         JsonObject misc = new JsonObject();
@@ -172,9 +188,11 @@ public class JsonConfig {
         root.add(CAT_CONNECTION, connection);
 
         JsonObject rules = new JsonObject();
+        JsonObject files = new JsonObject();
         JsonArray fileIgnoreList = new JsonArray();
         config.FILE_IGNORE_LIST.forEach(fileIgnoreList::add);
-        rules.add(PROP_FILE_IGNORE_LIST, fileIgnoreList);
+        files.add(PROP_FILES_IGNORE, fileIgnoreList);
+        rules.add(PROP_FILES, files);
         root.add(CAT_RULES, rules);
 
         JsonObject misc = new JsonObject();
@@ -241,5 +259,16 @@ public class JsonConfig {
             throw new IOException(String.format("Invalid value for %s, expected array", name));
         }
         return jsv.asArray();
+    }
+
+    private static JsonObject getObject(JsonObject root, String name) throws IOException {
+        JsonValue jsv = root.get(name);
+        if (jsv.isNull()) {
+            throw new IOException(String.format("No %s value present in configuration file", name));
+        }
+        if (!jsv.isObject()) {
+            throw new IOException(String.format("Invalid value for %s, expected object", name));
+        }
+        return jsv.asObject();
     }
 }

@@ -22,6 +22,12 @@ public class FileEntry implements Serializable {
      */
     public final String redirectTo;
 
+    public FileEntry(String path, String hash) {
+        this.path = path;
+        this.hash = hash;
+        this.redirectTo = "";
+    }
+
     public FileEntry(String path, String hash, String mapping) {
         this.path = path;
         this.hash = hash;

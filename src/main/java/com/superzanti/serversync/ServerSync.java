@@ -71,6 +71,7 @@ public class ServerSync implements Callable<Integer> {
     }
 
     private void commonInit() {
+        Logger.debug(String.format("Root dir: %s", ServerSync.rootDir));
         Locale locale = SyncConfig.getConfig().LOCALE;
         if (languageCode != null) {
             String[] lParts = languageCode.split("[_-]");
