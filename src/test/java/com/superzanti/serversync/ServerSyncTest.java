@@ -1,7 +1,7 @@
 package com.superzanti.serversync;
 
 class ServerSyncTest {
-
+// These are crashing github workflows due to the system exit calls in main
 //    final String TEST_ADDRESS = "test-address";
 //    final int TEST_PORT = 1234;
 //    final SyncConfig config;
