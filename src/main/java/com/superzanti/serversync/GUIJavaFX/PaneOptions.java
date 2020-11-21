@@ -20,20 +20,23 @@ import java.io.Serializable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+// GUI of options
 public class PaneOptions extends GridPane {
 
-    public PaneOptions(){
+    public PaneOptions() {
         this.setAlignment(Pos.CENTER);
-        this.setPadding(new Insets(10,10,10,10));
-        /** CLIENT */
+        this.setPadding(new Insets(10, 10, 10, 10));
+
+        /* CLIENT */
+        /* CLIENT -> Themes*/
         Label labelClient = new Label("Client (Options by default):");
         labelClient.setFont(new Font("Arial", 16));
-        this.setRowIndex(labelClient, 0);
-        this.setColumnIndex(labelClient, 0);
+        setRowIndex(labelClient, 0);
+        setColumnIndex(labelClient, 0);
 
         Label labelTheme = new Label("Theme: ");
-        this.setRowIndex(labelTheme, 1);
-        this.setColumnIndex(labelTheme, 0);
+        setRowIndex(labelTheme, 1);
+        setColumnIndex(labelTheme, 0);
 
         ObservableList<? extends Serializable> themes =
                 FXCollections.observableArrayList(
@@ -45,83 +48,85 @@ public class PaneOptions extends GridPane {
         comboBox.getSelectionModel().select(0);
         comboBox.valueProperty().addListener((obs, oldItem, newItem) -> {
             for (EThemes theme : EThemes.values()) {
-                if(newItem == theme.name()){
-                    Gui_JavaFX.root.setStyle(theme.toString());
+                if (newItem == theme.name()) {
+                    Gui_JavaFX.getStackMainPane().setStyle(theme.toString());
                     break;
                 }
             }
         });
-        this.setRowIndex(comboBox, 1);
-        this.setColumnIndex(comboBox, 1);
+        setRowIndex(comboBox, 1);
+        setColumnIndex(comboBox, 1);
 
-        this.getChildren().addAll(labelTheme,comboBox);
+        this.getChildren().addAll(labelTheme, comboBox);
 
+        /* CLIENT -> IP*/
         Label labelIp = new Label("IP: ");
-        this.setRowIndex(labelIp, 2);
-        this.setColumnIndex(labelIp, 0);
+        setRowIndex(labelIp, 2);
+        setColumnIndex(labelIp, 0);
 
         TextField fieldIp = new TextField();
         fieldIp.setText(SyncConfig.getConfig().SERVER_IP);
-        this.setRowIndex(fieldIp, 2);
-        this.setColumnIndex(fieldIp, 1);
+        setRowIndex(fieldIp, 2);
+        setColumnIndex(fieldIp, 1);
 
+        /* CLIENT -> PORT*/
         Label labelPort = new Label("Port: ");
-        this.setRowIndex(labelPort, 3);
-        this.setColumnIndex(labelPort, 0);
+        setRowIndex(labelPort, 3);
+        setColumnIndex(labelPort, 0);
 
         TextField fieldPort = new TextField();
         fieldPort.setText(String.valueOf(SyncConfig.getConfig().SERVER_PORT));
-        this.setRowIndex(fieldPort, 3);
-        this.setColumnIndex(fieldPort, 1);
+        setRowIndex(fieldPort, 3);
+        setColumnIndex(fieldPort, 1);
 
+        /* CLIENT -> Refuse client mods*/
         Label labelRefuse = new Label("Refuse client mods: ");
-        this.setRowIndex(labelRefuse, 4);
-        this.setColumnIndex(labelRefuse, 0);
+        setRowIndex(labelRefuse, 4);
+        setColumnIndex(labelRefuse, 0);
 
         CheckBox cbxRefuse = new CheckBox();
-        if(SyncConfig.getConfig().REFUSE_CLIENT_MODS){
-            cbxRefuse.setSelected(true);
-        }else{
-            cbxRefuse.setSelected(false);
-        }
-        this.setRowIndex(cbxRefuse, 4);
-        this.setColumnIndex(cbxRefuse, 1);
+        cbxRefuse.setSelected(SyncConfig.getConfig().REFUSE_CLIENT_MODS);
+        setRowIndex(cbxRefuse, 4);
+        setColumnIndex(cbxRefuse, 1);
 
+        /* CLIENT -> Ignore list*/
         Label labelIgnore = new Label("Ignore list: ");
-        this.setRowIndex(labelIgnore, 5);
-        this.setColumnIndex(labelIgnore, 0);
+        setRowIndex(labelIgnore, 5);
+        setColumnIndex(labelIgnore, 0);
 
         ListView<String> ignoreList = new ListView<String>();
-        ObservableList<String> items = FXCollections.observableArrayList (SyncConfig.getConfig().FILE_IGNORE_LIST);
+        ObservableList<String> items = FXCollections.observableArrayList(SyncConfig.getConfig().FILE_IGNORE_LIST);
         ignoreList.setItems(items);
-        this.setRowIndex(ignoreList, 6);
-        this.setColumnIndex(ignoreList, 0);
+        setRowIndex(ignoreList, 6);
+        setColumnIndex(ignoreList, 0);
 
         this.getChildren().addAll(labelClient, labelIp, labelPort, labelRefuse, cbxRefuse, fieldIp, fieldPort);
         this.getChildren().addAll(labelIgnore, ignoreList);
 
-        /** CANCEL BUTTON */
+        /* CANCEL BUTTON */
         Button btnCancel = new Button("Cancel");
         btnCancel.getStyleClass().add("btn");
         btnCancel.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent e) {
+            @Override
+            public void handle(ActionEvent e) {
                 fieldIp.setText(SyncConfig.getConfig().SERVER_IP);
                 fieldPort.setText(String.valueOf(SyncConfig.getConfig().SERVER_PORT));
                 cbxRefuse.setSelected(SyncConfig.getConfig().REFUSE_CLIENT_MODS);
             }
         });
-        this.setRowIndex(btnCancel, 7);
-        this.setColumnIndex(btnCancel, 0);
-        this.setHalignment(btnCancel, HPos.RIGHT);
+        setRowIndex(btnCancel, 7);
+        setColumnIndex(btnCancel, 0);
+        setHalignment(btnCancel, HPos.RIGHT);
 
-        /** SAVE BUTTON */
+        /* SAVE BUTTON */
         Button btnSave = new Button("Save");
         btnSave.getStyleClass().add("btn");
         btnSave.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent e) {
+            @Override
+            public void handle(ActionEvent e) {
                 int port = Integer.parseInt(fieldPort.getText());
                 String ip = fieldIp.getText();
-                if(Gui_JavaFX.getStackMainPane().getPaneSync().setPort(port)){
+                if (Gui_JavaFX.getStackMainPane().getPaneSync().setPort(port)) {
                     Gui_JavaFX.getStackMainPane().getPaneSync().setIPAddress(ip);
 
                     SyncConfig.getConfig().SERVER_IP = ip;
@@ -139,11 +144,12 @@ public class PaneOptions extends GridPane {
             }
         });
 
-        this.setRowIndex(btnSave, 7);
-        this.setColumnIndex(btnSave, 1);
+        setRowIndex(btnSave, 7);
+        setColumnIndex(btnSave, 1);
 
         this.getChildren().addAll(btnCancel, btnSave);
     }
+
     public void updateLogsArea(String text) {
         Gui_JavaFX.getStackMainPane().getPaneLogs().updateLogsArea(text);
     }

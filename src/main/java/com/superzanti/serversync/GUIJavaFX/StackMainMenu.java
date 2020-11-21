@@ -1,22 +1,17 @@
 package com.superzanti.serversync.GUIJavaFX;
 
 import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 
-
-import java.util.ArrayList;
-
+// Store all panels
 public class StackMainMenu extends BorderPane {
 
     private PaneSync sync = new PaneSync();
     private PaneLogs logs = new PaneLogs();
-    private PaneOptions options = new PaneOptions();
+    private final PaneOptions options = new PaneOptions();
 
-    private StackPane stack = new StackPane();
-    private ArrayList<Button> buttons= new ArrayList<Button>();
-    private String defaultStyle = new Button().getStyle();
+    private final StackPane stack = new StackPane();
 
     public StackMainMenu() {
         PaneSideBar sideBar = new PaneSideBar();
@@ -29,21 +24,24 @@ public class StackMainMenu extends BorderPane {
 
         displayPanel(0);
     }
+
     public PaneLogs getPaneLogs() {
-        if(logs==null) {
+        if (logs == null) {
             logs = new PaneLogs();
         }
         return logs;
     }
+
     public PaneSync getPaneSync() {
-        if(sync==null) {
+        if (sync == null) {
             sync = new PaneSync();
         }
         return sync;
     }
+
     public void displayPanel(int n) {
-        if(stack.getChildren().size() >0){
-            for(Node node: stack.getChildren()) {
+        if (stack.getChildren().size() > 0) {
+            for (Node node : stack.getChildren()) {
                 node.setVisible(false);
             }
         /*for(Button btn: buttons) {

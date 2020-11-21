@@ -5,17 +5,17 @@ import com.superzanti.serversync.util.enums.EValid;
 public class Mod{
 
     private String name;
-    private EValid validValue;
+    private EValid status;
     private boolean ignoreValue = false;
 
     public Mod(String name) {
         this.name = name;
-        this.validValue = EValid.INVALID;
+        this.status = EValid.INVALID;
     }
 
     public Mod(String name, EValid valid, Boolean b){
         this.name=name;
-        this.validValue = valid;
+        this.status = valid;
         this.ignoreValue = b;
     }
 
@@ -27,11 +27,11 @@ public class Mod{
         this.name = name;
     }
 
-    public String getValidValue() {
-        return validValue.toString();
+    public String getStatus() {
+        return status.toString();
     }
-    public void setValidValue(EValid validValue) {
-        this.validValue = validValue;
+    public void setStatus(EValid status) {
+        this.status = status;
     }
 
     public boolean isIgnoreValue() {

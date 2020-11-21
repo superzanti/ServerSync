@@ -9,18 +9,30 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+// Main class of the GUI, launch the window
 public class Gui_JavaFX extends Application {
 
-    public static StackMainMenu root = new StackMainMenu();
+    private static StackMainMenu root = new StackMainMenu();
+
+    public static StackMainMenu getStackMainPane() {
+        if (root == null) {
+            root = new StackMainMenu();
+        }
+        return root;
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 
     @Override
-    public void start(Stage primaryStage) throws Exception{
+    public void start(Stage primaryStage) throws Exception {
         root.setStyle(EThemes.BLUE_YELLOW.toString());
 
-        Scene scene = new Scene(root, 1024,576);
+        Scene scene = new Scene(root, 1024, 576);
         scene.getStylesheets().add(this.getClass().getResource("/css/application.css").toExternalForm());
         primaryStage.setScene(scene);
-        primaryStage.setTitle(RefStrings.NAME+ " - " + RefStrings.VERSION);
+        primaryStage.setTitle(RefStrings.NAME + " - " + RefStrings.VERSION);
         primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent t) {
@@ -29,15 +41,5 @@ public class Gui_JavaFX extends Application {
             }
         });
         primaryStage.show();
-    }
-    public static StackMainMenu getStackMainPane() {
-        if(root==null) {
-            root=new StackMainMenu();
-        }
-        return root;
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }

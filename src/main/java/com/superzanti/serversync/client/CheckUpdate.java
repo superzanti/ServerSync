@@ -12,6 +12,7 @@ import javafx.application.Platform;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+// Check if mods is "missing" or "up to date " or "outdated" without forcing the update
 public class CheckUpdate implements  Runnable{
 
     private final ManifestServer server;
@@ -58,13 +59,13 @@ public class CheckUpdate implements  Runnable{
 
                 if (entry.hash.equals(hash)) {
 
-                    mod.setValidValue(EValid.UPTODATE);
+                    mod.setStatus(EValid.UPTODATE);
                 }else{
 
-                    mod.setValidValue(EValid.OUTDATED);
+                    mod.setStatus(EValid.OUTDATED);
                 }
             }else{
-                mod.setValidValue(EValid.INVALID);
+                mod.setStatus(EValid.INVALID);
             }
 
             Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().add(mod);

@@ -7,17 +7,19 @@ import javafx.geometry.Insets;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 
+// GUI of logs
 public class PaneLogs extends BorderPane {
 
     private TextArea txtArea = new TextArea();
-    public PaneLogs(){
+
+    public PaneLogs() {
         Logger.getLog().addObserver((o, arg) -> {
             if (o instanceof Log) {
                 Platform.runLater(() -> updateLogsArea(((Log) o).userFacingLog.toString()));
             }
         });
         txtArea.setEditable(false);
-        this.setMargin(txtArea, new Insets(10, 10, 10, 10));
+        setMargin(txtArea, new Insets(10, 10, 10, 10));
         this.setCenter(txtArea);
     }
 

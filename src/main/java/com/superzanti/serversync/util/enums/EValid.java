@@ -3,9 +3,9 @@ package com.superzanti.serversync.util.enums;
 public enum EValid {
 
 
-    UPTODATE("Uptodate"),
+    UPTODATE("Up to date"),
     OUTDATED("Outdated"),
-    INVALID("Invalid");
+    INVALID("Missing");
 
     private final String state;
 

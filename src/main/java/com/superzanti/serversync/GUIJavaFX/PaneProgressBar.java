@@ -7,22 +7,24 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 
+// GUI with progress bar and texts about updated files
 public class PaneProgressBar extends VBox {
 
-    private Label label;
-    private ProgressBar progressBar;
-    private Label statusLabel,pathLabel;
-    private String statusText,pathText;
-    private HBox hBoxBar;
+    private final Label label;
+    private final ProgressBar progressBar;
+    private final Label statusLabel;
+    private final Label pathLabel;
+    private String statusText, pathText;
+    private final HBox hBoxBar;
 
-    public PaneProgressBar(){
+    public PaneProgressBar() {
         this.setSpacing(5);
         this.setAlignment(Pos.CENTER);
-        label =  new Label("Copy files:");
+        label = new Label("Copy files:");
         pathLabel = new Label("");
         progressBar = new ProgressBar(0);
         hBoxBar = new HBox();
-        hBoxBar.getChildren().addAll(label,progressBar);
+        hBoxBar.getChildren().addAll(label, progressBar);
         hBoxBar.setAlignment(Pos.CENTER);
         statusLabel = new Label("");
 
@@ -31,7 +33,7 @@ public class PaneProgressBar extends VBox {
         progressBar.setProgress(0);
         progressBar.prefWidthProperty().bind(this.widthProperty().subtract(250));
 
-        this.getChildren().addAll(hBoxBar,statusLabel,pathLabel);
+        this.getChildren().addAll(hBoxBar, statusLabel, pathLabel);
 
     }
 
