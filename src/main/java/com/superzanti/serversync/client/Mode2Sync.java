@@ -1,5 +1,12 @@
 package com.superzanti.serversync.client;
 
+// <<<<<<< master
+// import com.superzanti.serversync.GUIJavaFX.Gui_JavaFX;
+// import com.superzanti.serversync.config.Mod;
+// import com.superzanti.serversync.files.FileManifest;
+// import com.superzanti.serversync.files.FileHash;
+// import com.superzanti.serversync.files.ManifestEntry;
+// =======
 import com.superzanti.serversync.RefStrings;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.files.DirectoryEntry;
@@ -9,6 +16,8 @@ import com.superzanti.serversync.files.FileHash;
 import com.superzanti.serversync.files.FileManifest;
 import com.superzanti.serversync.files.FileEntry;
 import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.enums.EValid;
+import javafx.application.Platform;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -98,6 +107,22 @@ public class Mode2Sync implements Runnable {
     public void run() {
         FileManifest manifest = server.fetchManifest();
 
+// <<<<<<< master
+//         Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().clear();
+//         Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(0);
+//         double n = manifest.entries.size();
+//         double count = 0;
+//         for(ManifestEntry entry : manifest.entries){
+//             Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);
+//             Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText(entry.path);
+//             Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setStatusText("Files updated : " +(int)count+"/"+(int)n);
+//             Platform.runLater(() -> Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI());
+
+//             Path file = entry.resolvePath();
+//             Logger.debug(String.format("Starting check for file: %s", file));
+//             if (!entry.redirectTo.equals("")) {
+//                 Logger.debug(String.format(
+// =======
         manifest.files
             .forEach(entry -> {
                 Path file = entry.resolvePath();
@@ -108,12 +133,31 @@ public class Mode2Sync implements Runnable {
                         file.getFileName(),
                         entry.path,
                         file
-                    ));
-                }
+                ));
+            }
 
-                if (Files.exists(file)) {
-                    String hash = FileHash.hashFile(file);
+            if (Files.exists(file)) {
+                String hash = FileHash.hashFile(file);
 
+// <<<<<<< master
+//                 if (entry.hash.equals(hash)) {
+//                     Logger.debug("File already exists");
+//                 }else{
+//                     server.updateIndividualFile(entry, file);
+//                 }
+//             }else{
+//                 server.updateIndividualFile(entry, file);
+//             }
+
+//             Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().add(new Mod(entry.path, EValid.UPTODATE,false));
+
+//             count++;
+//         };
+//         Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);
+//         Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setStatusText("Files updated : " +(int)count+"/"+(int)n);
+//         Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText("Done!");
+//         Platform.runLater(() -> Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI());
+// =======
                     if (entry.hash.equals(hash)) {
                         Logger.debug("File already exists");
                     }

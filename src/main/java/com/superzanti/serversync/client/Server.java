@@ -82,6 +82,7 @@ public class Server {
     }
 
     public void close() {
+        /*TODO Need to be fix (since v3.7 alpha)
         try {
             // Output could be null if the server has never connected, i.e. the client used the wrong details
             if (output != null) {
@@ -91,6 +92,7 @@ public class Server {
             Logger.error("Failed to close server connection");
             Logger.debug(e);
         }
+         */
 
         if (clientSocket != null) {
             AutoClose.closeResource(clientSocket);
