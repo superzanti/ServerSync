@@ -17,4 +17,12 @@ public class DirectoryEntry implements Serializable {
     public JsonObject toJson() {
         return Json.object().add("path", path).add("mode", mode.toString());
     }
+
+    @Override
+    public String toString() {
+        return "DirectoryEntry{" +
+            "path='" + path + '\'' +
+            ", mode=" + mode +
+            '}';
+    }
 }

@@ -1,7 +1,5 @@
 package com.superzanti.serversync.GUIJavaFX;
 
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
@@ -25,12 +23,7 @@ public class PaneSideBar extends VBox {
         btnSync.setPrefWidth(125);
         btnSync.getStyleClass().add("sidebar-button");
         btnSync.setGraphic(svgSync);
-        btnSync.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                Gui_JavaFX.getStackMainPane().displayPanel(0);
-            }
-        });
+        btnSync.setOnAction(e -> Gui_JavaFX.getStackMainPane().displayPanel(0));
 
         /* LOGS button */
         SVGPath svgLogs = new SVGPath();
@@ -43,12 +36,7 @@ public class PaneSideBar extends VBox {
         btnLogs.setPrefWidth(125);
         btnLogs.getStyleClass().add("sidebar-button");
         btnLogs.setGraphic(svgLogs);
-        btnLogs.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                Gui_JavaFX.getStackMainPane().displayPanel(1);
-            }
-        });
+        btnLogs.setOnAction(e -> Gui_JavaFX.getStackMainPane().displayPanel(1));
 
         /* OPTIONS button */
         SVGPath svgOptions = new SVGPath();
@@ -61,11 +49,9 @@ public class PaneSideBar extends VBox {
         btnOptions.setPrefWidth(125);
         btnOptions.getStyleClass().add("sidebar-button");
         btnOptions.setGraphic(svgOptions);
-        btnOptions.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                Gui_JavaFX.getStackMainPane().displayPanel(2);
-            }
+        btnOptions.setOnAction(e -> {
+            Gui_JavaFX.getStackMainPane().displayPanel(2);
+            Gui_JavaFX.getStackMainPane().getPaneOptions().refreshConfigValues();
         });
 
         this.getStyleClass().add("sidebar-vbx");

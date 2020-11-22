@@ -82,17 +82,16 @@ public class Server {
     }
 
     public void close() {
-        /*TODO Need to be fix (since v3.7 alpha)
         try {
             // Output could be null if the server has never connected, i.e. the client used the wrong details
             if (output != null) {
                 output.writeUTF(EServerMessage.EXIT.toString());
+                output.flush();
             }
         } catch (IOException e) {
             Logger.error("Failed to close server connection");
             Logger.debug(e);
         }
-         */
 
         if (clientSocket != null) {
             AutoClose.closeResource(clientSocket);

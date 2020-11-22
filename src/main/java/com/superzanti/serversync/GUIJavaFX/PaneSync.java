@@ -1,14 +1,14 @@
 package com.superzanti.serversync.GUIJavaFX;
 
+import com.superzanti.serversync.client.ActionEntry;
 import com.superzanti.serversync.client.ClientWorker;
-import com.superzanti.serversync.config.Mod;
+import com.superzanti.serversync.client.EActionType;
 import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.util.enums.EValid;
+import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.Then;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -16,6 +16,8 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+
+import java.util.concurrent.Callable;
 
 // GUI of the SYNC panel (Field ip/port, button "sync" and "check for updates", table with mods)
 public class PaneSync extends BorderPane {
@@ -25,8 +27,10 @@ public class PaneSync extends BorderPane {
     private TableView table;
     private Button btnSync, btnCheckUpdate;
     private TextField fieldIp, fieldPort;
-    private final ObservableList<Mod> observMods = FXCollections.observableArrayList();
+    private final ObservableList<ActionEntry> observableMods = FXCollections.observableArrayList();
     private PaneProgressBar paneProgressBar;
+
+    private final ClientWorker worker = new ClientWorker();
 
     public PaneSync() {
         /*TODO Filter for the table */
@@ -82,8 +86,8 @@ public class PaneSync extends BorderPane {
         this.setBottom(gp);
     }
 
-    public ObservableList<Mod> getObservMods() {
-        return observMods;
+    public ObservableList<ActionEntry> getObservableMods() {
+        return observableMods;
     }
 
     public PaneProgressBar getPaneProgressBar() {
@@ -100,47 +104,58 @@ public class PaneSync extends BorderPane {
             table.setEditable(true);
             table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-            //Create column
-            TableColumn<Mod, String> colFileName = new TableColumn<>("File name");
-            TableColumn<Mod, String> colStatus = new TableColumn("Status");
-            TableColumn<Mod, Boolean> colIgnored = new TableColumn("Ignored");
+            // Create columns
+            TableColumn<ActionEntry, String> colFileName = new TableColumn<>("File path");
+            colFileName.prefWidthProperty().bind(table.widthProperty().multiply(0.55));
+            colFileName.setCellValueFactory(new PropertyValueFactory<>("name"));
+            colFileName.getStyleClass().add("align-left");
+            //----
 
-            colFileName.prefWidthProperty().bind(table.widthProperty().multiply(0.7));
-            colFileName.setCellValueFactory(
-                    new PropertyValueFactory<>("name"));
-            colStatus.prefWidthProperty().bind(table.widthProperty().multiply(0.2));
-            colStatus.setCellValueFactory(
-                    new PropertyValueFactory<>("status"));
-            colIgnored.prefWidthProperty().bind(table.widthProperty().multiply(0.2));
-            colIgnored.setCellValueFactory(
-                    new PropertyValueFactory<>("ignoreValue"));
+            TableColumn<ActionEntry, EActionType> colStatus = new TableColumn<>("Action");
+            colStatus.prefWidthProperty().bind(table.widthProperty().multiply(0.15));
+            colStatus.setCellValueFactory(new PropertyValueFactory<>("action"));
+            colStatus.setCellFactory(tc -> new TableCell<ActionEntry, EActionType>() {
 
-            table.getColumns().addAll(colFileName, colStatus);
+                @Override
+                protected void updateItem(EActionType item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (item == null) {
+                        setStyle("");
+                        return;
+                    }
+                    setText(item.toString());
+                    switch (item) {
+                        case Ignore:
+                            setStyle("-fx-text-fill: #db5461;");
+                            break;
+                        case Update:
+                            setStyle("-fx-text-fill: #dfa06e;");
+                            break;
+                        case None:
+                            setStyle("-fx-text-fill: #86ba90;");
+                            break;
+                        default:
+                            setStyle("");
+                    }
+                }
+            });
+            //----
+
+            // TODO ignore not implemented yet
+//            TableColumn<ActionEntry, Boolean> colIgnored = new TableColumn<>("Ignored");
+//            colIgnored.prefWidthProperty().bind(table.widthProperty().multiply(0.2));
+//            colIgnored.setCellValueFactory(new PropertyValueFactory<>("action"));
+            //----
+
+            TableColumn<ActionEntry, EActionType> colReason = new TableColumn<>("Reason");
+            colReason.prefWidthProperty().bind(table.widthProperty().multiply(0.25));
+            colReason.setCellValueFactory(new PropertyValueFactory<>("reason"));
+
+            table.getColumns().addAll(colStatus, colFileName, colReason);
 
             /* Change the color of the font text of columns "Status" */
-            table.setItems(observMods);
-            colStatus.setCellFactory(tc -> {
+            table.setItems(observableMods);
 
-                TableCell<Mod, String> cell = new TableCell<Mod, String>() {
-                    @Override
-                    protected void updateItem(String item, boolean empty) {
-                        super.updateItem(item, empty);
-                        setText(item);
-                        if (item == null) {
-                            setStyle("");
-                        } else if (item.equals(EValid.INVALID.toString())) {
-                            setStyle("-fx-text-fill: #db5461;");
-                        } else if (item.equals(EValid.OUTDATED.toString())) {
-                            setStyle("-fx-text-fill: #dfa06e;");
-                        } else if (item.equals(EValid.UPTODATE.toString())) {
-                            setStyle("-fx-text-fill: #86ba90;");
-                        } else {
-                            setStyle("");
-                        }
-                    }
-                };
-                return cell;
-            });
 
         }
 
@@ -151,7 +166,7 @@ public class PaneSync extends BorderPane {
         boolean valid = true;
         if (ip.equals("") && !setPort(port)) {
             updateLogsArea("No config found, requesting details");
-            displayAlert("Bad config", "IP field is wrong \nPort out of range, valid range: 1 - 49151");
+            displayAlert("Bad config", "IP field is required \nPort out of range, valid range: 1 - 49151");
             valid = false;
         } else if (ip.equals("")) {
             updateLogsArea("The ip field is empty");
@@ -170,26 +185,66 @@ public class PaneSync extends BorderPane {
             btnSync = new Button("Sync");
             btnSync.getStyleClass().add("btn");
             btnSync.setTooltip(new Tooltip("Synchronize client & server"));
-            btnSync.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent e) {
-                    getBtnSync().setDisable(true);
-                    getBtnCheckUpdate().setDisable(true);
+            btnSync.setOnAction(e -> {
+                Logger.debug("Clicked sync button");
+                getBtnSync().setDisable(true);
+                getBtnCheckUpdate().setDisable(true);
 
-                    int port = getPort();
-                    String ip = getFieldIp().getText();
-                    if (checkIpAndPort(ip, port)) {
-                        config.SERVER_IP = ip;
-                        config.SERVER_PORT = port;
-                        updateLogsArea("Starting update process...");
-                        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText("Getting manifest...");
-                        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI();
-                        new Thread(new ClientWorker()).start();
-                    } else {
-                        getBtnSync().setDisable(false);
-                        getBtnCheckUpdate().setDisable(false);
+                int port = getPort();
+                String ip = getFieldIp().getText();
+                if (checkIpAndPort(ip, port)) {
+                    ObservableList<ActionEntry> list = Gui_JavaFX
+                        .getStackMainPane()
+                        .getPaneSync()
+                        .getObservableMods();
+                    config.SERVER_IP = ip;
+                    config.SERVER_PORT = port;
+                    updateLogsArea("Starting update process...");
+
+                    try {
+                        SyncConfig.getConfig().SERVER_IP = ip;
+                        SyncConfig.getConfig().SERVER_PORT = port;
+                        worker.setAddress(ip);
+                        worker.setPort(port);
+                        worker.connect();
+
+                        setProgressText("Synchronizing files...");
+                        Then.onComplete(worker.fetchActions(), actions -> {
+                            list.clear();
+                            list.addAll(actions);
+
+                            Callable<Void> sync = worker.executeActions(actions, actionProgress -> {
+                                Platform.runLater(() -> {
+                                    getPaneProgressBar().setPathText(actionProgress.getName());
+                                    getPaneProgressBar().getProgressBar().setProgress(actionProgress.getProgress());
+                                    if (actionProgress.isComplete()) {
+                                        getObservableMods()
+                                            .stream().filter(entry -> entry.equals(actionProgress.entry))
+                                            .findAny()
+                                            .ifPresent(v -> {
+                                                v.action = EActionType.None;
+                                                v.reason = "Updated";
+                                            });
+                                    }
+                                    getTableView().refresh();
+                                    getPaneProgressBar().updateGUI();
+                                });
+                            });
+                            Then.onComplete(sync, unused -> {
+                                Platform.runLater(() -> {
+                                    setProgressText("Sync complete");
+                                    worker.close();
+                                });
+                            });
+                        });
+                    } catch (Exception exception) {
+                        Logger.debug(exception);
+                        setProgressText("Failed to connect to server");
                     }
                 }
+
+                getBtnSync().setDisable(false);
+                getBtnCheckUpdate().setDisable(false);
             });
         }
         return btnSync;
@@ -201,27 +256,43 @@ public class PaneSync extends BorderPane {
             btnCheckUpdate.getStyleClass().add("btn");
             btnCheckUpdate.getStyleClass().add("btnCheckUpdate");
             btnCheckUpdate.setTooltip(new Tooltip("Check update in table"));
-            btnCheckUpdate.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent e) {
-                    getBtnSync().setDisable(true);
-                    getBtnCheckUpdate().setDisable(true);
+            btnCheckUpdate.setOnAction(e -> {
+                Logger.debug("Clicked check updates button");
+                getBtnSync().setDisable(true);
+                getBtnCheckUpdate().setDisable(true);
 
-                    int port = getPort();
-                    String ip = getFieldIp().getText();
-                    if (checkIpAndPort(ip, port)) {
-                        config.SERVER_IP = ip;
-                        config.SERVER_PORT = port;
-                        updateLogsArea("Starting update process...");
-                        SyncConfig.getConfig().SYNC_MODE = 3;
-                        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText("Getting manifest...");
-                        Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI();
-                        new Thread(new ClientWorker()).start();
-                    } else {
-                        getBtnSync().setDisable(false);
-                        getBtnCheckUpdate().setDisable(false);
+                int port = getPort();
+                String ip = getFieldIp().getText();
+                if (checkIpAndPort(ip, port)) {
+                    ObservableList<ActionEntry> list = Gui_JavaFX
+                        .getStackMainPane()
+                        .getPaneSync()
+                        .getObservableMods();
+                    updateLogsArea("Starting update process...");
+                    setProgressText("Fetching manifest...");
+                    list.clear();
+                    SyncConfig.getConfig().SERVER_IP = ip;
+                    SyncConfig.getConfig().SERVER_PORT = port;
+                    worker.setAddress(ip);
+                    worker.setPort(port);
+
+                    try {
+                        worker.connect();
+                        Then.onComplete(worker.fetchActions(), actions -> {
+                            list.addAll(actions);
+                            worker.close();
+                            Platform.runLater(() -> {
+                                setProgressText("");
+                            });
+                        });
+                    } catch (Exception exception) {
+                        Logger.debug(exception);
+                        setProgressText("Failed to connect to server");
                     }
                 }
+
+                getBtnSync().setDisable(false);
+                getBtnCheckUpdate().setDisable(false);
             });
         }
         return btnCheckUpdate;
@@ -253,6 +324,15 @@ public class PaneSync extends BorderPane {
         }
 
         return port;
+    }
+
+    public void setProgressText(String text) {
+        getPaneProgressBar().setPathText(text);
+        getPaneProgressBar().updateGUI();
+    }
+
+    public void setProgress(double progress) {
+        getPaneProgressBar().getProgressBar().setProgress(progress);
     }
 
     public boolean setPort(int port) {

@@ -1,28 +1,16 @@
 package com.superzanti.serversync.client;
 
-// <<<<<<< master
-// import com.superzanti.serversync.GUIJavaFX.Gui_JavaFX;
-// import com.superzanti.serversync.config.Mod;
-// import com.superzanti.serversync.files.FileManifest;
-// import com.superzanti.serversync.files.FileHash;
-// import com.superzanti.serversync.files.ManifestEntry;
-// =======
 import com.superzanti.serversync.RefStrings;
 import com.superzanti.serversync.ServerSync;
-import com.superzanti.serversync.files.DirectoryEntry;
-import com.superzanti.serversync.files.EDirectoryMode;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
-import com.superzanti.serversync.files.FileHash;
-import com.superzanti.serversync.files.FileManifest;
-import com.superzanti.serversync.files.FileEntry;
+import com.superzanti.serversync.files.*;
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.enums.EValid;
-import javafx.application.Platform;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class Mode2Sync implements Runnable {
@@ -40,12 +28,12 @@ public class Mode2Sync implements Runnable {
         return server.fetchManifest();
     }
 
-    public void executeActionList(List<ActionEntry> actions) throws IOException {
+    public void executeActionList(List<ActionEntry> actions, Consumer<ActionProgress> progressConsumer) throws IOException {
         for (ActionEntry action : actions) {
             switch (action.action) {
                 case Update:
                     Logger.log(String.format("%sUpdating file %s", RefStrings.UPDATE_TOKEN, action));
-                    server.updateIndividualFile(action.target, action.target.resolvePath());
+                    server.updateIndividualFile(action, progressConsumer);
                     break;
                 case Delete:
                     Logger.log(String.format("%sDeleting file %s", RefStrings.DELETE_TOKEN, action));
@@ -133,11 +121,11 @@ public class Mode2Sync implements Runnable {
                         file.getFileName(),
                         entry.path,
                         file
-                ));
-            }
+                    ));
+                }
 
-            if (Files.exists(file)) {
-                String hash = FileHash.hashFile(file);
+                if (Files.exists(file)) {
+                    String hash = FileHash.hashFile(file);
 
 // <<<<<<< master
 //                 if (entry.hash.equals(hash)) {

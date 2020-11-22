@@ -4,11 +4,13 @@ import com.superzanti.serversync.GUIJavaFX.Gui_JavaFX;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.config.ConfigLoader;
 import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.gui.GUI_Client;
+import com.superzanti.serversync.gui.GUI_ProgresOnly;
 import com.superzanti.serversync.server.ServerSetup;
 import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.Then;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.EServerMode;
+import javafx.application.Application;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -31,7 +33,7 @@ public class ServerSync implements Callable<Integer> {
     public static final String GET_SERVER_INFO = "SERVER_INFO";
     public static EServerMode MODE;
 
-    public static GUI_Client clientGUI;
+    public static GUI_ProgresOnly clientGUI;
     public static ResourceBundle strings;
 
     public static Path rootDir = Paths.get(System.getProperty("user.dir"));
@@ -127,41 +129,44 @@ public class ServerSync implements Callable<Integer> {
         }
         commonInit();
 
-        Thread clientThread;
+        ClientWorker worker = new ClientWorker();
         if (modeQuiet) {
-            clientGUI = null;
-            new Thread(new ClientWorker()).start();
-        } else if (modeProgressOnly) {
-            // TODO setup a progress only version of the GUI
-            clientGUI = new GUI_Client();
-            clientGUI.setIPAddress(config.SERVER_IP);
-            clientGUI.setPort(config.SERVER_PORT);
-            clientGUI.build(config.LOCALE);
-
-            clientThread = new Thread(new ClientWorker(), "Client processing");
-            clientThread.start();
             try {
-                clientThread.join();
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
+                worker.setAddress(SyncConfig.getConfig().SERVER_IP);
+                worker.setPort(SyncConfig.getConfig().SERVER_PORT);
+                worker.connect();
+                Then.onComplete(worker.fetchActions(), actionEntries -> {
+                    Then.onComplete(worker.executeActions(actionEntries, unused -> {}), unused -> {
+                        worker.close();
+                        System.exit(0);
+                    });
+                });
+            } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);
             }
-            System.exit(0);
+        } else if (modeProgressOnly) {
+            // TODO setup a progress only version of the GUI?
+            try {
+                worker.setAddress(SyncConfig.getConfig().SERVER_IP);
+                worker.setPort(SyncConfig.getConfig().SERVER_PORT);
+                worker.connect();
+                Then.onComplete(worker.fetchActions(), actionEntries -> {
+                    Then.onComplete(worker.executeActions(actionEntries, actionProgress -> {
+                        if (actionProgress.isComplete()) {
+                            System.out.printf("Updated: %s%n", actionProgress.entry);
+                        }
+                    }), unused -> {
+                        worker.close();
+                        System.exit(0);
+                    });
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(1);
+            }
         } else {
-            /*
-            clientGUI = new GUI_Client();
-            clientGUI.setIPAddress(config.SERVER_IP);
-            clientGUI.setPort(config.SERVER_PORT);
-            clientGUI.build(config.LOCALE);
-            */
-
-            new Thread() {
-                @Override
-                public void run() {
-                    javafx.application.Application.launch(Gui_JavaFX.class);
-                }
-            }.start();
+            new Thread(() -> Application.launch(Gui_JavaFX.class)).start();
         }
     }
 }

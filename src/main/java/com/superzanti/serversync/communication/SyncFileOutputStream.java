@@ -23,7 +23,7 @@ public class SyncFileOutputStream {
         this.outputFile = outputFile;
     }
 
-    public boolean write(Consumer<Integer> onProgress) {
+    public boolean write(Consumer<Double> onProgress) {
         try {
             Files.createDirectories(outputFile.getParent());
         } catch (IOException e) {
@@ -58,7 +58,8 @@ public class SyncFileOutputStream {
                 totalBytesReceived += bytesReceived;
 
                 wr.write(outBuffer, 0, bytesReceived);
-                onProgress.accept((int) Math.ceil((float) totalBytesReceived / size * 100));
+                // Not terribly worried about conversion loss
+                onProgress.accept((double) totalBytesReceived / size);
 
                 if (totalBytesReceived == size) {
                     break;

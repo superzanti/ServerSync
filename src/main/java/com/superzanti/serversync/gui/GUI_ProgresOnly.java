@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-public class GUI_Client extends JFrame {
+public class GUI_ProgresOnly extends JFrame {
 
     /**
      *
@@ -41,7 +41,7 @@ public class GUI_Client extends JFrame {
 
     private SyncConfig config = SyncConfig.getConfig();
 
-    public GUI_Client() {
+    public GUI_ProgresOnly() {
         super();
         Logger.getLog().addObserver((o, arg) -> {
             if (o instanceof Log) {
