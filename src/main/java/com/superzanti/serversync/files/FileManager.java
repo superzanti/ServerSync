@@ -8,6 +8,7 @@ import com.superzanti.serversync.util.PrettyCollection;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -20,14 +21,14 @@ public class FileManager {
     public static final Path clientOnlyFilesDirectory = new PathBuilder().add(FileManager.clientOnlyFilesDirectoryName).toPath();
     public static final Path logsDirectory = new PathBuilder().add("logs").toPath();
 
-    static {
-        Logger.debug(String.format("root dir: %s", ServerSync.rootDir.toAbsolutePath().toString()));
-    }
-
     private FileManager() {
     }
 
     // New version of sync process
+
+    public static Map<String, String> getDiffableFilesFromDirectory(String dir) throws IOException {
+        return getDiffableFilesFromDirectories(Collections.singletonList(dir));
+    }
 
     /**
      * Get all of the **files** present in the list of directories as a diffable map for file comparison.

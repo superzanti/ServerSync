@@ -2,7 +2,7 @@ package com.superzanti.serversync.communication;
 
 import com.superzanti.serversync.client.Server;
 import com.superzanti.serversync.files.FileManifest;
-import com.superzanti.serversync.files.ManifestEntry;
+import com.superzanti.serversync.files.FileEntry;
 import com.superzanti.serversync.gui.FileProgress;
 import com.superzanti.serversync.communication.response.ServerInfo;
 import com.superzanti.serversync.util.Logger;
@@ -103,7 +103,7 @@ public class Requests {
         }
     }
 
-    public boolean updateFile(ManifestEntry entry, Path theLocalFile) {
+    public boolean updateFile(FileEntry entry, Path theLocalFile) {
         try {
             writeMessage(EServerMessage.UPDATE_FILE);
             writeObject(entry);

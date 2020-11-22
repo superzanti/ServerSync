@@ -1,9 +1,12 @@
 package com.superzanti.serversync.server;
 
+import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.files.*;
-import com.superzanti.serversync.util.*;
+import com.superzanti.serversync.util.BannedIPSReader;
+import com.superzanti.serversync.util.Glob;
+import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.PrettyCollection;
 import com.superzanti.serversync.util.enums.ELocations;
 import com.superzanti.serversync.util.enums.EServerMessage;
 
@@ -32,35 +35,62 @@ public class ServerSetup implements Runnable {
     private final Path bannedIps = Paths.get(ELocations.BANNED_IPS.getValue());
 
     private final Timer timeoutScheduler = new Timer();
-    private final Map<String, String> serverFiles = new HashMap<>(200);
-    private final List<String> managedDirectories = new ArrayList<>(config.DIRECTORY_INCLUDE_LIST);
 
-
-    private final FileManifest manifest = new FileManifest();
+    private FileManifest manifest;
     private final List<String> messages = Arrays.stream(EServerMessage.values())
                                                 .map(EServerMessage::toString)
                                                 .collect(Collectors.toList());
 
-    private void populateManifest(Map<String, String> files) {
-        try {
-            manifest.directories = config.DIRECTORY_INCLUDE_LIST;
-            files.forEach((key, value) -> {
-                Path p = Paths.get(key);
-                Optional<FileRedirect> re = config.REDIRECT_FILES_LIST
-                    .stream()
-                    .filter(r -> GlobPathMatcher.matches(p, r.pattern))
-                    .findFirst();
-                if (re.isPresent()) {
-                    manifest.entries.add(new ManifestEntry(key, value, re.get().redirectTo));
-                } else {
-                    manifest.entries.add(new ManifestEntry(key, value, ""));
-                }
-            });
-            Logger.debug(String.format("Manifest directories: %s", PrettyCollection.get(manifest.directories)));
-            Logger.debug(String.format("Manifest entries: %s", PrettyCollection.get(manifest.entries)));
-        } catch (Exception e) {
-            Logger.debug(e);
+    private FileManifest populateManifest() throws IOException {
+        FileManifest manifest = new FileManifest();
+        manifest.directories = config.DIRECTORY_INCLUDE_LIST;
+        if (config.PUSH_CLIENT_MODS) {
+            Logger.log("Server configured to push client only mods, clients can still refuse these mods!");
+            config.FILE_INCLUDE_LIST.add("clientmods/**");
+            config.REDIRECT_FILES_LIST.add(new FileRedirect("clientmods/**", "mods"));
         }
+
+        // Standard file handling, ignoring directories here as they are not relevant to serversync
+        List<Path> included = Files
+            .walk(ServerSync.rootDir)
+            .filter(f -> !Files.isDirectory(f))
+            .map(f -> ServerSync.rootDir.relativize(f))
+            .filter(f -> Glob.matches(f, config.FILE_INCLUDE_LIST))
+            .collect(Collectors.toList());
+
+        List<Path> filtered = included
+            .stream()
+            .filter(f -> !Glob.matches(f, config.FILE_IGNORE_LIST))
+            .collect(Collectors.toList());
+
+        List<String> includeMap = filtered
+            .stream()
+            // optional get can never be missing as we have just filtered the list by matching patterns
+            .map(f -> String.format("%s, Pattern: %s", f.toString(), Glob.getPattern(f, config.FILE_INCLUDE_LIST).get()))
+            .collect(Collectors.toList());
+        Logger.debug(String.format("Included files: %s", PrettyCollection.get(includeMap)));
+
+        List<String> excludeMap = included
+            .stream()
+            .filter(f -> Glob.matches(f, config.FILE_IGNORE_LIST))
+            // optional get can never be missing as we have just filtered the list by matching patterns
+            .map(f -> String.format("%s, Pattern: %s", f.toString(), Glob.getPattern(f, config.FILE_IGNORE_LIST).get()))
+            .collect(Collectors.toList());
+        Logger.debug(String.format("Ignored files: %s", PrettyCollection.get(excludeMap)));
+
+        manifest.files = filtered
+            .stream()
+            .map(f -> {
+                String fileHash = FileHash.hashFile(ServerSync.rootDir.resolve(f));
+                Optional<FileRedirect> redirect = config.REDIRECT_FILES_LIST
+                    .stream().filter(r -> Glob.matches(f, r.pattern)).findFirst();
+
+                return redirect
+                    .map(fileRedirect -> new FileEntry(f.toString(), fileHash, fileRedirect.redirectTo))
+                    .orElseGet(() -> new FileEntry(f.toString(), fileHash));
+            }).collect(Collectors.toList());
+
+        return manifest;
     }
 
 
@@ -72,70 +102,16 @@ public class ServerSetup implements Runnable {
             Logger.log("Starting scan for managed files: " + dateFormatter.format(new Date()));
             Logger.log(String.format("Ignore patterns: %s", PrettyCollection.get(config.FILE_IGNORE_LIST)));
 
-            for (String managedDirectory : managedDirectories) {
-                Files.createDirectories(Paths.get(managedDirectory));
-            }
+            manifest = populateManifest();
 
-            Map<String, String> managedFiles = FileManager.getDiffableFilesFromDirectories(managedDirectories);
-            populateManifest(managedFiles);
+            Logger.log(String.format("Manifest files: %s", PrettyCollection.get(manifest.files)));
 
-            Logger.log(String.format(
-                "Found %d files in %d directories <%s>",
-                managedFiles.size(),
-                managedDirectories.size(),
-                String.join(", ", managedDirectories)
-            ));
-            if (managedFiles.size() > 0) {
-                serverFiles.putAll(managedFiles);
-                Logger.log(String.format("Managed files: %s", PrettyCollection.get(managedFiles)));
-            }
-
-            // Only include configs if some are actually listed
-            // saves wasting time scanning the config directory.
-            if (config.CONFIG_INCLUDE_LIST.size() > 0) {
-                Logger.log(String.format("Starting scan for managed configs: %s", dateFormatter.format(new Date())));
-                Logger.log(String.format("Include patterns: %s", PrettyCollection.get(config.CONFIG_INCLUDE_LIST)));
-                // Add config include files
-                Map<String, String> configIncludeFiles = config.CONFIG_INCLUDE_LIST
-                    .stream()
-                    .parallel()
-                    .map(p -> new PathBuilder().add("config").add(p).toPath())
-                    .filter(path -> Files.exists(path) && !IgnoredFilesMatcher.matches(path))
-                    .collect(Collectors.toConcurrentMap(Path::toString, FileHash::hashFile));
-
-                Logger.log(String.format(
-                    "Found %d included configs in <config>",
-                    configIncludeFiles.size()
-                ));
-                if (configIncludeFiles.size() > 0) {
-                    Logger.log(String.format("Config files: %s", PrettyCollection.get(configIncludeFiles)));
-                    serverFiles.putAll(configIncludeFiles);
+            manifest.directories.stream().map(d -> ServerSync.rootDir.resolve(Paths.get(d.path))).forEach(p -> {
+                if (Files.notExists(p)) {
+                    Logger.error(String.format("Managed directory does not exist: %s", p));
+                    System.exit(1);
                 }
-            }
-
-            if (shouldPushClientOnlyFiles()) {
-                Logger.log("Server configured to push client only mods, clients can still refuse these mods!");
-                if (Files.notExists(FileManager.clientOnlyFilesDirectory)) {
-                    Logger.log(String.format(
-                        "%s directory did not exist, creating",
-                        FileManager.clientOnlyFilesDirectoryName
-                    ));
-                    Files.createDirectories(FileManager.clientOnlyFilesDirectory);
-                } else {
-                    Map<String, String> clientOnlyFiles = FileManager.getDiffableFilesFromDirectories(
-                        Collections.singletonList(FileManager.clientOnlyFilesDirectoryName)
-                    );
-                    Logger.log(String.format(
-                        "Found %d files in %s",
-                        clientOnlyFiles.size(),
-                        FileManager.clientOnlyFilesDirectoryName
-                    ));
-                    if (clientOnlyFiles.size() > 0) {
-                        Logger.log(String.format("Client only files: %s", PrettyCollection.get(clientOnlyFiles)));
-                        serverFiles.putAll(clientOnlyFiles);
-                    }
-                }
-            }
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }

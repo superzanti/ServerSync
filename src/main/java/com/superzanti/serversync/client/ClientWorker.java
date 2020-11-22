@@ -6,6 +6,9 @@ import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.communication.response.ServerInfo;
 import com.superzanti.serversync.util.Logger;
 
+import java.io.IOException;
+import java.util.List;
+
 /**
  * The sync process for clients.
  * - Get my state
@@ -44,23 +47,14 @@ public class ClientWorker implements Runnable {
 
         ServerInfo serverInfo = server.info;
 
-        switch (config.SYNC_MODE) {
-            case 1:
-                Mode1Sync.forServer(server).run();
-                break;
-            case 2:
-                Mode2Sync.forServer(server).run();
-                break;
-            case 3:
-                CheckUpdate.forServer(server).run();
-                break;
-            default:
-                Logger.error(String.format("Unknown server mode: %d", serverInfo.syncMode));
-                errorInUpdates = true;
-                updateHappened = false;
-                closeWorker();
-                return;
+        Mode2Sync sync = Mode2Sync.forServer(server);
+        try {
+            List<ActionEntry> actions = sync.generateActionList(sync.fetchManifest());
+            sync.executeActionList(actions);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
 
 
         updateHappened = true;
@@ -78,10 +72,9 @@ public class ClientWorker implements Runnable {
 
     private void closeWorker() {
         Logger.debug("Closing client worker");
-        if (server == null) {
-            return;
+        if (server != null) {
+            server.close();
         }
-        server.close();
 
         if (!updateHappened && !errorInUpdates) {
             Logger.log(ServerSync.strings.getString("update_not_needed"));

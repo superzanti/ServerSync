@@ -7,33 +7,36 @@
     "port": 38067
   },
   "rules": {
-    "directory_include_list": [
+    "directories": [
       {
-        "name": "test-mirror",
+        "path": "test-mirror",
         "mode": "mirror"
       },
       {
-        "name": "test-push",
+        "path": "test-push",
         "mode": "push"
       },
       "test-default"
     ],
-    "file_ignore_list": [
-      {
-        "description": "No jar files allowed",
-        "pattern": "**/*.jar"
-      },
-      {
-        "pattern": "**/other.bing"
-      },
-      "**/basic.thing"
-    ],
-    "redirect_files": [
-      {
-        "pattern": "**/*.jar",
-        "redirectTo": "redirected-files"
-      }
-    ]
+    "files": {
+      "include": [],
+      "ignore": [
+        {
+          "description": "No jar files allowed",
+          "pattern": "**/*.jar"
+        },
+        {
+          "pattern": "**/other.bing"
+        },
+        "**/basic.thing"
+      ],
+      "redirect": [
+        {
+          "pattern": "**/*.jar",
+          "redirectTo": "redirected-files"
+        }
+      ]
+    }
   },
   "misc": {
     "locale": "en_NZ"

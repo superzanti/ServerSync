@@ -91,12 +91,14 @@
       "default": {},
       "examples": [
         {
-          "file_ignore_list": [
-            {
-              "pattern": "\\*\\*/*.jar"
-            }
-          ],
-          "directory_include_list": [
+          "files": {
+            "ignore": [
+              {
+                "pattern": "\\*\\*/*.jar"
+              }
+            ]
+          },
+          "directories": [
             {
               "name": "test-mirror",
               "mode": "mirror"
@@ -109,52 +111,52 @@
         }
       ],
       "required": [
-        "directory_include_list",
-        "file_ignore_list"
+        "directories",
+        "files"
       ],
       "additionalProperties": true,
       "properties": {
-        "directory_include_list": {
-          "$id": "#/properties/rules/properties/directory_include_list",
+        "directories": {
+          "$id": "#/properties/rules/properties/directories",
           "type": "array",
-          "title": "The directory_include_list schema",
+          "title": "The directories schema",
           "description": "The directories that will be scanned for files to sync",
           "default": [],
           "examples": [
             [
               {
-                "name": "test-mirror",
+                "path": "test-mirror",
                 "mode": "mirror"
               },
               {
-                "name": "test-push",
+                "path": "test-push",
                 "mode": "push"
               }
             ]
           ],
           "additionalItems": true,
           "items": {
-            "$id": "#/properties/rules/properties/directory_include_list/items",
+            "$id": "#/properties/rules/properties/directories/items",
             "anyOf": [
               {
-                "$id": "#/properties/rules/properties/directory_include_list/items/anyOf/0",
+                "$id": "#/properties/rules/properties/directories/items/anyOf/0",
                 "type": "object",
                 "title": "Object style included directory",
                 "description": "Sync directory with details about how",
                 "default": {},
                 "examples": [
                   {
-                    "mode": "mirror",
+                    "path": "mirror",
                     "name": "test-mirror"
                   }
                 ],
                 "required": [
-                  "name"
+                  "path"
                 ],
                 "additionalProperties": true,
                 "properties": {
-                  "name": {
-                    "$id": "#/properties/rules/properties/directory_include_list/items/anyOf/0/properties/name",
+                  "path": {
+                    "$id": "#/properties/rules/properties/directories/items/anyOf/0/properties/name",
                     "type": "string",
                     "title": "The name schema",
                     "description": "The name of the directory",
@@ -164,7 +166,7 @@
                     ]
                   },
                   "mode": {
-                    "$id": "#/properties/rules/properties/directory_include_list/items/anyOf/0/properties/mode",
+                    "$id": "#/properties/rules/properties/directories/items/anyOf/0/properties/mode",
                     "type": "string",
                     "pattern": "push|mirror",
                     "title": "The mode schema",
@@ -177,7 +179,7 @@
                 }
               },
               {
-                "$id": "#/properties/rules/properties/directory_include_list/items/anyOf/1",
+                "$id": "#/properties/rules/properties/directories/items/anyOf/1",
                 "type": "string",
                 "title": "Named default mode",
                 "description": "Default sync mode for named directory",
@@ -189,77 +191,240 @@
             ]
           }
         },
-        "file_ignore_list": {
-          "$id": "#/properties/rules/properties/file_ignore_list",
-          "type": "array",
-          "title": "The file_ignore_list schema",
-          "description": "A list of file patterns to ignore from sync",
-          "default": [],
+        "files": {
+          "$id": "#/properties/rules/properties/files",
+          "type": "object",
+          "title": "The files schema",
+          "description": "Configuration of what gets synced.",
+          "default": {},
           "examples": [
-            [
-              {
-                "pattern": "\\*\\*/*.jar",
-                "description": "No JARs"
-              }
-            ]
+            {
+              "include": [
+                "**/serversync-*.jar",
+                {
+                  "pattern": "\\*\\*/serversync-\\*.cfg",
+                  "description": "foobar"
+                }
+              ],
+              "ignore": [
+                "**/serversync-*.jar",
+                {
+                  "pattern": "\\*\\*/serversync-\\*.cfg",
+                  "description": "foobar"
+                }
+              ]
+            }
           ],
-          "additionalItems": true,
-          "items": {
-            "$id": "#/properties/rules/properties/file_ignore_list/items",
-            "anyOf": [
-              {
-                "$id": "#/properties/rules/properties/file_ignore_list/items/anyOf/0",
-                "type": "object",
-                "title": "Detailed configuration",
-                "description": "Used to specify extra information about a pattern",
-                "default": {},
-                "examples": [
+          "required": [
+            "include"
+          ],
+          "properties": {
+            "include": {
+              "$id": "#/properties/rules/properties/files/properties/include",
+              "type": "array",
+              "title": "The include schema",
+              "description": "Glob patterns of files that will be included during sync.",
+              "default": [],
+              "examples": [
+                [
+                  "**/serversync-*.jar",
                   {
-                    "pattern": "\\*\\*/*.jar",
-                    "description": "No JARs"
+                    "pattern": "\\*\\*/serversync-\\*.cfg",
+                    "description": "I like this file!"
                   }
-                ],
-                "required": [
-                  "pattern"
-                ],
-                "additionalProperties": true,
-                "properties": {
-                  "description": {
-                    "$id": "#/properties/rules/properties/file_ignore_list/items/anyOf/0/properties/description",
+                ]
+              ],
+              "additionalItems": true,
+              "items": {
+                "$id": "#/properties/rules/properties/files/properties/include/items",
+                "anyOf": [
+                  {
+                    "$id": "#/properties/rules/properties/files/properties/include/items/anyOf/0",
                     "type": "string",
-                    "title": "A description about the purpose of this pattern",
-                    "description": "Use this to remind yourself why you are ignoring this pattern",
+                    "title": "The first anyOf schema",
+                    "description": "A naked include glob pattern.",
                     "default": "",
                     "examples": [
-                      "No JARs"
+                      "**/serversync-*.jar"
                     ]
                   },
-                  "pattern": {
-                    "$id": "#/properties/rules/properties/file_ignore_list/items/anyOf/0/properties/pattern",
-                    "type": "string",
-                    "title": "The pattern to match against",
-                    "description": "Matches using GLOB patterns",
-                    "default": "",
+                  {
+                    "$id": "#/properties/rules/properties/files/properties/include/items/anyOf/1",
+                    "type": "object",
+                    "title": "The second anyOf schema",
+                    "description": "A description of an include glob pattern.",
+                    "default": {},
                     "examples": [
-                      "**/*.jar"
-                    ]
+                      {
+                        "pattern": "\\*\\*/serversync-\\*.cfg",
+                        "description": "I like this file!"
+                      }
+                    ],
+                    "required": [
+                      "pattern"
+                    ],
+                    "properties": {
+                      "pattern": {
+                        "$id": "#/properties/rules/properties/files/properties/include/items/anyOf/1/properties/pattern",
+                        "type": "string",
+                        "title": "The pattern schema",
+                        "description": "A glob pattern to match against.",
+                        "default": "",
+                        "examples": [
+                          "**/serversync-*.cfg"
+                        ]
+                      },
+                      "description": {
+                        "$id": "#/properties/rules/properties/files/properties/include/items/anyOf/1/properties/description",
+                        "type": "string",
+                        "title": "The description schema",
+                        "description": "A description of the reason for this pattern.",
+                        "default": "",
+                        "examples": [
+                          "I like this file!"
+                        ]
+                      }
+                    },
+                    "additionalProperties": true
                   }
-                }
-              },
-              {
-                "$id": "#/properties/rules/properties/file_ignore_list/items/anyOf/1",
-                "type": "string",
-                "title": "Basic configuration",
-                "description": "A pattern to match without extra details",
-                "default": "",
-                "examples": [
-                  "**/*.jar",
-                  "example.jar",
-                  "partial*.jar"
                 ]
               }
-            ]
-          }
+            },
+            "ignore": {
+              "$id": "#/properties/rules/properties/files/properties/ignore",
+              "type": "array",
+              "title": "The ignore schema",
+              "description": "Glob patterns of files that will not be sent to clients.",
+              "default": [],
+              "examples": [
+                [
+                  "**/serversync-*.jar",
+                  {
+                    "pattern": "\\*\\*/serversync-\\*.cfg",
+                    "description": "I don't like these files!"
+                  }
+                ]
+              ],
+              "additionalItems": true,
+              "items": {
+                "$id": "#/properties/rules/properties/files/properties/ignore/items",
+                "anyOf": [
+                  {
+                    "$id": "#/properties/rules/properties/files/properties/ignore/items/anyOf/0",
+                    "type": "string",
+                    "title": "The first anyOf schema",
+                    "description": "A naked ignore glob pattern.",
+                    "default": "",
+                    "examples": [
+                      "**/serversync-*.jar",
+                      "config/serversync/*"
+                    ]
+                  },
+                  {
+                    "$id": "#/properties/rules/properties/files/properties/ignore/items/anyOf/1",
+                    "type": "object",
+                    "title": "The second anyOf schema",
+                    "description": "A description of an ignore pattern.",
+                    "default": {},
+                    "examples": [
+                      {
+                        "pattern": "\\*\\*/serversync-\\*.cfg",
+                        "description": "I don't like these files!"
+                      }
+                    ],
+                    "required": [
+                      "pattern"
+                    ],
+                    "properties": {
+                      "pattern": {
+                        "$id": "#/properties/rules/properties/files/properties/ignore/items/anyOf/1/properties/pattern",
+                        "type": "string",
+                        "title": "The pattern schema",
+                        "description": "A glob pattern to match against.",
+                        "default": "",
+                        "examples": [
+                          "**/serversync-*.cfg"
+                        ]
+                      },
+                      "description": {
+                        "$id": "#/properties/rules/properties/files/properties/ignore/items/anyOf/1/properties/description",
+                        "type": "string",
+                        "title": "The description schema",
+                        "description": "A description of why this pattern is here.",
+                        "default": "",
+                        "examples": [
+                          "I don't like these files!"
+                        ]
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                ]
+              }
+            },
+            "redirect": {
+              "$id": "#/properties/rules/properties/files/properties/redirect",
+              "type": "array",
+              "title": "The redirect schema",
+              "description": "Glob patterns of files to redirect to another location on the client.",
+              "default": [],
+              "examples": [
+                [
+                  {
+                    "pattern": "mods/test-redirect-file.txt",
+                    "redirectTo": "redirected-files"
+                  }
+                ]
+              ],
+              "additionalItems": true,
+              "items": {
+                "$id": "#/properties/rules/properties/files/properties/redirect/items",
+                "anyOf": [
+                  {
+                    "$id": "#/properties/rules/properties/files/properties/redirect/items/anyOf/0",
+                    "type": "object",
+                    "title": "The first anyOf schema",
+                    "description": "A description of the redirect.",
+                    "default": {},
+                    "examples": [
+                      {
+                        "pattern": "mods/test-redirect-file.txt",
+                        "redirectTo": "redirected-files"
+                      }
+                    ],
+                    "required": [
+                      "pattern",
+                      "redirectTo"
+                    ],
+                    "properties": {
+                      "pattern": {
+                        "$id": "#/properties/rules/properties/files/properties/redirect/items/anyOf/0/properties/pattern",
+                        "type": "string",
+                        "title": "The pattern schema",
+                        "description": "The glob of files to redirect.",
+                        "default": "",
+                        "examples": [
+                          "mods/test-redirect-file.txt"
+                        ]
+                      },
+                      "redirectTo": {
+                        "$id": "#/properties/rules/properties/files/properties/redirect/items/anyOf/0/properties/redirectTo",
+                        "type": "string",
+                        "title": "The redirectTo schema",
+                        "description": "The location to redirect the files to.",
+                        "default": "",
+                        "examples": [
+                          "redirected-files"
+                        ]
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                ]
+              }
+            }
+          },
+          "additionalProperties": true
         },
         "redirect_files": {
           "$id": "#/properties/rules/properties/redirect_files",

@@ -7,7 +7,7 @@ public class FileRedirect {
     public String pattern;
     public String redirectTo;
 
-    private FileRedirect(String pattern, String redirectTo) {
+    public FileRedirect(String pattern, String redirectTo) {
         this.pattern = pattern;
         this.redirectTo = redirectTo;
     }
