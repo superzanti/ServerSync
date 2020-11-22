@@ -1,6 +1,5 @@
 package com.superzanti.serversync.client;
 
-import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.files.FileManifest;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.PrettyCollection;
@@ -24,12 +23,10 @@ public class ClientWorker implements Runnable, Closeable {
 
     public void setAddress(String address) {
         this.address = address;
-        SyncConfig.getConfig().SERVER_IP = address;
     }
 
     public void setPort(int port) {
         this.port = port;
-        SyncConfig.getConfig().SERVER_PORT = port;
     }
 
     /**

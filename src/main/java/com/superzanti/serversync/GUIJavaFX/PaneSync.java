@@ -17,6 +17,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 
 // GUI of the SYNC panel (Field ip/port, button "sync" and "check for updates", table with mods)
@@ -197,16 +198,17 @@ public class PaneSync extends BorderPane {
                         .getStackMainPane()
                         .getPaneSync()
                         .getObservableMods();
-                    config.SERVER_IP = ip;
-                    config.SERVER_PORT = port;
                     updateLogsArea("Starting update process...");
 
                     try {
-                        SyncConfig.getConfig().SERVER_IP = ip;
-                        SyncConfig.getConfig().SERVER_PORT = port;
                         worker.setAddress(ip);
                         worker.setPort(port);
                         worker.connect();
+
+                        // Setting this after connection so that we don't save an invalid address
+                        SyncConfig.getConfig().SERVER_IP = ip;
+                        SyncConfig.getConfig().SERVER_PORT = port;
+                        saveConfig();
 
                         setProgressText("Synchronizing files...");
                         Then.onComplete(worker.fetchActions(), actions -> {
@@ -271,13 +273,17 @@ public class PaneSync extends BorderPane {
                     updateLogsArea("Starting update process...");
                     setProgressText("Fetching manifest...");
                     list.clear();
-                    SyncConfig.getConfig().SERVER_IP = ip;
-                    SyncConfig.getConfig().SERVER_PORT = port;
                     worker.setAddress(ip);
                     worker.setPort(port);
 
                     try {
                         worker.connect();
+
+                        // Setting this after connection so that we don't save an invalid address
+                        SyncConfig.getConfig().SERVER_IP = ip;
+                        SyncConfig.getConfig().SERVER_PORT = port;
+                        saveConfig();
+
                         Then.onComplete(worker.fetchActions(), actions -> {
                             list.addAll(actions);
                             worker.close();
@@ -358,6 +364,16 @@ public class PaneSync extends BorderPane {
         alert.setHeaderText(header);
         alert.setContentText(content);
         alert.showAndWait();
+    }
+
+    private void saveConfig() {
+        try {
+            SyncConfig.getConfig().save();
+            updateLogsArea("Options saved");
+        } catch (IOException ex) {
+            Logger.debug(ex);
+            updateLogsArea(ex.toString());
+        }
     }
 }
 

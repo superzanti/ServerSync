@@ -1,7 +1,7 @@
 package com.superzanti.serversync.GUIJavaFX;
 
 import com.superzanti.serversync.RefStrings;
-import com.superzanti.serversync.util.enums.EThemes;
+import com.superzanti.serversync.config.SyncConfig;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -25,7 +25,7 @@ public class Gui_JavaFX extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        root.setStyle(EThemes.BLUE_YELLOW.toString());
+        root.setStyle(SyncConfig.getConfig().THEME.toString());
 
         Scene scene = new Scene(root, 1024, 576);
         scene.getStylesheets().add(this.getClass().getResource("/css/application.css").toExternalForm());

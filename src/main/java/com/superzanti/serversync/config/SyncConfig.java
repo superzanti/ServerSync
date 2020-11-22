@@ -6,6 +6,7 @@ import com.superzanti.serversync.files.EDirectoryMode;
 import com.superzanti.serversync.files.FileRedirect;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.EServerMode;
+import com.superzanti.serversync.util.enums.ETheme;
 
 import java.io.IOException;
 import java.util.*;
@@ -24,6 +25,7 @@ public class SyncConfig {
     public List<String> FILE_IGNORE_LIST = Arrays.asList("**/serversync-*.jar", "**/serversync-*.cfg");
     public List<String> CONFIG_INCLUDE_LIST = new ArrayList<>();
     public Locale LOCALE = Locale.getDefault();
+    public ETheme THEME = ETheme.BLUE_YELLOW;
     ////////////////////////////////////////
 
     // SERVER //////////////////////////////

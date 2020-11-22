@@ -7,7 +7,7 @@ import com.superzanti.serversync.util.BannedIPSReader;
 import com.superzanti.serversync.util.Glob;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.PrettyCollection;
-import com.superzanti.serversync.util.enums.ELocations;
+import com.superzanti.serversync.util.enums.ELocation;
 import com.superzanti.serversync.util.enums.EServerMessage;
 
 import java.io.IOException;
@@ -32,7 +32,7 @@ public class ServerSetup implements Runnable {
     private static final int SEND_BUFFER_SIZE = 1024 * 8;
 
     private final SyncConfig config = SyncConfig.getConfig();
-    private final Path bannedIps = Paths.get(ELocations.BANNED_IPS.getValue());
+    private final Path bannedIps = Paths.get(ELocation.BANNED_IPS.getValue());
 
     private final Timer timeoutScheduler = new Timer();
 
