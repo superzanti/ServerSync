@@ -4,9 +4,9 @@ import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.files.DirectoryEntry;
 import com.superzanti.serversync.files.EDirectoryMode;
 import com.superzanti.serversync.files.FileRedirect;
-import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.EServerMode;
+import com.superzanti.serversync.util.enums.ETheme;
 
 import java.io.IOException;
 import java.util.*;
@@ -25,6 +25,7 @@ public class SyncConfig {
     public List<String> FILE_IGNORE_LIST = Arrays.asList("**/serversync-*.jar", "**/serversync-*.cfg");
     public List<String> CONFIG_INCLUDE_LIST = new ArrayList<>();
     public Locale LOCALE = Locale.getDefault();
+    public ETheme THEME = ETheme.BLUE_YELLOW;
     ////////////////////////////////////////
 
     // SERVER //////////////////////////////
@@ -65,20 +66,7 @@ public class SyncConfig {
         return SyncConfig.singleton;
     }
 
-    /**
-     * Bit of a hack, need to update the config to be read/write
-     *
-     * @param ip   The updated IP address
-     * @param port The updated port
-     */
-    public void updateServerDetails(String ip, int port) {
-        SERVER_IP = ip;
-        SERVER_PORT = port;
-        try {
-            ConfigLoader.save(EConfigType.CLIENT);
-        } catch (IOException e) {
-            Logger.error("Failed to save last used server details to client config file");
-            Logger.debug(e);
-        }
+    public void save() throws IOException {
+        ConfigLoader.save(configType);
     }
 }

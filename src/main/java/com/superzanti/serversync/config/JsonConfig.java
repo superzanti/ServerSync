@@ -4,6 +4,8 @@ import com.eclipsesource.json.*;
 import com.superzanti.serversync.files.DirectoryEntry;
 import com.superzanti.serversync.files.EDirectoryMode;
 import com.superzanti.serversync.files.FileRedirect;
+import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.enums.ETheme;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -30,6 +32,7 @@ public class JsonConfig {
     private static final String PROP_FILES_IGNORE = "ignore";
     private static final String PROP_FILES_REDIRECT = "redirect";
     private static final String PROP_LOCALE = "locale";
+    private static final String PROP_THEME = "theme";
 
     public static void forServer(Path json) throws IOException {
         try (Reader reader = Files.newBufferedReader(json)) {
@@ -92,7 +95,7 @@ public class JsonConfig {
                 .map(v -> FileRedirect.from(v.asObject()))
                 .collect(Collectors.toList());
 
-            String[] localeParts = getString(misc, PROP_LOCALE).split("_");
+            String[] localeParts = getString(misc, PROP_LOCALE, "en_US").split("_");
             config.LOCALE = new Locale(localeParts[0], localeParts[1]);
 
         }
@@ -112,7 +115,7 @@ public class JsonConfig {
             JsonObject misc = getCategory(root, CAT_MISC);
 
             config.REFUSE_CLIENT_MODS = getBoolean(general, PROP_REFUSE_CLIENT_MODS);
-            config.SERVER_IP = getString(connection, PROP_ADDRESS);
+            config.SERVER_IP = getString(connection, PROP_ADDRESS, "127.0.0.1");
             config.SERVER_PORT = getInt(connection, PROP_PORT);
 
             JsonObject files = getObject(rules, PROP_FILES);
@@ -128,9 +131,9 @@ public class JsonConfig {
                 })
                 .collect(Collectors.toList());
 
-            String[] localeParts = getString(misc, PROP_LOCALE).split("_");
+            String[] localeParts = getString(misc, PROP_LOCALE, "en_US").split("_");
             config.LOCALE = new Locale(localeParts[0], localeParts[1]);
-
+            config.THEME = ETheme.valueOf(getString(misc, PROP_THEME, "BLUE_YELLOW"));
         }
     }
 
@@ -197,6 +200,7 @@ public class JsonConfig {
 
         JsonObject misc = new JsonObject();
         misc.add(PROP_LOCALE, config.LOCALE.toString());
+        misc.add(PROP_THEME, config.THEME.name());
         root.add(CAT_MISC, misc);
 
         writeTo(Files.newBufferedWriter(file), root);
@@ -217,10 +221,11 @@ public class JsonConfig {
         return jso;
     }
 
-    private static String getString(JsonObject root, String name) throws IOException {
+    private static String getString(JsonObject root, String name, String defaultValue) throws IOException {
         JsonValue jsv = root.get(name);
-        if (jsv.isNull()) {
-            throw new IOException(String.format("No %s value present in configuration file", name));
+        if (jsv == null || jsv.isNull()) {
+            Logger.error(String.format("No %s value present in configuration file", name));
+            return defaultValue;
         }
         if (!jsv.isString()) {
             throw new IOException(String.format("Invalid value for %s, expected string", name));

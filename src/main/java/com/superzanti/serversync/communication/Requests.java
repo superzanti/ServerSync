@@ -1,19 +1,19 @@
 package com.superzanti.serversync.communication;
 
+import com.superzanti.serversync.client.ActionEntry;
+import com.superzanti.serversync.client.ActionProgress;
 import com.superzanti.serversync.client.Server;
-import com.superzanti.serversync.files.FileManifest;
-import com.superzanti.serversync.files.FileEntry;
-import com.superzanti.serversync.gui.FileProgress;
 import com.superzanti.serversync.communication.response.ServerInfo;
+import com.superzanti.serversync.files.FileManifest;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EServerMessage;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class Requests {
     private final Server server;
@@ -103,10 +103,10 @@ public class Requests {
         }
     }
 
-    public boolean updateFile(FileEntry entry, Path theLocalFile) {
+    public boolean updateFile(ActionEntry entry, Consumer<ActionProgress> progressConsumer) {
         try {
             writeMessage(EServerMessage.UPDATE_FILE);
-            writeObject(entry);
+            writeObject(entry.target);
         } catch (IOException e) {
             return false;
         }
@@ -115,7 +115,7 @@ public class Requests {
             boolean serverHasFile = input.readBoolean();
 
             if (!serverHasFile) {
-                Logger.error(String.format("File does not exist on the server: %s", entry));
+                Logger.error(String.format("File does not exist on the server: %s", entry.target));
                 return false;
             }
         } catch (IOException e) {
@@ -126,14 +126,15 @@ public class Requests {
 
         try {
             long fileSize = input.readLong();
-            String fileName = theLocalFile.getFileName().toString();
-            FileProgress progressUpdates = new FileProgress();
+            ActionProgress progress = new ActionProgress(0, entry.target.path, false, entry);
 
-            SyncFileOutputStream out = new SyncFileOutputStream(server, fileSize, theLocalFile);
-            out.write((progress) -> {
-                progressUpdates.updateProgress(progress, fileName);
+            SyncFileOutputStream out = new SyncFileOutputStream(server, fileSize, entry.target.resolvePath());
+            out.write((pc) -> {
+                progress.setProgress(pc);
+                progressConsumer.accept(progress);
             });
-            progressUpdates.fileFinished();
+            progress.setComplete(true);
+            progressConsumer.accept(progress);
             return true;
         } catch (IOException e) {
             return false;

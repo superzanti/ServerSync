@@ -1,13 +1,13 @@
 package com.superzanti.serversync.util.enums;
 
-public enum ELocations {
+public enum ELocation {
     ROOT(""),
     CONFIG("config/serversync"),
     BANNED_IPS("banned-ips.json");
 
     private final String value;
 
-    ELocations(String value) {
+    ELocation(String value) {
         this.value = value;
     }
 

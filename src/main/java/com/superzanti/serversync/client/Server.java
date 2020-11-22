@@ -86,6 +86,7 @@ public class Server {
             // Output could be null if the server has never connected, i.e. the client used the wrong details
             if (output != null) {
                 output.writeUTF(EServerMessage.EXIT.toString());
+                output.flush();
             }
         } catch (IOException e) {
             Logger.error("Failed to close server connection");
