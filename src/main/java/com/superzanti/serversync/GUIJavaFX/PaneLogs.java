@@ -10,7 +10,7 @@ import javafx.scene.layout.BorderPane;
 // GUI of logs
 public class PaneLogs extends BorderPane {
 
-    private TextArea txtArea = new TextArea();
+    private final TextArea txtArea = new TextArea();
 
     public PaneLogs() {
         Logger.getLog().addObserver((o, arg) -> {

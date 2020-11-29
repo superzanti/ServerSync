@@ -152,9 +152,7 @@ public class JsonConfig {
 
         JsonObject rules = new JsonObject();
         JsonArray dirIncludeList = new JsonArray();
-        config.DIRECTORY_INCLUDE_LIST.forEach(d -> {
-            dirIncludeList.add(d.toJson());
-        });
+        config.DIRECTORY_INCLUDE_LIST.forEach(d -> dirIncludeList.add(d.toJson()));
         rules.add(PROP_DIRECTORIES, dirIncludeList);
         JsonObject files = new JsonObject();
         JsonArray fileIncludeList = new JsonArray();

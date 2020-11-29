@@ -168,6 +168,7 @@ public class ServerWorker implements Runnable {
 
                 // <---->
                 // the actual file sync
+                // @Deprecated - This sync mode is no longer used or supported
                 if (matchMessage(message, EServerMessage.SYNC_FILES)) {
                     // Server: Do you have this file?
                     // - String: path

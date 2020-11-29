@@ -4,8 +4,8 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 
 public class FileRedirect {
-    public String pattern;
-    public String redirectTo;
+    public final String pattern;
+    public final String redirectTo;
 
     public FileRedirect(String pattern, String redirectTo) {
         this.pattern = pattern;

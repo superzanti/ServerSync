@@ -14,7 +14,7 @@ public class LoggerNG {
     private static final String TAG_ERROR = "ERROR:";
     private static final String TAG_LOG = "LOG:";
 
-    private Log LOG;
+    private final Log LOG;
 
     public LoggerNG(String context) {
         LOG = new Log("serversync-" + context);

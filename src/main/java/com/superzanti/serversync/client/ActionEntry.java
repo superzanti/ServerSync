@@ -3,7 +3,7 @@ package com.superzanti.serversync.client;
 import com.superzanti.serversync.files.FileEntry;
 
 public class ActionEntry {
-    public FileEntry target;
+    public final FileEntry target;
     public EActionType action;
     public String reason;
 

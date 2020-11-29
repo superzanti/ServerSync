@@ -2,9 +2,9 @@ package com.superzanti.serversync.client;
 
 public class ActionProgress {
     public double progress;
-    public String name;
+    public final String name;
     public boolean complete;
-    public ActionEntry entry;
+    public final ActionEntry entry;
 
     public ActionProgress(double progress, String name, boolean complete, ActionEntry entry) {
         this.progress = progress;

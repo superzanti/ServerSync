@@ -9,9 +9,9 @@ import java.util.Observable;
 
 public class Log extends Observable {
 
-    private String fileName;
-    private StringBuilder logContent = new StringBuilder(1000);
-    public StringBuilder userFacingLog = new StringBuilder(1000);
+    private final String fileName;
+    private final StringBuilder logContent = new StringBuilder(1000);
+    public final StringBuilder userFacingLog = new StringBuilder(1000);
     boolean shouldOutputToSystem = false;
 
     private static final String EXT = ".log";
@@ -20,10 +20,6 @@ public class Log extends Observable {
         this.fileName = fileName;
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::saveLog));
-    }
-
-    public void clearUserFacingLog() {
-        userFacingLog.setLength(0);
     }
 
     /**

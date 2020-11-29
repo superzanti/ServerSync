@@ -41,6 +41,7 @@ public class ServerSetup implements Runnable {
                                                 .map(EServerMessage::toString)
                                                 .collect(Collectors.toList());
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     private FileManifest populateManifest() throws IOException {
         FileManifest manifest = new FileManifest();
         manifest.directories = config.DIRECTORY_INCLUDE_LIST;
