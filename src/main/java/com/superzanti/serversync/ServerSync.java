@@ -4,7 +4,6 @@ import com.superzanti.serversync.GUIJavaFX.Gui_JavaFX;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.config.ConfigLoader;
 import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.gui.GUI_ProgresOnly;
 import com.superzanti.serversync.server.ServerSetup;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.Then;
@@ -33,21 +32,25 @@ public class ServerSync implements Callable<Integer> {
     public static final String GET_SERVER_INFO = "SERVER_INFO";
     public static EServerMode MODE;
 
-    public static GUI_ProgresOnly clientGUI;
     public static ResourceBundle strings;
 
     public static Path rootDir = Paths.get(System.getProperty("user.dir"));
 
+    @SuppressWarnings("FieldMayBeFinal") // These have special behavior, final breaks it
     @Option(names = {"-r", "--root"}, description = "The root directory of the game, defaults to the current working directory.")
     private String rootDirectory = System.getProperty("user.dir");
+    @SuppressWarnings("FieldMayBeFinal")
     @Option(names = {"-o", "--progress", "progress-only"}, description = "Only show progress indication. Ignored if '-s', '--server' is specified.")
     private boolean modeProgressOnly = false;
+    @SuppressWarnings("FieldMayBeFinal")
     @Option(names = {"-q", "--quiet", "silent"}, description = "Remove all GUI interaction. Ignored if '-s', '--server' is specified.")
     private boolean modeQuiet = false;
+    @SuppressWarnings("FieldMayBeFinal")
     @Option(names = {"-s", "--server", "server"}, description = "Run the program in server mode.")
     private boolean modeServer = false;
     @Option(names = {"-a", "--address"}, description = "The address of the server you wish to connect to.")
     private String serverAddress;
+    @SuppressWarnings("FieldMayBeFinal")
     @Option(names = {"-p", "--port"}, description = "The port the server is running on.")
     private int serverPort = -1;
     @Option(names = {"-i", "--ignore"}, arity = "1..*", description = "A glob pattern or series of patterns for files to ignore")
@@ -135,12 +138,11 @@ public class ServerSync implements Callable<Integer> {
                 worker.setAddress(SyncConfig.getConfig().SERVER_IP);
                 worker.setPort(SyncConfig.getConfig().SERVER_PORT);
                 worker.connect();
-                Then.onComplete(worker.fetchActions(), actionEntries -> {
-                    Then.onComplete(worker.executeActions(actionEntries, unused -> {}), unused -> {
-                        worker.close();
-                        System.exit(0);
-                    });
-                });
+                Then.onComplete(worker.fetchActions(), actionEntries -> Then.onComplete(worker.executeActions(actionEntries, unused -> {
+                }), unused -> {
+                    worker.close();
+                    System.exit(0);
+                }));
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);
@@ -151,16 +153,14 @@ public class ServerSync implements Callable<Integer> {
                 worker.setAddress(SyncConfig.getConfig().SERVER_IP);
                 worker.setPort(SyncConfig.getConfig().SERVER_PORT);
                 worker.connect();
-                Then.onComplete(worker.fetchActions(), actionEntries -> {
-                    Then.onComplete(worker.executeActions(actionEntries, actionProgress -> {
-                        if (actionProgress.isComplete()) {
-                            System.out.printf("Updated: %s%n", actionProgress.entry);
-                        }
-                    }), unused -> {
-                        worker.close();
-                        System.exit(0);
-                    });
-                });
+                Then.onComplete(worker.fetchActions(), actionEntries -> Then.onComplete(worker.executeActions(actionEntries, actionProgress -> {
+                    if (actionProgress.isComplete()) {
+                        System.out.printf("Updated: %s%n", actionProgress.entry);
+                    }
+                }), unused -> {
+                    worker.close();
+                    System.exit(0);
+                }));
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);

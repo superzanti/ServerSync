@@ -5,37 +5,38 @@ import java.util.HashMap;
 
 /**
  * Begone from here, there be beasts lurking.
+ *
+ * This will be removed entirely once the JSON config has had time to settle.
  */
 public class FriendlyConfig extends HashMap<String, FriendlyConfigCategory> {
     private static final long serialVersionUID = -8812919144959413432L;
 
-    public void writeConfig(FriendlyConfigWriter writer) {
-        this.forEach((key, category) -> {
-
-            try {
-                writer.writeOpenCategory(category.getCategoryName());
-                for (int i = 0; i < category.size(); i++) {
-                    FriendlyConfigElement e = category.get(i);
-                    writer.writeElement(e);
-                    if (i == category.size() - 1) {
-                        // Last element
-                        writer.newLine();
-                    } else {
-                        writer.newLines(2);
-                    }
-                }
-                writer.writeCloseCategory();
-            } catch (Exception e) {
-                //TODO handle these errors
-                e.printStackTrace();
-            }
-        });
-        try {
-            writer.close();
-        } catch (Exception e1) {
-            e1.printStackTrace();
-        }
-    }
+//    public void writeConfig(FriendlyConfigWriter writer) {
+//        this.forEach((key, category) -> {
+//
+//            try {
+//                writer.writeOpenCategory(category.getCategoryName());
+//                for (int i = 0; i < category.size(); i++) {
+//                    FriendlyConfigElement e = category.get(i);
+//                    writer.writeElement(e);
+//                    if (i == category.size() - 1) {
+//                        // Last element
+//                        writer.newLine();
+//                    } else {
+//                        writer.newLines(2);
+//                    }
+//                }
+//                writer.writeCloseCategory();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        });
+//        try {
+//            writer.close();
+//        } catch (Exception e1) {
+//            e1.printStackTrace();
+//        }
+//    }
 
     public void readConfig(FriendlyConfigReader read) {
         FriendlyConfigElement entry;

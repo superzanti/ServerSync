@@ -1,27 +1,13 @@
 package com.superzanti.serversync.gui;
 
-import com.superzanti.serversync.RefStrings;
-import com.superzanti.serversync.ServerSync;
-import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.client.ClientWorker;
-import com.superzanti.serversync.util.Log;
-import com.superzanti.serversync.util.Logger;
-
 import javax.swing.*;
-import javax.swing.border.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
 
+/**
+ * No longer used, this will most likely be replaced with command line reporting instead.
+ */
+@Deprecated
 public class GUI_ProgresOnly extends JFrame {
-
-    /**
-     *
-     */
+    /*
     private static final long serialVersionUID = -6888496807573569823L;
 
     private JPanel root = new JPanel();
@@ -282,5 +268,5 @@ public class GUI_ProgresOnly extends JFrame {
 
         this.TF_port.setText(String.valueOf(port));
         return true;
-    }
+    }*/
 }

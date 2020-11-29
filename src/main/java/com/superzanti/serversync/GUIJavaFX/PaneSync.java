@@ -25,7 +25,7 @@ public class PaneSync extends BorderPane {
 
     private final SyncConfig config = SyncConfig.getConfig();
 
-    private TableView table;
+    private TableView<ActionEntry> table;
     private Button btnSync, btnCheckUpdate;
     private TextField fieldIp, fieldPort;
     private final ObservableList<ActionEntry> observableMods = FXCollections.observableArrayList();
@@ -98,10 +98,10 @@ public class PaneSync extends BorderPane {
         return paneProgressBar;
     }
 
-    public TableView getTableView() {
+    public TableView<ActionEntry> getTableView() {
         if (table == null) {
 
-            table = new TableView();
+            table = new TableView<>();
             table.setEditable(true);
             table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
@@ -148,16 +148,13 @@ public class PaneSync extends BorderPane {
 //            colIgnored.setCellValueFactory(new PropertyValueFactory<>("action"));
             //----
 
-            TableColumn<ActionEntry, EActionType> colReason = new TableColumn<>("Reason");
+            TableColumn<ActionEntry, String> colReason = new TableColumn<>("Reason");
             colReason.prefWidthProperty().bind(table.widthProperty().multiply(0.25));
             colReason.setCellValueFactory(new PropertyValueFactory<>("reason"));
 
             table.getColumns().addAll(colStatus, colFileName, colReason);
 
-            /* Change the color of the font text of columns "Status" */
             table.setItems(observableMods);
-
-
         }
 
         return table;
@@ -215,29 +212,25 @@ public class PaneSync extends BorderPane {
                             list.clear();
                             list.addAll(actions);
 
-                            Callable<Void> sync = worker.executeActions(actions, actionProgress -> {
-                                Platform.runLater(() -> {
-                                    getPaneProgressBar().setPathText(actionProgress.getName());
-                                    getPaneProgressBar().getProgressBar().setProgress(actionProgress.getProgress());
-                                    if (actionProgress.isComplete()) {
-                                        getObservableMods()
-                                            .stream().filter(entry -> entry.equals(actionProgress.entry))
-                                            .findAny()
-                                            .ifPresent(v -> {
-                                                v.action = EActionType.None;
-                                                v.reason = "Updated";
-                                            });
-                                    }
-                                    getTableView().refresh();
-                                    getPaneProgressBar().updateGUI();
-                                });
-                            });
-                            Then.onComplete(sync, unused -> {
-                                Platform.runLater(() -> {
-                                    setProgressText("Sync complete");
-                                    worker.close();
-                                });
-                            });
+                            Callable<Void> sync = worker.executeActions(actions, actionProgress -> Platform.runLater(() -> {
+                                getPaneProgressBar().setPathText(actionProgress.getName());
+                                getPaneProgressBar().getProgressBar().setProgress(actionProgress.getProgress());
+                                if (actionProgress.isComplete()) {
+                                    getObservableMods()
+                                        .stream().filter(entry -> entry.equals(actionProgress.entry))
+                                        .findAny()
+                                        .ifPresent(v -> {
+                                            v.action = EActionType.None;
+                                            v.reason = "Updated";
+                                        });
+                                }
+                                getTableView().refresh();
+                                getPaneProgressBar().updateGUI();
+                            }));
+                            Then.onComplete(sync, unused -> Platform.runLater(() -> {
+                                setProgressText("Sync complete");
+                                worker.close();
+                            }));
                         });
                     } catch (Exception exception) {
                         Logger.debug(exception);
@@ -287,9 +280,7 @@ public class PaneSync extends BorderPane {
                         Then.onComplete(worker.fetchActions(), actions -> {
                             list.addAll(actions);
                             worker.close();
-                            Platform.runLater(() -> {
-                                setProgressText("");
-                            });
+                            Platform.runLater(() -> setProgressText(""));
                         });
                     } catch (Exception exception) {
                         Logger.debug(exception);
@@ -342,7 +333,7 @@ public class PaneSync extends BorderPane {
     }
 
     public boolean setPort(int port) {
-        if (!(port <= 49151 && port > 0)) {
+        if (port > 49151 || port < 0) {
             updateLogsArea("Port out of range, valid range: 1 - 49151");
             return false;
         }
