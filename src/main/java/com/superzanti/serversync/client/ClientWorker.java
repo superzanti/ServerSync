@@ -1,103 +1,124 @@
 package com.superzanti.serversync.client;
 
-import com.superzanti.serversync.GUIJavaFX.Gui_JavaFX;
-import com.superzanti.serversync.ServerSync;
-import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.communication.response.ServerInfo;
+import com.superzanti.serversync.files.FileManifest;
 import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.PrettyCollection;
+
+import java.io.Closeable;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 /**
  * The sync process for clients.
- * - Get my state
- * - Stream server state and pop files from my state that are dealt with
- * - Delete files that are not present on the server (remaining)
- * <p>
- * Caveats:
- * - Client can configure to ignore files from deletion (e.g. Optifine, NEET and other such client side mods)
- * <p>
  *
  * @author Rheimus
  */
-public class ClientWorker implements Runnable {
-
-    private boolean errorInUpdates = false;
-    private boolean updateHappened = false;
+public class ClientWorker implements Runnable, Closeable {
+    private String address;
+    private int port = -1;
 
     private Server server;
+    private Mode2Sync sync;
 
-    private final SyncConfig config = SyncConfig.getConfig();
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    /**
+     * Generate a list of actions required to synchronize with the server.
+     * <p>
+     * This method requires an address and port to be configured via setAddress & setPort.
+     *
+     * @return A list of actions
+     */
+    public Callable<List<ActionEntry>> fetchActions() {
+        return () -> {
+            FileManifest manifest = sync.fetchManifest();
+            Logger.log("Determining actions for manifest");
+            Logger.log(PrettyCollection.get(manifest.directories));
+            Logger.log(PrettyCollection.get(manifest.files));
+            return sync.generateActionList(manifest);
+        };
+    }
+
+    public Callable<Void> executeActions(List<ActionEntry> actions, Consumer<ActionProgress> progressConsumer) {
+        return () -> {
+            Logger.log(String.format("Executing actions: %s", PrettyCollection.get(actions)));
+            sync.executeActionList(actions, progressConsumer);
+            return null;
+        };
+    }
+
+    public void connect() throws Exception {
+        if (address == null || port == -1) {
+            // TODO use a real exception here
+            throw new Exception("Attempted to call connect without an address or port configured");
+        }
+        Client client = new Client(address, port);
+        this.server = Server.forClient(client);
+        if (!server.connect()) {
+            // TODO use a real exception here
+            throw new Exception("Failed to connect to server");
+        }
+
+        this.sync = Mode2Sync.forServer(server);
+    }
+
+    public void close() {
+        if (this.server != null) {
+            this.server.close();
+            this.server = null;
+        }
+        this.sync = null;
+    }
 
     @Override
     public void run() {
-        updateHappened = false;
+//        updateHappened = false;
 
-        Logger.getLog().clearUserFacingLog();
-
-        Client client = new Client(config.SERVER_IP, config.SERVER_PORT);
-        server = Server.forClient(client);
-
-        if (!server.connect()) {
-            errorInUpdates = true;
-            closeWorker();
-            return;
-        }
-
-        ServerInfo serverInfo = server.info;
-
-        switch (config.SYNC_MODE) {
-            case 1:
-                Mode1Sync.forServer(server).run();
-                break;
-            case 2:
-                Mode2Sync.forServer(server).run();
-                break;
-            case 3:
-                CheckUpdate.forServer(server).run();
-                break;
-            default:
-                Logger.error(String.format("Unknown server mode: %d", serverInfo.syncMode));
-                errorInUpdates = true;
-                updateHappened = false;
-                closeWorker();
-                return;
-        }
-
-
-        updateHappened = true;
-        closeWorker();
-
-        // Update configured server to the latest used address
-        // consideration to be had here for client silent sync mode
-        //TODO fix or delete this
-        if (ServerSync.clientGUI != null) {
-            config.updateServerDetails(ServerSync.clientGUI.getIPAddress(), ServerSync.clientGUI.getPort());
-        }
-
-        Logger.log(ServerSync.strings.getString("update_complete"));
+//        Logger.getLog().clearUserFacingLog();
+//
+//        Client client = new Client(config.SERVER_IP, config.SERVER_PORT);
+//        server = Server.forClient(client);
+//
+//        if (!server.connect()) {
+//            errorInUpdates = true;
+//            closeWorker();
+//            return;
+//        }
+//
+//        ServerInfo serverInfo = server.info;
+//
+//        Mode2Sync sync = Mode2Sync.forServer(server);
+//        try {
+//            List<ActionEntry> actions = sync.generateActionList(sync.fetchManifest());
+//            sync.executeActionList(actions);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//
+//
+//        updateHappened = true;
+//        closeWorker();
+//
+//        // Update configured server to the latest used address
+//        // consideration to be had here for client silent sync mode
+//        //TODO fix or delete this
+//        if (ServerSync.clientGUI != null) {
+//            config.updateServerDetails(ServerSync.clientGUI.getIPAddress(), ServerSync.clientGUI.getPort());
+//        }
+//
+//        Logger.log(ServerSync.strings.getString("update_complete"));
     }
 
-    private void closeWorker() {
-        Logger.debug("Closing client worker");
-        if (server == null) {
-            return;
-        }
-        server.close();
-
-        if (!updateHappened && !errorInUpdates) {
-            Logger.log(ServerSync.strings.getString("update_not_needed"));
-        } else {
-            Logger.debug(ServerSync.strings.getString("update_happened"));
-        }
-
-        if (errorInUpdates) {
-            Logger.error(ServerSync.strings.getString("update_error"));
-        }
-
-        enableGuiButton();
-    }
-
-    private void enableGuiButton() {
-        Gui_JavaFX.getStackMainPane().getPaneSync().getBtnSync().setDisable(false);
-        Gui_JavaFX.getStackMainPane().getPaneSync().getBtnCheckUpdate().setDisable(false);
-    }
+//    private void enableGuiButton() {
+//        Gui_JavaFX.getStackMainPane().getPaneSync().getBtnSync().setDisable(false);
+//        Gui_JavaFX.getStackMainPane().getPaneSync().getBtnCheckUpdate().setDisable(false);
+//    }
 }

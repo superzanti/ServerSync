@@ -1,5 +1,7 @@
 package com.superzanti.serversync.config;
 
+import com.superzanti.serversync.files.DirectoryEntry;
+import com.superzanti.serversync.files.EDirectoryMode;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.minecraft.config.FriendlyConfig;
@@ -9,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class OldConfig {
     public static void forServer(Path file) throws IOException {
@@ -61,7 +64,9 @@ public class OldConfig {
             Logger.debug(String.format(couldNotFindString, "PUSH_CLIENT_MODS"));
         }
         try {
-            config.DIRECTORY_INCLUDE_LIST = _config.getEntryByName("DIRECTORY_INCLUDE_LIST").getList();
+            config.DIRECTORY_INCLUDE_LIST = _config.getEntryByName("DIRECTORY_INCLUDE_LIST").getList().stream()
+                                                   .map(d -> new DirectoryEntry(d, EDirectoryMode.mirror))
+                                                   .collect(Collectors.toList());
         } catch (NullPointerException e) {
             Logger.debug(String.format(couldNotFindString, "DIRECTORY_INCLUDE_LIST"));
         }

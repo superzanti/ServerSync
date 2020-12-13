@@ -7,9 +7,9 @@ import javafx.scene.layout.StackPane;
 // Store all panels
 public class StackMainMenu extends BorderPane {
 
-    private PaneSync sync = new PaneSync();
-    private PaneLogs logs = new PaneLogs();
-    private final PaneOptions options = new PaneOptions();
+    private PaneSync sync = getPaneSync();
+    private PaneLogs logs = getPaneLogs();
+    private PaneOptions options = getPaneOptions();
 
     private final StackPane stack = new StackPane();
 
@@ -37,6 +37,13 @@ public class StackMainMenu extends BorderPane {
             sync = new PaneSync();
         }
         return sync;
+    }
+
+    public PaneOptions getPaneOptions() {
+        if (options == null) {
+            options = new PaneOptions();
+        }
+        return options;
     }
 
     public void displayPanel(int n) {

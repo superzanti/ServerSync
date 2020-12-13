@@ -1,27 +1,30 @@
 package com.superzanti.serversync.GUIJavaFX;
 
-import com.superzanti.serversync.config.ConfigLoader;
-import com.superzanti.serversync.config.JsonConfig;
 import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.util.enums.EThemes;
+import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.enums.ETheme;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 // GUI of options
 public class PaneOptions extends GridPane {
+
+    private final TextField address = getAddressField();
+    private final TextField port = getPortField();
+    private final CheckBox refuseClientMods = getRefuseClientModsCheckbox();
+    private final ComboBox<String> themeComboBox = getThemeComboBox();
 
     public PaneOptions() {
         this.setAlignment(Pos.CENTER);
@@ -29,7 +32,7 @@ public class PaneOptions extends GridPane {
 
         /* CLIENT */
         /* CLIENT -> Themes*/
-        Label labelClient = new Label("Client (Options by default):");
+        Label labelClient = new Label("Client configuration:");
         labelClient.setFont(new Font("Arial", 16));
         setRowIndex(labelClient, 0);
         setColumnIndex(labelClient, 0);
@@ -38,21 +41,13 @@ public class PaneOptions extends GridPane {
         setRowIndex(labelTheme, 1);
         setColumnIndex(labelTheme, 0);
 
-        ObservableList<? extends Serializable> themes =
-                FXCollections.observableArrayList(
-                        Stream.of(EThemes.values())
-                                .map(Enum::name)
-                                .collect(Collectors.toList())
-                );
-        ComboBox comboBox = new ComboBox(themes);
-        comboBox.getSelectionModel().select(0);
+        ComboBox<String> comboBox = getThemeComboBox();
+        comboBox.getSelectionModel().select(SyncConfig.getConfig().THEME.ordinal());
         comboBox.valueProperty().addListener((obs, oldItem, newItem) -> {
-            for (EThemes theme : EThemes.values()) {
-                if (newItem == theme.name()) {
-                    Gui_JavaFX.getStackMainPane().setStyle(theme.toString());
-                    break;
-                }
-            }
+            ETheme newTheme = ETheme.valueOf(newItem);
+            Gui_JavaFX.getStackMainPane().setStyle(newTheme.toString());
+            SyncConfig.getConfig().THEME = newTheme;
+            saveConfig();
         });
         setRowIndex(comboBox, 1);
         setColumnIndex(comboBox, 1);
@@ -64,18 +59,28 @@ public class PaneOptions extends GridPane {
         setRowIndex(labelIp, 2);
         setColumnIndex(labelIp, 0);
 
-        TextField fieldIp = new TextField();
-        fieldIp.setText(SyncConfig.getConfig().SERVER_IP);
-        setRowIndex(fieldIp, 2);
-        setColumnIndex(fieldIp, 1);
+        TextField fieldAddress = getAddressField();
+        fieldAddress.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (oldValue) {
+                SyncConfig.getConfig().SERVER_IP = fieldAddress.getText();
+                saveConfig();
+            }
+        });
+        setRowIndex(fieldAddress, 2);
+        setColumnIndex(fieldAddress, 1);
 
         /* CLIENT -> PORT*/
         Label labelPort = new Label("Port: ");
         setRowIndex(labelPort, 3);
         setColumnIndex(labelPort, 0);
 
-        TextField fieldPort = new TextField();
-        fieldPort.setText(String.valueOf(SyncConfig.getConfig().SERVER_PORT));
+        TextField fieldPort = getPortField();
+        fieldPort.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (oldValue) {
+                SyncConfig.getConfig().SERVER_PORT = Integer.parseInt(fieldPort.getText(), 10);
+                saveConfig();
+            }
+        });
         setRowIndex(fieldPort, 3);
         setColumnIndex(fieldPort, 1);
 
@@ -84,73 +89,84 @@ public class PaneOptions extends GridPane {
         setRowIndex(labelRefuse, 4);
         setColumnIndex(labelRefuse, 0);
 
-        CheckBox cbxRefuse = new CheckBox();
+        CheckBox cbxRefuse = getRefuseClientModsCheckbox();
         cbxRefuse.setSelected(SyncConfig.getConfig().REFUSE_CLIENT_MODS);
+        cbxRefuse.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            SyncConfig.getConfig().REFUSE_CLIENT_MODS = newValue;
+            saveConfig();
+        });
         setRowIndex(cbxRefuse, 4);
         setColumnIndex(cbxRefuse, 1);
 
         /* CLIENT -> Ignore list*/
-        Label labelIgnore = new Label("Ignore list: ");
-        setRowIndex(labelIgnore, 5);
-        setColumnIndex(labelIgnore, 0);
+        // TODO implement this ignore list
+//        Label labelIgnore = new Label("Ignore list: ");
+//        setRowIndex(labelIgnore, 5);
+//        setColumnIndex(labelIgnore, 0);
+//
+//        ListView<String> ignoreList = new ListView<String>();
+//        ObservableList<String> items = FXCollections.observableArrayList(SyncConfig.getConfig().FILE_IGNORE_LIST);
+//        ignoreList.setItems(items);
+//        setRowIndex(ignoreList, 6);
+//        setColumnIndex(ignoreList, 0);
 
-        ListView<String> ignoreList = new ListView<String>();
-        ObservableList<String> items = FXCollections.observableArrayList(SyncConfig.getConfig().FILE_IGNORE_LIST);
-        ignoreList.setItems(items);
-        setRowIndex(ignoreList, 6);
-        setColumnIndex(ignoreList, 0);
+        this.getChildren().addAll(labelClient, labelIp, labelPort, labelRefuse, cbxRefuse, fieldAddress, fieldPort);
+//        this.getChildren().addAll(labelIgnore, ignoreList);
+        refreshConfigValues();
+    }
 
-        this.getChildren().addAll(labelClient, labelIp, labelPort, labelRefuse, cbxRefuse, fieldIp, fieldPort);
-        this.getChildren().addAll(labelIgnore, ignoreList);
+    public TextField getAddressField() {
+        if (address == null) {
+            return new TextField();
+        }
+        return address;
+    }
 
-        /* CANCEL BUTTON */
-        Button btnCancel = new Button("Cancel");
-        btnCancel.getStyleClass().add("btn");
-        btnCancel.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                fieldIp.setText(SyncConfig.getConfig().SERVER_IP);
-                fieldPort.setText(String.valueOf(SyncConfig.getConfig().SERVER_PORT));
-                cbxRefuse.setSelected(SyncConfig.getConfig().REFUSE_CLIENT_MODS);
-            }
-        });
-        setRowIndex(btnCancel, 7);
-        setColumnIndex(btnCancel, 0);
-        setHalignment(btnCancel, HPos.RIGHT);
+    public TextField getPortField() {
+        if (port == null) {
+            return new TextField();
+        }
+        return port;
+    }
 
-        /* SAVE BUTTON */
-        Button btnSave = new Button("Save");
-        btnSave.getStyleClass().add("btn");
-        btnSave.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                int port = Integer.parseInt(fieldPort.getText());
-                String ip = fieldIp.getText();
-                if (Gui_JavaFX.getStackMainPane().getPaneSync().setPort(port)) {
-                    Gui_JavaFX.getStackMainPane().getPaneSync().setIPAddress(ip);
+    public CheckBox getRefuseClientModsCheckbox() {
+        if (refuseClientMods == null) {
+            return new CheckBox();
+        }
+        return refuseClientMods;
+    }
 
-                    SyncConfig.getConfig().SERVER_IP = ip;
-                    SyncConfig.getConfig().SERVER_PORT = port;
-                    SyncConfig.getConfig().REFUSE_CLIENT_MODS = cbxRefuse.isSelected();
+    public ComboBox<String> getThemeComboBox() {
+        if (themeComboBox == null) {
+            ObservableList<String> themes =
+                FXCollections.observableArrayList(
+                    Stream.of(ETheme.values())
+                          .map(Enum::name)
+                          .collect(Collectors.toList())
+                );
+            return new ComboBox<>(themes);
+        }
+        return themeComboBox;
+    }
 
-                    try {
-                        JsonConfig.saveClient(ConfigLoader.v2ClientConfig);
-                        updateLogsArea("Options saved");
-                        //btnSave.setDisable(true);
-                    } catch (IOException ioException) {
-                        updateLogsArea(ioException.toString());
-                    }
-                }
-            }
-        });
-
-        setRowIndex(btnSave, 7);
-        setColumnIndex(btnSave, 1);
-
-        this.getChildren().addAll(btnCancel, btnSave);
+    public void refreshConfigValues() {
+        getAddressField().setText(SyncConfig.getConfig().SERVER_IP);
+        getPortField().setText(String.valueOf(SyncConfig.getConfig().SERVER_PORT));
+        getRefuseClientModsCheckbox().setSelected(SyncConfig.getConfig().REFUSE_CLIENT_MODS);
+        getThemeComboBox().getSelectionModel().select(SyncConfig.getConfig().THEME.name());
     }
 
     public void updateLogsArea(String text) {
         Gui_JavaFX.getStackMainPane().getPaneLogs().updateLogsArea(text);
+    }
+
+    private void saveConfig() {
+        try {
+            SyncConfig.getConfig().save();
+            updateLogsArea("Options saved");
+        } catch (IOException ex) {
+            Logger.debug(ex);
+            updateLogsArea(ex.toString());
+        }
     }
 }

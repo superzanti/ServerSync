@@ -1,10 +1,14 @@
 package com.superzanti.serversync.config;
 
 import com.superzanti.serversync.ServerSync;
+import com.superzanti.serversync.files.DirectoryEntry;
+import com.superzanti.serversync.files.EDirectoryMode;
 import com.superzanti.serversync.files.FileRedirect;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.EServerMode;
+import com.superzanti.serversync.util.enums.ETheme;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -21,12 +25,17 @@ public class SyncConfig {
     public List<String> FILE_IGNORE_LIST = Arrays.asList("**/serversync-*.jar", "**/serversync-*.cfg");
     public List<String> CONFIG_INCLUDE_LIST = new ArrayList<>();
     public Locale LOCALE = Locale.getDefault();
+    public ETheme THEME = ETheme.BLUE_YELLOW;
     ////////////////////////////////////////
 
     // SERVER //////////////////////////////
     public int SERVER_PORT = 38067;
     public Boolean PUSH_CLIENT_MODS = false;
-    public List<String> DIRECTORY_INCLUDE_LIST = Collections.singletonList("mods");
+    public List<String> FILE_INCLUDE_LIST = new ArrayList<>();
+    public List<DirectoryEntry> DIRECTORY_INCLUDE_LIST = Collections.singletonList(new DirectoryEntry(
+        "mods",
+        EDirectoryMode.mirror
+    ));
     public List<FileRedirect> REDIRECT_FILES_LIST = new ArrayList<>();
     public int SYNC_MODE = 2;
     ////////////////////////////////////////
@@ -57,15 +66,7 @@ public class SyncConfig {
         return SyncConfig.singleton;
     }
 
-    /**
-     * Bit of a hack, need to update the config to be read/write
-     *
-     * @param ip   The updated IP address
-     * @param port The updated port
-     */
-    public void updateServerDetails(String ip, int port) {
-        SERVER_IP = ip;
-        SERVER_PORT = port;
-        System.out.println("NOT IMPLEMENTED!");
+    public void save() throws IOException {
+        ConfigLoader.save(configType);
     }
 }

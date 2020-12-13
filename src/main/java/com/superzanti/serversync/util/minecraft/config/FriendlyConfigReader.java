@@ -5,11 +5,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class FriendlyConfigReader extends BufferedReader {
-
-    //TODO create separate server/client config files
-    //TODO have server send handshake secure codes and remove from clients config
-
     public String category;
 
     public FriendlyConfigReader(BufferedReader read) {

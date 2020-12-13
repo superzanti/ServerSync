@@ -1,6 +1,6 @@
 package com.superzanti.serversync.util.enums;
 
-public enum EThemes {
+public enum ETheme {
     /*
         -fx-primary     -> Color background
         -fx-secondary   -> Color button/border/progressbar
@@ -14,7 +14,7 @@ public enum EThemes {
 
     private final String theme;
 
-    EThemes(String theme) {
+    ETheme(String theme) {
         this.theme = theme;
     }
 

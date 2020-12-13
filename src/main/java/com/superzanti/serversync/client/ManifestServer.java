@@ -2,9 +2,8 @@ package com.superzanti.serversync.client;
 
 import com.superzanti.serversync.communication.Requests;
 import com.superzanti.serversync.files.FileManifest;
-import com.superzanti.serversync.files.ManifestEntry;
 
-import java.nio.file.Path;
+import java.util.function.Consumer;
 
 public class ManifestServer {
     private final Requests requests;
@@ -17,7 +16,7 @@ public class ManifestServer {
         return requests.getManifest();
     }
 
-    public boolean updateIndividualFile(ManifestEntry entry, Path theLocalFile) {
-        return requests.updateFile(entry, theLocalFile);
+    public boolean updateIndividualFile(ActionEntry entry, Consumer<ActionProgress> progressConsumer) {
+        return requests.updateFile(entry, progressConsumer);
     }
 }

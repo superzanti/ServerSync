@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GlobPathMatcherTests {
-    SyncConfig config;
+    final SyncConfig config;
 
     GlobPathMatcherTests() {
         ServerSync.MODE = EServerMode.CLIENT;
@@ -37,10 +37,10 @@ public class GlobPathMatcherTests {
 
         config.FILE_IGNORE_LIST = Arrays.asList("ignored-file.test", "nested/ignored-file.test", "ignored-directory");
 
-        assertTrue(GlobPathMatcher.matches(ignoredFile, config.FILE_IGNORE_LIST));
-        assertTrue(GlobPathMatcher.matches(ignoredFile2, config.FILE_IGNORE_LIST));
-        assertTrue(GlobPathMatcher.matches(ignoredDirectory, config.FILE_IGNORE_LIST));
-        assertFalse(GlobPathMatcher.matches(includedFile, config.FILE_IGNORE_LIST));
+        assertTrue(Glob.matches(ignoredFile, config.FILE_IGNORE_LIST));
+        assertTrue(Glob.matches(ignoredFile2, config.FILE_IGNORE_LIST));
+        assertTrue(Glob.matches(ignoredDirectory, config.FILE_IGNORE_LIST));
+        assertFalse(Glob.matches(includedFile, config.FILE_IGNORE_LIST));
     }
 
     @Test
@@ -58,14 +58,14 @@ public class GlobPathMatcherTests {
 
         config.FILE_IGNORE_LIST = Arrays.asList("wild-ignored*", "**/deep-ignore.test", "anything-shallow/*", "anything-deep/**");
 
-        assertTrue(GlobPathMatcher.matches(ignoredFileWild, config.FILE_IGNORE_LIST));
-        assertTrue(GlobPathMatcher.matches(ignoredFileAnywhere, config.FILE_IGNORE_LIST));
-        assertTrue(GlobPathMatcher.matches(ignoredFileAnywhere2, config.FILE_IGNORE_LIST));
-        assertTrue(GlobPathMatcher.matches(ignoredFileAnything, config.FILE_IGNORE_LIST));
-        assertTrue(GlobPathMatcher.matches(ignoredFileAnything2, config.FILE_IGNORE_LIST));
-        assertTrue(GlobPathMatcher.matches(ignoredFileAnything3, config.FILE_IGNORE_LIST));
+        assertTrue(Glob.matches(ignoredFileWild, config.FILE_IGNORE_LIST));
+        assertTrue(Glob.matches(ignoredFileAnywhere, config.FILE_IGNORE_LIST));
+        assertTrue(Glob.matches(ignoredFileAnywhere2, config.FILE_IGNORE_LIST));
+        assertTrue(Glob.matches(ignoredFileAnything, config.FILE_IGNORE_LIST));
+        assertTrue(Glob.matches(ignoredFileAnything2, config.FILE_IGNORE_LIST));
+        assertTrue(Glob.matches(ignoredFileAnything3, config.FILE_IGNORE_LIST));
 
-        assertFalse(GlobPathMatcher.matches(includedFile, config.FILE_IGNORE_LIST));
-        assertFalse(GlobPathMatcher.matches(includedFile2, config.FILE_IGNORE_LIST));
+        assertFalse(Glob.matches(includedFile, config.FILE_IGNORE_LIST));
+        assertFalse(Glob.matches(includedFile2, config.FILE_IGNORE_LIST));
     }
 }

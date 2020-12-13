@@ -1,13 +1,11 @@
 package com.superzanti.serversync.GUIJavaFX;
 
 import com.superzanti.serversync.RefStrings;
-import com.superzanti.serversync.util.enums.EThemes;
+import com.superzanti.serversync.config.SyncConfig;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 
 // Main class of the GUI, launch the window
 public class Gui_JavaFX extends Application {
@@ -27,18 +25,15 @@ public class Gui_JavaFX extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        root.setStyle(EThemes.BLUE_YELLOW.toString());
+        root.setStyle(SyncConfig.getConfig().THEME.toString());
 
         Scene scene = new Scene(root, 1024, 576);
         scene.getStylesheets().add(this.getClass().getResource("/css/application.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.setTitle(RefStrings.NAME + " - " + RefStrings.VERSION);
-        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            @Override
-            public void handle(WindowEvent t) {
-                Platform.exit();
-                System.exit(0);
-            }
+        primaryStage.setOnCloseRequest(t -> {
+            Platform.exit();
+            System.exit(0);
         });
         primaryStage.show();
     }

@@ -8,7 +8,7 @@ import java.util.TimerTask;
  */
 public class ServerTimeout extends TimerTask {
 	
-	ServerWorker worker;
+	final ServerWorker worker;
 	
 	public ServerTimeout(ServerWorker worker) {
 		this.worker = worker;

@@ -9,7 +9,7 @@ public enum EServerMessage {
     UPDATE_FILE("UPDATE_FILE"),
     EXIT("EXIT");
 
-    String name;
+    final String name;
 
     EServerMessage(String name) {
         this.name = name;

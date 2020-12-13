@@ -4,11 +4,12 @@ import com.superzanti.serversync.GUIJavaFX.Gui_JavaFX;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.config.ConfigLoader;
 import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.gui.GUI_Client;
 import com.superzanti.serversync.server.ServerSetup;
 import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.Then;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.EServerMode;
+import javafx.application.Application;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -22,7 +23,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.concurrent.Callable;
 
-@Command(name = "ServerSync", mixinStandardHelpOptions = true, version = "3.6.0", description = "A utility for synchronizing a server<->client style game.")
+@Command(name = "ServerSync", mixinStandardHelpOptions = true, version = RefStrings.VERSION, description = "A utility for synchronizing a server<->client style game.")
 public class ServerSync implements Callable<Integer> {
 
     /* AWT EVENT DISPATCHER THREAD */
@@ -31,21 +32,25 @@ public class ServerSync implements Callable<Integer> {
     public static final String GET_SERVER_INFO = "SERVER_INFO";
     public static EServerMode MODE;
 
-    public static GUI_Client clientGUI;
     public static ResourceBundle strings;
 
     public static Path rootDir = Paths.get(System.getProperty("user.dir"));
 
+    @SuppressWarnings("FieldMayBeFinal") // These have special behavior, final breaks it
     @Option(names = {"-r", "--root"}, description = "The root directory of the game, defaults to the current working directory.")
     private String rootDirectory = System.getProperty("user.dir");
+    @SuppressWarnings("FieldMayBeFinal")
     @Option(names = {"-o", "--progress", "progress-only"}, description = "Only show progress indication. Ignored if '-s', '--server' is specified.")
     private boolean modeProgressOnly = false;
+    @SuppressWarnings("FieldMayBeFinal")
     @Option(names = {"-q", "--quiet", "silent"}, description = "Remove all GUI interaction. Ignored if '-s', '--server' is specified.")
     private boolean modeQuiet = false;
+    @SuppressWarnings("FieldMayBeFinal")
     @Option(names = {"-s", "--server", "server"}, description = "Run the program in server mode.")
     private boolean modeServer = false;
     @Option(names = {"-a", "--address"}, description = "The address of the server you wish to connect to.")
     private String serverAddress;
+    @SuppressWarnings("FieldMayBeFinal")
     @Option(names = {"-p", "--port"}, description = "The port the server is running on.")
     private int serverPort = -1;
     @Option(names = {"-i", "--ignore"}, arity = "1..*", description = "A glob pattern or series of patterns for files to ignore")
@@ -72,6 +77,7 @@ public class ServerSync implements Callable<Integer> {
     }
 
     private void commonInit() {
+        Logger.debug(String.format("Root dir: %s", ServerSync.rootDir));
         Locale locale = SyncConfig.getConfig().LOCALE;
         if (languageCode != null) {
             String[] lParts = languageCode.split("[_-]");
@@ -126,41 +132,41 @@ public class ServerSync implements Callable<Integer> {
         }
         commonInit();
 
-        Thread clientThread;
+        ClientWorker worker = new ClientWorker();
         if (modeQuiet) {
-            clientGUI = null;
-            new Thread(new ClientWorker()).start();
-        } else if (modeProgressOnly) {
-            // TODO setup a progress only version of the GUI
-            clientGUI = new GUI_Client();
-            clientGUI.setIPAddress(config.SERVER_IP);
-            clientGUI.setPort(config.SERVER_PORT);
-            clientGUI.build(config.LOCALE);
-
-            clientThread = new Thread(new ClientWorker(), "Client processing");
-            clientThread.start();
             try {
-                clientThread.join();
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
+                worker.setAddress(SyncConfig.getConfig().SERVER_IP);
+                worker.setPort(SyncConfig.getConfig().SERVER_PORT);
+                worker.connect();
+                Then.onComplete(worker.fetchActions(), actionEntries -> Then.onComplete(worker.executeActions(actionEntries, unused -> {
+                }), unused -> {
+                    worker.close();
+                    System.exit(0);
+                }));
+            } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);
             }
-            System.exit(0);
+        } else if (modeProgressOnly) {
+            // TODO setup a progress only version of the GUI?
+            try {
+                worker.setAddress(SyncConfig.getConfig().SERVER_IP);
+                worker.setPort(SyncConfig.getConfig().SERVER_PORT);
+                worker.connect();
+                Then.onComplete(worker.fetchActions(), actionEntries -> Then.onComplete(worker.executeActions(actionEntries, actionProgress -> {
+                    if (actionProgress.isComplete()) {
+                        System.out.printf("Updated: %s%n", actionProgress.entry);
+                    }
+                }), unused -> {
+                    worker.close();
+                    System.exit(0);
+                }));
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(1);
+            }
         } else {
-            /*
-            clientGUI = new GUI_Client();
-            clientGUI.setIPAddress(config.SERVER_IP);
-            clientGUI.setPort(config.SERVER_PORT);
-            clientGUI.build(config.LOCALE);
-            */
-
-            new Thread() {
-                @Override
-                public void run() {
-                    javafx.application.Application.launch(Gui_JavaFX.class);
-                }
-            }.start();
+            new Thread(() -> Application.launch(Gui_JavaFX.class)).start();
         }
     }
 }

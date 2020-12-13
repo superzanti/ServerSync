@@ -7,13 +7,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Collectors;
 
 public class ConfigLoader {
-    public static final Path v2ServerConfig = Paths.get(ServerSync.rootDir.toString(),"serversync-server.json");
-    public static final Path v2ClientConfig = Paths.get(ServerSync.rootDir.toString(),"serversync-client.json");
+    private static final Path v2ServerConfig = Paths.get(ServerSync.rootDir.toString(), "serversync-server.json");
+    private static final Path v2ClientConfig = Paths.get(ServerSync.rootDir.toString(), "serversync-client.json");
 
-    private static final Path v1ServerConfig = Paths.get(ServerSync.rootDir.toString(),"config", "serversync", "serversync-server.cfg");
-    private static final Path v1ClientConfig = Paths.get(ServerSync.rootDir.toString(),"config", "serversync", "serversync-client.cfg");
+    private static final Path v1ServerConfig = Paths
+        .get(ServerSync.rootDir.toString(), "config", "serversync", "serversync-server.cfg");
+    private static final Path v1ClientConfig = Paths
+        .get(ServerSync.rootDir.toString(), "config", "serversync", "serversync-client.cfg");
 
     public static void load(EConfigType type) throws IOException {
         if (EConfigType.SERVER.equals(type)) {
@@ -23,6 +26,14 @@ public class ConfigLoader {
             }
             if (Files.exists(v1ServerConfig)) {
                 OldConfig.forServer(v1ServerConfig);
+                SyncConfig config = SyncConfig.getConfig();
+                config.SYNC_MODE = 2; // mode 2 is the only supported mode
+                // Old configurations would include everything in the directory list
+                config.FILE_INCLUDE_LIST = config.DIRECTORY_INCLUDE_LIST
+                    .stream()
+                    .map(di -> di.path + "/**")
+                    .collect(Collectors.toList());
+                createConfig(type); // Migrate to new json based config
                 return;
             }
             createConfig(type);
@@ -37,6 +48,7 @@ public class ConfigLoader {
             }
             if (Files.exists(v1ClientConfig)) {
                 OldConfig.forClient(v1ClientConfig);
+                createConfig(type); // Migrate to new json based config
                 return;
             }
             createConfig(type);
@@ -44,6 +56,15 @@ public class ConfigLoader {
             return;
         }
         throw new IOException(String.format("Unhandled config type given: %s", type));
+    }
+
+    public static void save(EConfigType type) throws IOException {
+        if (EConfigType.SERVER.equals(type)) {
+            JsonConfig.saveServer(v2ServerConfig);
+        }
+        if (EConfigType.CLIENT.equals(type)) {
+            JsonConfig.saveClient(v2ClientConfig);
+        }
     }
 
     private static void createConfig(EConfigType type) throws IOException {

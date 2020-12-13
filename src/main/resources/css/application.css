@@ -94,6 +94,9 @@
 .table-column{
     -fx-alignment: CENTER;
 }
+.table-column.align-left {
+    -fx-alignment: CENTER_LEFT;
+}
 .table-row-cell:even{
     -fx-background-color: derive(-fx-primary, 10%);
 }
