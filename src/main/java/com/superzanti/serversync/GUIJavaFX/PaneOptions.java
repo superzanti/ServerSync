@@ -23,11 +23,11 @@ import java.util.stream.Stream;
 // GUI of options
 public class PaneOptions extends GridPane {
 
-    private final TextField address = getAddressField();
-    private final TextField port = getPortField();
-    private final CheckBox refuseClientMods = getRefuseClientModsCheckbox();
-    private final ComboBox<String> themeComboBox = getThemeComboBox();
-    private ComboBox<String> comboBoxlanguage;
+    private TextField fieldAddress;
+    private TextField fieldPort;
+    private CheckBox cbxRefuse ;
+    private ComboBox<String> comboBoxTheme;
+    private ComboBox<String> comboBoxLanguage;
 
     public PaneOptions() {
         this.setAlignment(Pos.CENTER);
@@ -44,18 +44,10 @@ public class PaneOptions extends GridPane {
         setRowIndex(labelTheme, 1);
         setColumnIndex(labelTheme, 0);
 
-        ComboBox<String> comboBox = getThemeComboBox();
-        comboBox.getSelectionModel().select(SyncConfig.getConfig().THEME.ordinal());
-        comboBox.valueProperty().addListener((obs, oldItem, newItem) -> {
-            ETheme newTheme = ETheme.valueOf(newItem);
-            Gui_JavaFX.getStackMainPane().setStyle(newTheme.toString());
-            SyncConfig.getConfig().THEME = newTheme;
-            saveConfig();
-        });
-        setRowIndex(comboBox, 1);
-        setColumnIndex(comboBox, 1);
+        setRowIndex(getComboBoxTheme(), 1);
+        setColumnIndex(getComboBoxTheme(), 1);
 
-        this.getChildren().addAll(labelTheme, comboBox);
+        this.getChildren().addAll(labelTheme, getComboBoxTheme());
 
         Label labelLanguage = I18N.labelForValue(() -> I18N.get("ui/language"));
         setRowIndex(labelLanguage, 2);
@@ -70,44 +62,24 @@ public class PaneOptions extends GridPane {
         setRowIndex(labelIp, 3);
         setColumnIndex(labelIp, 0);
 
-        TextField fieldAddress = getAddressField();
-        fieldAddress.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (oldValue) {
-                SyncConfig.getConfig().SERVER_IP = fieldAddress.getText();
-                saveConfig();
-            }
-        });
-        setRowIndex(fieldAddress, 3);
-        setColumnIndex(fieldAddress, 1);
+        setRowIndex(getAddressField(), 3);
+        setColumnIndex(getAddressField(), 1);
 
         /* CLIENT -> PORT*/
         Label labelPort = I18N.labelForValue(() -> I18N.get("ui/server_port"));
         setRowIndex(labelPort, 4);
         setColumnIndex(labelPort, 0);
 
-        TextField fieldPort = getPortField();
-        fieldPort.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (oldValue) {
-                SyncConfig.getConfig().SERVER_PORT = Integer.parseInt(fieldPort.getText(), 10);
-                saveConfig();
-            }
-        });
-        setRowIndex(fieldPort, 4);
-        setColumnIndex(fieldPort, 1);
+        setRowIndex(getPortField(), 4);
+        setColumnIndex(getPortField(), 1);
 
         /* CLIENT -> Refuse client mods*/
         Label labelRefuse = I18N.labelForValue(() -> I18N.get("ui/refuse_client_mods"));
         setRowIndex(labelRefuse, 5);
         setColumnIndex(labelRefuse, 0);
 
-        CheckBox cbxRefuse = getRefuseClientModsCheckbox();
-        cbxRefuse.setSelected(SyncConfig.getConfig().REFUSE_CLIENT_MODS);
-        cbxRefuse.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            SyncConfig.getConfig().REFUSE_CLIENT_MODS = newValue;
-            saveConfig();
-        });
-        setRowIndex(cbxRefuse, 5);
-        setColumnIndex(cbxRefuse, 1);
+        setRowIndex(getRefuseClientModsCheckbox(), 5);
+        setColumnIndex(getRefuseClientModsCheckbox(), 1);
 
         /* CLIENT -> Ignore list*/
         // TODO implement this ignore list
@@ -127,44 +99,68 @@ public class PaneOptions extends GridPane {
     }
 
     public TextField getAddressField() {
-        if (address == null) {
-            return new TextField();
+        if (fieldAddress == null) {
+            fieldAddress = new TextField();
+            fieldAddress.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                if (oldValue) {
+                    SyncConfig.getConfig().SERVER_IP = fieldAddress.getText();
+                    saveConfig();
+                }
+            });
         }
-        return address;
+        return fieldAddress;
     }
 
     public TextField getPortField() {
-        if (port == null) {
-            return new TextField();
+        if (fieldPort == null) {
+            fieldPort = new TextField();
+            fieldPort.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                if (oldValue) {
+                    SyncConfig.getConfig().SERVER_PORT = Integer.parseInt(fieldPort.getText(), 10);
+                    saveConfig();
+                }
+            });
         }
-        return port;
+        return fieldPort;
     }
 
     public CheckBox getRefuseClientModsCheckbox() {
-        if (refuseClientMods == null) {
-            return new CheckBox();
+        if (cbxRefuse == null) {
+            cbxRefuse = new CheckBox();
+            cbxRefuse.setSelected(SyncConfig.getConfig().REFUSE_CLIENT_MODS);
+            cbxRefuse.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                SyncConfig.getConfig().REFUSE_CLIENT_MODS = newValue;
+                saveConfig();
+            });
         }
-        return refuseClientMods;
+        return cbxRefuse;
     }
 
-    public ComboBox<String> getThemeComboBox() {
-        if (themeComboBox == null) {
+    public ComboBox<String> getComboBoxTheme() {
+        if (comboBoxTheme == null) {
             ObservableList<String> themes =
                 FXCollections.observableArrayList(
                     Stream.of(ETheme.values())
                           .map(Enum::name)
                           .collect(Collectors.toList())
                 );
-            return new ComboBox<>(themes);
+            comboBoxTheme = new ComboBox<>(themes);
+            comboBoxTheme.getSelectionModel().select(SyncConfig.getConfig().THEME.ordinal());
+            comboBoxTheme.valueProperty().addListener((obs, oldItem, newItem) -> {
+                ETheme newTheme = ETheme.valueOf((String) newItem);
+                Gui_JavaFX.getStackMainPane().setStyle(newTheme.toString());
+                SyncConfig.getConfig().THEME = newTheme;
+                saveConfig();
+            });
         }
-        return themeComboBox;
+        return comboBoxTheme;
     }
 
     public ComboBox<String> getComboBoxLanguage() {
-        if (comboBoxlanguage == null) {
-            comboBoxlanguage = new ComboBox();
+        if (comboBoxLanguage == null) {
+            comboBoxLanguage = new ComboBox();
 
-            comboBoxlanguage.getItems().addAll(
+            comboBoxLanguage.getItems().addAll(
                     ServerSync.strings.getString("language/english"),
                     ServerSync.strings.getString("language/spanish"),
                     ServerSync.strings.getString("language/french"),
@@ -172,19 +168,19 @@ public class PaneOptions extends GridPane {
                     ServerSync.strings.getString("language/russian"),
                     ServerSync.strings.getString("language/chinese"));
             setDefaultComboxBox();
-            comboBoxlanguage.valueProperty().addListener((obs, oldItem, newItem) -> {
+            comboBoxLanguage.valueProperty().addListener((obs, oldItem, newItem) -> {
                 changeLanguage(newItem);
                 saveConfig();
             });
         }
-        return comboBoxlanguage;
+        return comboBoxLanguage;
     }
 
     public void refreshConfigValues() {
         getAddressField().setText(SyncConfig.getConfig().SERVER_IP);
         getPortField().setText(String.valueOf(SyncConfig.getConfig().SERVER_PORT));
         getRefuseClientModsCheckbox().setSelected(SyncConfig.getConfig().REFUSE_CLIENT_MODS);
-        getThemeComboBox().getSelectionModel().select(SyncConfig.getConfig().THEME.name());
+        getComboBoxTheme().getSelectionModel().select(SyncConfig.getConfig().THEME.name());
     }
 
     public void updateLogsArea(String text) {
@@ -215,8 +211,8 @@ public class PaneOptions extends GridPane {
         } else if (language.equals(ServerSync.strings.getString("language/chinese"))) {
             I18N.setLocale(new Locale("zh", "CN"));
         }
-        comboBoxlanguage.getItems().clear();
-        comboBoxlanguage.getItems().addAll(
+        comboBoxLanguage.getItems().clear();
+        comboBoxLanguage.getItems().addAll(
                 ServerSync.strings.getString("language/english"),
                 ServerSync.strings.getString("language/spanish"),
                 ServerSync.strings.getString("language/french"),
@@ -229,17 +225,17 @@ public class PaneOptions extends GridPane {
     private void setDefaultComboxBox(){
         Locale locale = SyncConfig.getConfig().LOCALE;
         if (locale.equals(new Locale("en", "US"))) {
-            comboBoxlanguage.getSelectionModel().select(ServerSync.strings.getString("language/english"));
+            comboBoxLanguage.getSelectionModel().select(ServerSync.strings.getString("language/english"));
         } else if (locale.equals(new Locale("es", "ES"))) {
-            comboBoxlanguage.getSelectionModel().select(ServerSync.strings.getString("language/spanish"));
+            comboBoxLanguage.getSelectionModel().select(ServerSync.strings.getString("language/spanish"));
         } else if (locale.equals(new Locale("fr", "FR"))) {
-            comboBoxlanguage.getSelectionModel().select(ServerSync.strings.getString("language/french"));
+            comboBoxLanguage.getSelectionModel().select(ServerSync.strings.getString("language/french"));
         } else if (locale.equals(new Locale("pl", "PL"))) {
-            comboBoxlanguage.getSelectionModel().select(ServerSync.strings.getString("language/polish"));
+            comboBoxLanguage.getSelectionModel().select(ServerSync.strings.getString("language/polish"));
         } else if (locale.equals(new Locale("ru", "RU"))) {
-            comboBoxlanguage.getSelectionModel().select(ServerSync.strings.getString("language/russian"));
+            comboBoxLanguage.getSelectionModel().select(ServerSync.strings.getString("language/russian"));
         } else if (locale.equals(new Locale("zh", "CN"))) {
-            comboBoxlanguage.getSelectionModel().select(ServerSync.strings.getString("language/chinese"));
+            comboBoxLanguage.getSelectionModel().select(ServerSync.strings.getString("language/chinese"));
         }
     }
 }
