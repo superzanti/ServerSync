@@ -20,7 +20,7 @@ public class PaneProgressBar extends VBox {
     public PaneProgressBar() {
         this.setSpacing(5);
         this.setAlignment(Pos.CENTER);
-        label = new Label("Copy files:");
+        label = I18N.labelForValue(() -> I18N.get("ui/copy_files"));
         pathLabel = new Label("");
         progressBar = new ProgressBar(0);
         hBoxBar = new HBox();

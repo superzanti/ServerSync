@@ -51,11 +51,7 @@ public class StackMainMenu extends BorderPane {
             for (Node node : stack.getChildren()) {
                 node.setVisible(false);
             }
-        /*for(Button btn: buttons) {
-            btn.setStyle("-fx-background-color: #A9A9A9");;
-        }
-        buttons.get(n).setStyle(defaultStyle);;*/
-            stack.getChildren().get(n).setVisible(true);
+        stack.getChildren().get(n).setVisible(true);
         }
 
     }
