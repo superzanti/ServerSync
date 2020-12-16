@@ -28,6 +28,7 @@ public class PaneOptions extends GridPane {
     private CheckBox cbxRefuse ;
     private ComboBox<String> comboBoxTheme;
     private ComboBox<String> comboBoxLanguage;
+    private String[] keyLanguage = {"language/english","language/spanish","language/french","language/polish","language/russian","language/chinese"};
 
     public PaneOptions() {
         this.setAlignment(Pos.CENTER);
@@ -93,7 +94,7 @@ public class PaneOptions extends GridPane {
 //        setRowIndex(ignoreList, 6);
 //        setColumnIndex(ignoreList, 0);
 
-        this.getChildren().addAll(labelClient, labelIp, labelPort, labelRefuse, cbxRefuse, fieldAddress, fieldPort);
+        this.getChildren().addAll(labelClient, labelIp, labelPort, labelRefuse, getRefuseClientModsCheckbox(), getAddressField(), getPortField());
 //        this.getChildren().addAll(labelIgnore, ignoreList);
         refreshConfigValues();
     }
@@ -159,14 +160,9 @@ public class PaneOptions extends GridPane {
     public ComboBox<String> getComboBoxLanguage() {
         if (comboBoxLanguage == null) {
             comboBoxLanguage = new ComboBox();
-
-            comboBoxLanguage.getItems().addAll(
-                    ServerSync.strings.getString("language/english"),
-                    ServerSync.strings.getString("language/spanish"),
-                    ServerSync.strings.getString("language/french"),
-                    ServerSync.strings.getString("language/polish"),
-                    ServerSync.strings.getString("language/russian"),
-                    ServerSync.strings.getString("language/chinese"));
+            for(int i = 0; i < keyLanguage.length; i++){
+                comboBoxLanguage.getItems().add(i, ServerSync.strings.getString(keyLanguage[i]));
+            }
             setDefaultComboxBox();
             comboBoxLanguage.valueProperty().addListener((obs, oldItem, newItem) -> {
                 changeLanguage(newItem);
@@ -211,15 +207,9 @@ public class PaneOptions extends GridPane {
         } else if (language.equals(ServerSync.strings.getString("language/chinese"))) {
             I18N.setLocale(new Locale("zh", "CN"));
         }
-        comboBoxLanguage.getItems().clear();
-        comboBoxLanguage.getItems().addAll(
-                ServerSync.strings.getString("language/english"),
-                ServerSync.strings.getString("language/spanish"),
-                ServerSync.strings.getString("language/french"),
-                ServerSync.strings.getString("language/polish"),
-                ServerSync.strings.getString("language/russian"),
-                ServerSync.strings.getString("language/chinese"));
-        setDefaultComboxBox();
+        for(int i = 0; i < keyLanguage.length; i++){
+            getComboBoxLanguage().getItems().set(i, ServerSync.strings.getString(keyLanguage[i]));
+        }
     }
 
     private void setDefaultComboxBox(){
