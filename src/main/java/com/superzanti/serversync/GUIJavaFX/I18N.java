@@ -11,6 +11,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.Tooltip;
 
 import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
@@ -150,5 +151,10 @@ public final class I18N {
         TableColumn<ActionEntry, EActionType> col = new TableColumn<>();
         col.textProperty().bind(createStringBinding(key, args));
         return col;
+    }
+    public static Tooltip toolTipForKey(final String key, final Object... args) {
+        Tooltip tooltip = new Tooltip();
+        tooltip.textProperty().bind(createStringBinding(key, args));
+        return tooltip;
     }
 }
