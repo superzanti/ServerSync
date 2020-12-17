@@ -235,7 +235,7 @@ public class PaneSync extends BorderPane {
                         });
                     } catch (Exception exception) {
                         Logger.debug(exception);
-                        setProgressText(ServerSync.strings.getString("connection_failed_server"));
+                        setProgressText(ServerSync.strings.getString("connection_failed_server")+" "+ip+":"+port);
                     }
                 }
 
@@ -250,7 +250,6 @@ public class PaneSync extends BorderPane {
         if (btnCheckUpdate == null) {
             btnCheckUpdate = I18N.buttonForKey(("ui/check_for_updates"));
             btnCheckUpdate.getStyleClass().add("btn");
-            btnCheckUpdate.getStyleClass().add("btnCheckUpdate");
             btnCheckUpdate.setTooltip(I18N.toolTipForKey("ui/btn_check_tooltip"));
             btnCheckUpdate.setOnAction(e -> {
                 Logger.debug("Clicked check updates button");
@@ -286,7 +285,7 @@ public class PaneSync extends BorderPane {
                         });
                     } catch (Exception exception) {
                         Logger.debug(exception);
-                        //setProgressText(ServerSync.strings.getString("connection_failed_server"));
+                        setProgressText(ServerSync.strings.getString("connection_failed_server")+" "+ip+":"+port);
                     }
                 }
 
