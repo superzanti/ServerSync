@@ -19,7 +19,7 @@ public class PaneSideBar extends VBox {
         svgSync.setScaleX(1.25);
         svgSync.setScaleY(1.25);
 
-        Button btnSync = new Button(" Sync");
+        Button btnSync = I18N.buttonForKey(("ui/sync"));
         btnSync.setPrefWidth(125);
         btnSync.getStyleClass().add("sidebar-button");
         btnSync.setGraphic(svgSync);
@@ -32,7 +32,7 @@ public class PaneSideBar extends VBox {
         svgLogs.setScaleX(0.9);
         svgLogs.setScaleY(0.9);
 
-        Button btnLogs = new Button("Logs");
+        Button btnLogs = I18N.buttonForKey(("ui/logs"));
         btnLogs.setPrefWidth(125);
         btnLogs.getStyleClass().add("sidebar-button");
         btnLogs.setGraphic(svgLogs);
@@ -45,7 +45,7 @@ public class PaneSideBar extends VBox {
         svgOptions.setScaleX(0.9);
         svgOptions.setScaleY(0.9);
 
-        Button btnOptions = new Button("Options");
+        Button btnOptions = I18N.buttonForKey(("ui/options"));
         btnOptions.setPrefWidth(125);
         btnOptions.getStyleClass().add("sidebar-button");
         btnOptions.setGraphic(svgOptions);

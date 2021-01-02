@@ -1,5 +1,6 @@
 package com.superzanti.serversync.GUIJavaFX;
 
+import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.client.ActionEntry;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.client.EActionType;
@@ -61,14 +62,14 @@ public class PaneSync extends BorderPane {
         /* Bottom section with IP/Port field and label, button "Sync" and "Check for updates */
         GridPane gp = new GridPane();
 
-        Label label_ip = new Label("IP:");
+        Label label_ip = I18N.labelForValue(() -> I18N.get("ui/server_address"));
         GridPane.setRowIndex(label_ip, 0);
         GridPane.setColumnIndex(label_ip, 0);
 
         GridPane.setRowIndex(getFieldIp(), 1);
         GridPane.setColumnIndex(getFieldIp(), 0);
 
-        Label label_port = new Label("Port:");
+        Label label_port = I18N.labelForValue(() -> I18N.get("ui/server_port"));
         GridPane.setRowIndex(label_port, 0);
         GridPane.setColumnIndex(label_port, 1);
 
@@ -106,15 +107,15 @@ public class PaneSync extends BorderPane {
             table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
             // Create columns
-            TableColumn<ActionEntry, String> colFileName = new TableColumn<>("File path");
+            TableColumn<ActionEntry, String> colFileName =  I18N.tableColumnForKey("ui/file_path");
             colFileName.prefWidthProperty().bind(table.widthProperty().multiply(0.55));
             colFileName.setCellValueFactory(new PropertyValueFactory<>("name"));
             colFileName.getStyleClass().add("align-left");
             //----
 
-            TableColumn<ActionEntry, EActionType> colStatus = new TableColumn<>("Action");
+            TableColumn<ActionEntry, EActionType> colStatus =  I18N.tableColumnEActionForKey("ui/action");
             colStatus.prefWidthProperty().bind(table.widthProperty().multiply(0.15));
-            colStatus.setCellValueFactory(new PropertyValueFactory<>("action"));
+            colStatus.setCellValueFactory(new PropertyValueFactory<>("ui/action"));
             colStatus.setCellFactory(tc -> new TableCell<ActionEntry, EActionType>() {
 
                 @Override
@@ -148,9 +149,9 @@ public class PaneSync extends BorderPane {
 //            colIgnored.setCellValueFactory(new PropertyValueFactory<>("action"));
             //----
 
-            TableColumn<ActionEntry, String> colReason = new TableColumn<>("Reason");
+            TableColumn<ActionEntry, String> colReason = I18N.tableColumnForKey("ui/reason");
             colReason.prefWidthProperty().bind(table.widthProperty().multiply(0.25));
-            colReason.setCellValueFactory(new PropertyValueFactory<>("reason"));
+            colReason.setCellValueFactory(new PropertyValueFactory<>("ui/reason"));
 
             table.getColumns().addAll(colStatus, colFileName, colReason);
 
@@ -164,15 +165,15 @@ public class PaneSync extends BorderPane {
         boolean valid = true;
         if (ip.equals("") && !setPort(port)) {
             updateLogsArea("No config found, requesting details");
-            displayAlert("Bad config", "IP field is required \nPort out of range, valid range: 1 - 49151");
+            displayAlert(ServerSync.strings.getString("ui/wrong_configuration"), ServerSync.strings.getString("ui/ip_empty") + "\n" + ServerSync.strings.getString("ui/port_invalid"));
             valid = false;
         } else if (ip.equals("")) {
             updateLogsArea("The ip field is empty");
-            displayAlert("Wrong IP", "The IP field is empty");
+            displayAlert(ServerSync.strings.getString("ui/wrong_ip"), ServerSync.strings.getString("ui/ip_empty"));
             valid = false;
         } else if (!setPort(port)) {
             updateLogsArea("The ip field is empty");
-            displayAlert("Wrong port", "Port out of range, valid range: 1 - 49151");
+            displayAlert(ServerSync.strings.getString("ui/wrong_port"), ServerSync.strings.getString("ui/port_invalid"));
             valid = false;
         }
         return valid;
@@ -180,9 +181,9 @@ public class PaneSync extends BorderPane {
 
     public Button getBtnSync() {
         if (btnSync == null) {
-            btnSync = new Button("Sync");
+            btnSync = I18N.buttonForKey(("ui/sync"));
             btnSync.getStyleClass().add("btn");
-            btnSync.setTooltip(new Tooltip("Synchronize client & server"));
+            btnSync.setTooltip(I18N.toolTipForKey("ui/btn_sync_tooltip"));
             btnSync.setOnAction(e -> {
                 Logger.debug("Clicked sync button");
                 getBtnSync().setDisable(true);
@@ -207,7 +208,7 @@ public class PaneSync extends BorderPane {
                         SyncConfig.getConfig().SERVER_PORT = port;
                         saveConfig();
 
-                        setProgressText("Synchronizing files...");
+                        setProgressText(ServerSync.strings.getString("connection_attempt_server"));
                         Then.onComplete(worker.fetchActions(), actions -> {
                             list.clear();
                             list.addAll(actions);
@@ -228,13 +229,13 @@ public class PaneSync extends BorderPane {
                                 getPaneProgressBar().updateGUI();
                             }));
                             Then.onComplete(sync, unused -> Platform.runLater(() -> {
-                                setProgressText("Sync complete");
+                                setProgressText(ServerSync.strings.getString("update_complete"));
                                 worker.close();
                             }));
                         });
                     } catch (Exception exception) {
                         Logger.debug(exception);
-                        setProgressText("Failed to connect to server");
+                        setProgressText(ServerSync.strings.getString("connection_failed_server")+" "+ip+":"+port);
                     }
                 }
 
@@ -247,10 +248,9 @@ public class PaneSync extends BorderPane {
 
     public Button getBtnCheckUpdate() {
         if (btnCheckUpdate == null) {
-            btnCheckUpdate = new Button("Check for updates");
+            btnCheckUpdate = I18N.buttonForKey(("ui/check_for_updates"));
             btnCheckUpdate.getStyleClass().add("btn");
-            btnCheckUpdate.getStyleClass().add("btnCheckUpdate");
-            btnCheckUpdate.setTooltip(new Tooltip("Check update in table"));
+            btnCheckUpdate.setTooltip(I18N.toolTipForKey("ui/btn_check_tooltip"));
             btnCheckUpdate.setOnAction(e -> {
                 Logger.debug("Clicked check updates button");
                 getBtnSync().setDisable(true);
@@ -264,7 +264,8 @@ public class PaneSync extends BorderPane {
                         .getPaneSync()
                         .getObservableMods();
                     updateLogsArea("Starting update process...");
-                    setProgressText("Fetching manifest...");
+                    //setProgressText("Fetching manifest...");
+                    setProgressText(ServerSync.strings.getString("connection_attempt_server"));
                     list.clear();
                     worker.setAddress(ip);
                     worker.setPort(port);
@@ -284,7 +285,7 @@ public class PaneSync extends BorderPane {
                         });
                     } catch (Exception exception) {
                         Logger.debug(exception);
-                        setProgressText("Failed to connect to server");
+                        setProgressText(ServerSync.strings.getString("connection_failed_server")+" "+ip+":"+port);
                     }
                 }
 
