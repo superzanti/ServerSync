@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class BannedIPSReaderTest {
 
     public BannedIPSReaderTest() {
-        new Logger("test");
+        new ServerSyncLogger("test");
     }
 
 

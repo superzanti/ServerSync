@@ -14,7 +14,7 @@ public class Then {
             try {
                 value = ex.submit(cb).get();
             } catch (InterruptedException | ExecutionException e) {
-                Logger.debug(e);
+                ServerSyncLogger.debug(e);
             }
             consumer.accept(value);
         });

@@ -30,6 +30,7 @@ public class Gui_JavaFX extends Application {
         Scene scene = new Scene(root, 1024, 576);
         scene.getStylesheets().add(this.getClass().getResource("/css/application.css").toExternalForm());
         primaryStage.setScene(scene);
+        primaryStage.sizeToScene();
         primaryStage.setTitle(RefStrings.NAME + " - " + RefStrings.VERSION);
         primaryStage.setOnCloseRequest(t -> {
             Platform.exit();

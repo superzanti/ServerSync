@@ -5,7 +5,7 @@ import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.config.ConfigLoader;
 import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.server.ServerSetup;
-import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.ServerSyncLogger;
 import com.superzanti.serversync.util.Then;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.EServerMode;
@@ -77,7 +77,7 @@ public class ServerSync implements Callable<Integer> {
     }
 
     private void commonInit() {
-        Logger.debug(String.format("Root dir: %s", ServerSync.rootDir));
+        ServerSyncLogger.debug(String.format("Root dir: %s", ServerSync.rootDir));
         Locale locale = SyncConfig.getConfig().LOCALE;
         if (languageCode != null) {
             String[] lParts = languageCode.split("[_-]");
@@ -95,23 +95,23 @@ public class ServerSync implements Callable<Integer> {
         }
 
         try {
-            Logger.log("Loading language file: " + locale);
+            ServerSyncLogger.log("Loading language file: " + locale);
             strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", locale);
         } catch (MissingResourceException e) {
-            Logger.log("No language file available for: " + locale + ", defaulting to en_US");
+            ServerSyncLogger.log("No language file available for: " + locale + ", defaulting to en_US");
             strings = ResourceBundle.getBundle("assets.serversync.lang.MessagesBundle", new Locale("en", "US"));
         }
     }
 
     private void runInServerMode() {
         ServerSync.MODE = EServerMode.SERVER;
-        new Logger("server");
-        Logger.setSystemOutput(true);
+        new ServerSyncLogger("server");
+        ServerSyncLogger.setSystemOutput(true);
         try {
             ConfigLoader.load(EConfigType.SERVER);
         } catch (IOException e) {
-            Logger.error("Failed to load server config");
-            Logger.debug(e);
+            ServerSyncLogger.error("Failed to load server config");
+            ServerSyncLogger.debug(e);
         }
         commonInit();
 
@@ -122,12 +122,12 @@ public class ServerSync implements Callable<Integer> {
 
     private void runInClientMode() {
         ServerSync.MODE = EServerMode.CLIENT;
-        new Logger("client");
+        new ServerSyncLogger("client");
         SyncConfig config = SyncConfig.getConfig();
         try {
             ConfigLoader.load(EConfigType.CLIENT);
         } catch (IOException e) {
-            Logger.error("Failed to load client config");
+            ServerSyncLogger.error("Failed to load client config");
             e.printStackTrace();
         }
         commonInit();

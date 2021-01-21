@@ -5,7 +5,7 @@ import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.files.*;
 import com.superzanti.serversync.util.BannedIPSReader;
 import com.superzanti.serversync.util.Glob;
-import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.ServerSyncLogger;
 import com.superzanti.serversync.util.PrettyCollection;
 import com.superzanti.serversync.util.enums.ELocation;
 import com.superzanti.serversync.util.enums.EServerMessage;
@@ -46,7 +46,7 @@ public class ServerSetup implements Runnable {
         FileManifest manifest = new FileManifest();
         manifest.directories = config.DIRECTORY_INCLUDE_LIST;
         if (config.PUSH_CLIENT_MODS) {
-            Logger.log("Server configured to push client only mods, clients can still refuse these mods!");
+            ServerSyncLogger.log("Server configured to push client only mods, clients can still refuse these mods!");
             config.FILE_INCLUDE_LIST.add("clientmods/**");
             config.REDIRECT_FILES_LIST.add(new FileRedirect("clientmods/**", "mods"));
         }
@@ -69,7 +69,7 @@ public class ServerSetup implements Runnable {
             // optional get can never be missing as we have just filtered the list by matching patterns
             .map(f -> String.format("%s, Pattern: %s", f.toString(), Glob.getPattern(f, config.FILE_INCLUDE_LIST).get()))
             .collect(Collectors.toList());
-        Logger.debug(String.format("Included files: %s", PrettyCollection.get(includeMap)));
+        ServerSyncLogger.debug(String.format("Included files: %s", PrettyCollection.get(includeMap)));
 
         List<String> excludeMap = included
             .stream()
@@ -77,7 +77,7 @@ public class ServerSetup implements Runnable {
             // optional get can never be missing as we have just filtered the list by matching patterns
             .map(f -> String.format("%s, Pattern: %s", f.toString(), Glob.getPattern(f, config.FILE_IGNORE_LIST).get()))
             .collect(Collectors.toList());
-        Logger.debug(String.format("Ignored files: %s", PrettyCollection.get(excludeMap)));
+        ServerSyncLogger.debug(String.format("Ignored files: %s", PrettyCollection.get(excludeMap)));
 
         manifest.files = filtered
             .stream()
@@ -99,17 +99,17 @@ public class ServerSetup implements Runnable {
         DateFormat dateFormatter = DateFormat.getDateInstance();
 
         try {
-            Logger.log(String.format("Starting server in mode: %s", config.SYNC_MODE));
-            Logger.log("Starting scan for managed files: " + dateFormatter.format(new Date()));
-            Logger.log(String.format("Ignore patterns: %s", PrettyCollection.get(config.FILE_IGNORE_LIST)));
+            ServerSyncLogger.log(String.format("Starting server in mode: %s", config.SYNC_MODE));
+            ServerSyncLogger.log("Starting scan for managed files: " + dateFormatter.format(new Date()));
+            ServerSyncLogger.log(String.format("Ignore patterns: %s", PrettyCollection.get(config.FILE_IGNORE_LIST)));
 
             manifest = populateManifest();
 
-            Logger.log(String.format("Manifest files: %s", PrettyCollection.get(manifest.files)));
+            ServerSyncLogger.log(String.format("Manifest files: %s", PrettyCollection.get(manifest.files)));
 
             manifest.directories.stream().map(d -> ServerSync.rootDir.resolve(Paths.get(d.path))).forEach(p -> {
                 if (Files.notExists(p)) {
-                    Logger.error(String.format("Managed directory does not exist: %s", p));
+                    ServerSyncLogger.error(String.format("Managed directory does not exist: %s", p));
                     System.exit(1);
                 }
             });
@@ -120,12 +120,12 @@ public class ServerSetup implements Runnable {
 
     @Override
     public void run() {
-        Logger.debug("Creating new server socket");
+        ServerSyncLogger.debug("Creating new server socket");
         ServerSocket server;
         try {
             server = new ServerSocket(config.SERVER_PORT);
         } catch (BindException e) {
-            Logger.error("Socket already bound at: " + config.SERVER_PORT);
+            ServerSyncLogger.error("Socket already bound at: " + config.SERVER_PORT);
             return;
         } catch (IOException e) {
             e.printStackTrace();
@@ -133,17 +133,17 @@ public class ServerSetup implements Runnable {
         }
 
         // keep listening indefinitely until program terminates
-        Logger.log("Now accepting clients...");
+        ServerSyncLogger.log("Now accepting clients...");
 
         while (!server.isClosed()) {
             try {
                 Socket socket = server.accept();
                 InetAddress address = socket.getInetAddress();
-                Logger.debug(String.format("Accepted connection from: %s", address));
+                ServerSyncLogger.debug(String.format("Accepted connection from: %s", address));
 
                 if (isIpBanned(address.getHostAddress())) {
                     socket.close();
-                    Logger.log(String.format("Connection closed from banned IP address: %s", address.getHostAddress()));
+                    ServerSyncLogger.log(String.format("Connection closed from banned IP address: %s", address.getHostAddress()));
                     continue;
                 }
 
@@ -158,7 +158,7 @@ public class ServerSetup implements Runnable {
                 clientThread.setName("ClientThread - " + address);
                 clientThread.start();
             } catch (IOException e) {
-                Logger.error(
+                ServerSyncLogger.error(
                     "Error while accepting client connection, breaking server listener. You will need to restart ServerSync");
                 try {
                     server.close();
@@ -174,10 +174,10 @@ public class ServerSetup implements Runnable {
             try {
                 return BannedIPSReader.read(bannedIps).contains(ip);
             } catch (IOException e) {
-                Logger.debug("Failed to read banned-ips.json");
+                ServerSyncLogger.debug("Failed to read banned-ips.json");
             }
         }
-        Logger.debug("No banned-ips.json file exists, skipping ban check");
+        ServerSyncLogger.debug("No banned-ips.json file exists, skipping ban check");
         return false;
     }
 

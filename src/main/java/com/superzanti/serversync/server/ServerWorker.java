@@ -5,8 +5,7 @@ import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.files.FileManifest;
 import com.superzanti.serversync.files.FileEntry;
 import com.superzanti.serversync.communication.response.ServerInfo;
-import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.LoggerNG;
+import com.superzanti.serversync.util.ServerSyncLogger;
 import com.superzanti.serversync.files.PathBuilder;
 import com.superzanti.serversync.util.PrettyCollection;
 import com.superzanti.serversync.util.enums.EBinaryAnswer;
@@ -49,7 +48,7 @@ public class ServerWorker implements Runnable {
     private Timer timeout;
     private TimerTask timeoutTask;
 
-    private final LoggerNG clientLogger;
+    private final ServerSyncLogger clientLogger;
 
     ServerWorker(
         Socket socket,
@@ -57,7 +56,7 @@ public class ServerWorker implements Runnable {
         Timer timeoutScheduler,
         FileManifest manifest
     ) {
-        clientLogger = new LoggerNG(String.format(
+        clientLogger = new ServerSyncLogger(String.format(
             "server-connection-from-%s",
             socket.getInetAddress().toString().replaceAll("[/.:@?|*\"]", "-")
         ));
@@ -78,8 +77,8 @@ public class ServerWorker implements Runnable {
             oos = new ObjectOutputStream(clientSocket.getOutputStream());
         } catch (IOException e) {
             clientLogger.log("Failed to create client streams");
-            Logger.error(String.format("Error in client setup: %s", clientSocket.getInetAddress()));
-            Logger.debug(e);
+            ServerSyncLogger.error(String.format("Error in client setup: %s", clientSocket.getInetAddress()));
+            ServerSyncLogger.debug(e);
         }
 
         while (!clientSocket.isClosed()) {
@@ -92,10 +91,10 @@ public class ServerWorker implements Runnable {
                     message,
                     clientSocket.getInetAddress()
                 ));
-                Logger.debug(String.format("Received message: %s", message));
+                ServerSyncLogger.debug(String.format("Received message: %s", message));
             } catch (SocketException e) {
                 // Client timed out
-                Logger.error(String.format("Client: %s, timed out", clientSocket.getInetAddress()));
+                ServerSyncLogger.error(String.format("Client: %s, timed out", clientSocket.getInetAddress()));
                 break;
             } catch (IOException e) {
                 clientLogger.debug(e);
@@ -256,7 +255,7 @@ public class ServerWorker implements Runnable {
 
             String error = String.format("Unhandled message type: %s", message);
             clientLogger.log(error);
-            Logger.error(String.format("%s from client: %s", error, clientSocket.getInetAddress()));
+            ServerSyncLogger.error(String.format("%s from client: %s", error, clientSocket.getInetAddress()));
             break;
         }
 
@@ -278,7 +277,7 @@ public class ServerWorker implements Runnable {
             clientLogger.debug(e);
             String error = String.format(ServerSync.strings.getString("server_message_file_missing"), file);
             clientLogger.error(error);
-            Logger.error(error);
+            ServerSyncLogger.error(error);
         } catch (SecurityException se) {
             clientLogger.debug(se);
             clientLogger

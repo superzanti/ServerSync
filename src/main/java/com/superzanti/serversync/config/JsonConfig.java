@@ -4,7 +4,7 @@ import com.eclipsesource.json.*;
 import com.superzanti.serversync.files.DirectoryEntry;
 import com.superzanti.serversync.files.EDirectoryMode;
 import com.superzanti.serversync.files.FileRedirect;
-import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.ServerSyncLogger;
 import com.superzanti.serversync.util.enums.ETheme;
 
 import java.io.IOException;
@@ -222,7 +222,7 @@ public class JsonConfig {
     private static String getString(JsonObject root, String name, String defaultValue) throws IOException {
         JsonValue jsv = root.get(name);
         if (jsv == null || jsv.isNull()) {
-            Logger.error(String.format("No %s value present in configuration file", name));
+            ServerSyncLogger.error(String.format("No %s value present in configuration file", name));
             return defaultValue;
         }
         if (!jsv.isString()) {

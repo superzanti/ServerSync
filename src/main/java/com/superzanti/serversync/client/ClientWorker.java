@@ -1,7 +1,7 @@
 package com.superzanti.serversync.client;
 
 import com.superzanti.serversync.files.FileManifest;
-import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.ServerSyncLogger;
 import com.superzanti.serversync.util.PrettyCollection;
 
 import java.io.Closeable;
@@ -39,16 +39,16 @@ public class ClientWorker implements Runnable, Closeable {
     public Callable<List<ActionEntry>> fetchActions() {
         return () -> {
             FileManifest manifest = sync.fetchManifest();
-            Logger.log("Determining actions for manifest");
-            Logger.log(PrettyCollection.get(manifest.directories));
-            Logger.log(PrettyCollection.get(manifest.files));
+            ServerSyncLogger.log("Determining actions for manifest");
+            ServerSyncLogger.log(PrettyCollection.get(manifest.directories));
+            ServerSyncLogger.log(PrettyCollection.get(manifest.files));
             return sync.generateActionList(manifest);
         };
     }
 
     public Callable<Void> executeActions(List<ActionEntry> actions, Consumer<ActionProgress> progressConsumer) {
         return () -> {
-            Logger.log(String.format("Executing actions: %s", PrettyCollection.get(actions)));
+            ServerSyncLogger.log(String.format("Executing actions: %s", PrettyCollection.get(actions)));
             sync.executeActionList(actions, progressConsumer);
             return null;
         };
