@@ -3,7 +3,7 @@ package com.superzanti.serversync.communication;
 import com.superzanti.serversync.RefStrings;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.client.Server;
-import com.superzanti.serversync.util.ServerSyncLogger;
+import com.superzanti.serversync.util.Logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -27,27 +27,27 @@ public class SyncFileOutputStream {
         try {
             Files.createDirectories(outputFile.getParent());
         } catch (IOException e) {
-            ServerSyncLogger.error("Failed to create parent directories for: " + outputFile.toString());
-            ServerSyncLogger.debug(e);
+            Logger.error("Failed to create parent directories for: " + outputFile.toString());
+            Logger.debug(e);
         }
 
         if (Files.notExists(outputFile)) {
             try {
                 Files.createFile(outputFile);
             } catch (IOException e) {
-                ServerSyncLogger.error("Failed to create new file for: " + outputFile.toString());
-                ServerSyncLogger.debug(e);
+                Logger.error("Failed to create new file for: " + outputFile.toString());
+                Logger.debug(e);
                 return false;
             }
         }
 
         if (size == 0) {
-            ServerSyncLogger.debug(String.format("Found a 0 byte file, writing an empty file to: %s", outputFile));
+            Logger.debug(String.format("Found a 0 byte file, writing an empty file to: %s", outputFile));
             return true;
         }
 
         try {
-            ServerSyncLogger.debug("Attempting to write file (" + outputFile.toString() + ")");
+            Logger.debug("Attempting to write file (" + outputFile.toString() + ")");
             OutputStream wr = Files.newOutputStream(outputFile, StandardOpenOption.TRUNCATE_EXISTING);
 
             byte[] outBuffer = new byte[server.clientSocket.getReceiveBufferSize()];
@@ -68,14 +68,14 @@ public class SyncFileOutputStream {
             wr.flush();
             wr.close();
 
-            ServerSyncLogger.debug("Finished writing file" + outputFile.toString());
+            Logger.debug("Finished writing file" + outputFile.toString());
         } catch (IOException e) {
-            ServerSyncLogger.error("Failed to transfer data for: " + outputFile.toString());
-            ServerSyncLogger.debug(e);
+            Logger.error("Failed to transfer data for: " + outputFile.toString());
+            Logger.debug(e);
             return false;
         }
 
-        ServerSyncLogger.log(
+        Logger.log(
             String.format(
                 "%s %s %s",
                 RefStrings.UPDATE_TOKEN,

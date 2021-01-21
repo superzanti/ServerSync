@@ -16,7 +16,7 @@ public class BannedIPSReader {
         try {
             return fromJson(Json.parse(data).asArray());
         } catch (ParseException e) {
-            ServerSyncLogger.debug("Found invalid JSON in string");
+            Logger.debug("Found invalid JSON in string");
         }
         return Collections.emptyList();
     }
@@ -25,7 +25,7 @@ public class BannedIPSReader {
         try {
             return fromJson(Json.parse(Files.newBufferedReader(file)).asArray());
         } catch (ParseException e) {
-            ServerSyncLogger.debug("Found invalid JSON in banned-ips.json");
+            Logger.debug("Found invalid JSON in banned-ips.json");
         }
         return Collections.emptyList();
     }

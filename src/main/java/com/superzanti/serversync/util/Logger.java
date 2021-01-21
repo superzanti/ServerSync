@@ -15,14 +15,14 @@ import java.util.logging.*;
  *
  * @author Rheimus, Alfuken
  */
-public class ServerSyncLogger {
-    public static Logger LOG = Logger.getLogger(ServerSync.APPLICATION_TITLE);
+public class Logger {
+    public static java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ServerSync.APPLICATION_TITLE);
     public static SimpleFormatter formatter = new SimpleFormatter();
     FileHandler logFileHandler;
 
     final Path logsDir = new PathBuilder().add("logs").toPath();
 
-    public ServerSyncLogger(String side) {
+    public Logger(String side) {
         try {
             Files.createDirectories(logsDir);
         } catch (IOException e) {
@@ -41,7 +41,7 @@ public class ServerSyncLogger {
 
     }
 
-    public static Logger getLog() {
+    public static java.util.logging.Logger getLog() {
         return LOG;
     }
 

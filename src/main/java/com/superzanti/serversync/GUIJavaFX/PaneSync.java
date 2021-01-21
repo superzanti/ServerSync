@@ -5,7 +5,7 @@ import com.superzanti.serversync.client.ActionEntry;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.client.EActionType;
 import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.util.ServerSyncLogger;
+import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.Then;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -185,7 +185,7 @@ public class PaneSync extends BorderPane {
             btnSync.getStyleClass().add("btn");
             btnSync.setTooltip(I18N.toolTipForKey("ui/btn_sync_tooltip"));
             btnSync.setOnAction(e -> {
-                ServerSyncLogger.debug("Clicked sync button");
+                Logger.debug("Clicked sync button");
                 getBtnSync().setDisable(true);
                 getBtnCheckUpdate().setDisable(true);
 
@@ -234,7 +234,7 @@ public class PaneSync extends BorderPane {
                             }));
                         });
                     } catch (Exception exception) {
-                        ServerSyncLogger.debug(exception);
+                        Logger.debug(exception);
                         setProgressText(ServerSync.strings.getString("connection_failed_server")+" "+ip+":"+port);
                     }
                 }
@@ -252,7 +252,7 @@ public class PaneSync extends BorderPane {
             btnCheckUpdate.getStyleClass().add("btn");
             btnCheckUpdate.setTooltip(I18N.toolTipForKey("ui/btn_check_tooltip"));
             btnCheckUpdate.setOnAction(e -> {
-                ServerSyncLogger.debug("Clicked check updates button");
+                Logger.debug("Clicked check updates button");
                 getBtnSync().setDisable(true);
                 getBtnCheckUpdate().setDisable(true);
 
@@ -284,7 +284,7 @@ public class PaneSync extends BorderPane {
                             Platform.runLater(() -> setProgressText(""));
                         });
                     } catch (Exception exception) {
-                        ServerSyncLogger.debug(exception);
+                        Logger.debug(exception);
                         setProgressText(ServerSync.strings.getString("connection_failed_server")+" "+ip+":"+port);
                     }
                 }
@@ -363,7 +363,7 @@ public class PaneSync extends BorderPane {
             SyncConfig.getConfig().save();
             updateLogsArea("Options saved");
         } catch (IOException ex) {
-            ServerSyncLogger.debug(ex);
+            Logger.debug(ex);
             updateLogsArea(ex.toString());
         }
     }

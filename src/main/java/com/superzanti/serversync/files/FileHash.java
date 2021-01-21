@@ -1,6 +1,6 @@
 package com.superzanti.serversync.files;
 
-import com.superzanti.serversync.util.ServerSyncLogger;
+import com.superzanti.serversync.util.Logger;
 
 import java.io.BufferedInputStream;
 import java.math.BigInteger;
@@ -21,8 +21,8 @@ public class FileHash {
             while (in.read(buffer) > -1) { }
             return String.format("%064x", new BigInteger(1, in.getMessageDigest().digest()));
         } catch (Exception e) {
-            ServerSyncLogger.debug(String.format("Failed to hash file: %s", file));
-            ServerSyncLogger.debug(e);
+            Logger.debug(String.format("Failed to hash file: %s", file));
+            Logger.debug(e);
         }
         return "";
     }

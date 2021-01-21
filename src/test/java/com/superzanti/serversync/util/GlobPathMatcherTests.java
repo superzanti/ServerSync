@@ -19,7 +19,7 @@ public class GlobPathMatcherTests {
 
     GlobPathMatcherTests() {
         ServerSync.MODE = EServerMode.CLIENT;
-        new ServerSyncLogger("testing");
+        new Logger("testing");
         config = SyncConfig.getConfig();
     }
 

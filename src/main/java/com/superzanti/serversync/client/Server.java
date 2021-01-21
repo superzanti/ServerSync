@@ -3,7 +3,7 @@ package com.superzanti.serversync.client;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.communication.response.ServerInfo;
 import com.superzanti.serversync.util.AutoClose;
-import com.superzanti.serversync.util.ServerSyncLogger;
+import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EServerMessage;
 
 import java.io.IOException;
@@ -37,29 +37,29 @@ public class Server {
         try {
             host = InetAddress.getByName(address);
         } catch (UnknownHostException e) {
-            ServerSyncLogger.error(ServerSync.strings.getString("connection_failed_host") + ": " + address);
+            Logger.error(ServerSync.strings.getString("connection_failed_host") + ": " + address);
             return false;
         }
 
-        ServerSyncLogger.debug(ServerSync.strings.getString("connection_attempt_server"));
+        Logger.debug(ServerSync.strings.getString("connection_attempt_server"));
         clientSocket = new Socket();
 
-        ServerSyncLogger.log("< " + ServerSync.strings.getString("connection_message") + " >");
+        Logger.log("< " + ServerSync.strings.getString("connection_message") + " >");
         try {
             clientSocket.connect(new InetSocketAddress(host.getHostName(), port), 5000);
         } catch (IOException e) {
-            ServerSyncLogger.error(ServerSync.strings.getString("connection_failed_server") + ": " + address + ":" + port);
+            Logger.error(ServerSync.strings.getString("connection_failed_server") + ": " + address + ":" + port);
             AutoClose.closeResource(clientSocket);
             return false;
         }
 
-        ServerSyncLogger.debug(ServerSync.strings.getString("debug_IO_streams"));
+        Logger.debug(ServerSync.strings.getString("debug_IO_streams"));
         try {
             clientSocket.setPerformancePreferences(0, 1, 2);
             output = new ObjectOutputStream(clientSocket.getOutputStream());
             input = new ObjectInputStream(clientSocket.getInputStream());
         } catch (IOException e) {
-            ServerSyncLogger.debug(ServerSync.strings.getString("debug_IO_streams_failed"));
+            Logger.debug(ServerSync.strings.getString("debug_IO_streams_failed"));
             AutoClose.closeResource(clientSocket);
             return false;
         }
@@ -68,14 +68,14 @@ public class Server {
             output.writeUTF(ServerSync.GET_SERVER_INFO);
             output.flush();
         } catch (IOException e) {
-            ServerSyncLogger.outputError(ServerSync.GET_SERVER_INFO);
+            Logger.outputError(ServerSync.GET_SERVER_INFO);
         }
 
         try {
             info = (ServerInfo) input.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            ServerSyncLogger.error("Failed to read server information");
-            ServerSyncLogger.debug(e);
+            Logger.error("Failed to read server information");
+            Logger.debug(e);
         }
 
         return true;
@@ -89,8 +89,8 @@ public class Server {
                 output.flush();
             }
         } catch (IOException e) {
-            ServerSyncLogger.error("Failed to close server connection");
-            ServerSyncLogger.debug(e);
+            Logger.error("Failed to close server connection");
+            Logger.debug(e);
         }
 
         if (clientSocket != null) {

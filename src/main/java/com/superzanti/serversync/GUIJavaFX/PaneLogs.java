@@ -1,6 +1,6 @@
 package com.superzanti.serversync.GUIJavaFX;
 
-import com.superzanti.serversync.util.ServerSyncLogger;
+import com.superzanti.serversync.util.Logger;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.TextArea;
@@ -8,7 +8,6 @@ import javafx.scene.layout.BorderPane;
 
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 
 // GUI for showing the logs
 public class PaneLogs extends BorderPane {
@@ -16,11 +15,11 @@ public class PaneLogs extends BorderPane {
     private final TextArea txtArea = new TextArea();
 
     public PaneLogs() {
-        Logger log = ServerSyncLogger.getLog();
+        java.util.logging.Logger log = Logger.getLog();
         log.addHandler(new Handler() {
             @Override
             public void publish(LogRecord record) {
-                Platform.runLater(() -> updateLogsArea(ServerSyncLogger.formatter.format(record)));
+                Platform.runLater(() -> updateLogsArea(Logger.formatter.format(record)));
             }
 
             @Override

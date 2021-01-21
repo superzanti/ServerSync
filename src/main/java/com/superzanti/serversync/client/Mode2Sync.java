@@ -4,7 +4,7 @@ import com.superzanti.serversync.RefStrings;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
 import com.superzanti.serversync.files.*;
-import com.superzanti.serversync.util.ServerSyncLogger;
+import com.superzanti.serversync.util.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,11 +32,11 @@ public class Mode2Sync implements Runnable {
         for (ActionEntry action : actions) {
             switch (action.action) {
                 case Update:
-                    ServerSyncLogger.log(String.format("%sUpdating file %s", RefStrings.UPDATE_TOKEN, action));
+                    Logger.log(String.format("%sUpdating file %s", RefStrings.UPDATE_TOKEN, action));
                     server.updateIndividualFile(action, progressConsumer);
                     break;
                 case Delete:
-                    ServerSyncLogger.log(String.format("%sDeleting file %s", RefStrings.DELETE_TOKEN, action));
+                    Logger.log(String.format("%sDeleting file %s", RefStrings.DELETE_TOKEN, action));
                     Files.delete(action.target.resolvePath());
                     break;
 
@@ -114,9 +114,9 @@ public class Mode2Sync implements Runnable {
         manifest.files
             .forEach(entry -> {
                 Path file = entry.resolvePath();
-                ServerSyncLogger.debug(String.format("Starting check for file: %s", file));
+                Logger.debug(String.format("Starting check for file: %s", file));
                 if (!entry.redirectTo.equals("")) {
-                    ServerSyncLogger.debug(String.format(
+                    Logger.debug(String.format(
                         "File: %s, redirected from: %s to %s",
                         file.getFileName(),
                         entry.path,
@@ -147,7 +147,7 @@ public class Mode2Sync implements Runnable {
 //         Platform.runLater(() -> Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI());
 // =======
                     if (entry.hash.equals(hash)) {
-                        ServerSyncLogger.debug("File already exists");
+                        Logger.debug("File already exists");
                     }
                 }
 

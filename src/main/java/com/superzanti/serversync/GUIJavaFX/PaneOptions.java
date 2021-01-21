@@ -2,7 +2,7 @@ package com.superzanti.serversync.GUIJavaFX;
 
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.util.ServerSyncLogger;
+import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.ETheme;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -191,7 +191,7 @@ public class PaneOptions extends GridPane {
             SyncConfig.getConfig().save();
             updateLogsArea("Options saved");
         } catch (IOException ex) {
-            ServerSyncLogger.debug(ex);
+            Logger.debug(ex);
             updateLogsArea(ex.toString());
         }
     }

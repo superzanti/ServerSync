@@ -2,7 +2,7 @@ package com.superzanti.serversync.server;
 
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.SyncConfig;
-import com.superzanti.serversync.util.ServerSyncLogger;
+import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EServerMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +20,7 @@ public class ServerSetupTests {
     @BeforeEach
     void init() {
         ServerSync.MODE = EServerMode.SERVER;
-        ServerSyncLogger serverSyncLogger = new ServerSyncLogger("testing");
+        Logger logger = new Logger("testing");
         config = SyncConfig.getConfig();
         config.DIRECTORY_INCLUDE_LIST = new ArrayList<>();
         config.PUSH_CLIENT_MODS = false;

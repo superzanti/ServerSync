@@ -2,7 +2,7 @@ package com.superzanti.serversync.files;
 
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
-import com.superzanti.serversync.util.ServerSyncLogger;
+import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.PrettyCollection;
 
 import java.io.IOException;
@@ -43,12 +43,12 @@ public class FileManager {
         for (String includedDirectory : includedDirectories) {
             Path dir = ServerSync.rootDir.resolve(Paths.get(includedDirectory));
             if (!Files.exists(dir)) {
-                ServerSyncLogger.debug(String.format("Configured directory: %s does not exist.", dir));
+                Logger.debug(String.format("Configured directory: %s does not exist.", dir));
                 throw new IOException("File does not exist");
             }
 
             if (!Files.isDirectory(dir)) {
-                ServerSyncLogger.debug(String.format("Configured directory: %s is not a directory.", dir));
+                Logger.debug(String.format("Configured directory: %s is not a directory.", dir));
                 throw new IOException("File is not a directory");
             }
 
@@ -62,26 +62,26 @@ public class FileManager {
                 try {
                     return Files.walk(dir).filter(dirPath -> !Files.isDirectory(dirPath));
                 } catch (IOException e) {
-                    ServerSyncLogger.debug(String.format("Failed to access files in the directory: %s", dir));
-                    ServerSyncLogger.debug(e);
+                    Logger.debug(String.format("Failed to access files in the directory: %s", dir));
+                    Logger.debug(e);
                 }
                 return Stream.empty();
             })
             .map(ServerSync.rootDir::relativize)
             .collect(Collectors.toList());
-        ServerSyncLogger.debug(String.format("All files: %s", PrettyCollection.get(allFiles)));
+        Logger.debug(String.format("All files: %s", PrettyCollection.get(allFiles)));
 
         List<Path> ignoredFiles = allFiles
             .parallelStream()
             .filter(IgnoredFilesMatcher::matches)
             .collect(Collectors.toList());
-        ServerSyncLogger.debug(String.format("Ignored files: %s", PrettyCollection.get(ignoredFiles)));
+        Logger.debug(String.format("Ignored files: %s", PrettyCollection.get(ignoredFiles)));
 
         List<Path> filteredFiles = allFiles
             .parallelStream()
             .filter(f -> !IgnoredFilesMatcher.matches(f))
             .collect(Collectors.toList());
-        ServerSyncLogger.debug(String.format("Filtered files: %s", PrettyCollection.get(filteredFiles)));
+        Logger.debug(String.format("Filtered files: %s", PrettyCollection.get(filteredFiles)));
 
         return filteredFiles.stream()
                             .filter(path -> Files.exists(ServerSync.rootDir.resolve(path)))
@@ -113,7 +113,7 @@ public class FileManager {
                     }
                 });
             } catch (IOException e) {
-                ServerSyncLogger.debug(e);
+                Logger.debug(e);
             }
         });
     }

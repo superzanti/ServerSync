@@ -5,7 +5,7 @@ import com.superzanti.serversync.client.ActionProgress;
 import com.superzanti.serversync.client.Server;
 import com.superzanti.serversync.communication.response.ServerInfo;
 import com.superzanti.serversync.files.FileManifest;
-import com.superzanti.serversync.util.ServerSyncLogger;
+import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EServerMessage;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ public class Requests {
      * @return The file manifest or null if an error occurs
      */
     public FileManifest getManifest() {
-        ServerSyncLogger.debug("Requesting file manifest");
+        Logger.debug("Requesting file manifest");
         try {
             writeMessage(EServerMessage.GET_MANIFEST);
         } catch (IOException e) {
@@ -48,19 +48,19 @@ public class Requests {
         try {
             return (FileManifest) input.readObject();
         } catch (ClassNotFoundException | IOException e) {
-            ServerSyncLogger.debug("Failed to read from server stream");
-            ServerSyncLogger.debug(e);
+            Logger.debug("Failed to read from server stream");
+            Logger.debug(e);
             return null;
         }
     }
 
     public List<String> getManagedDirectories() {
-        ServerSyncLogger.debug("Requesting managed directories");
+        Logger.debug("Requesting managed directories");
         try {
             writeMessage(EServerMessage.GET_MANAGED_DIRECTORIES);
         } catch (IOException e) {
-            ServerSyncLogger.debug("Failed to write message to server");
-            ServerSyncLogger.debug(e);
+            Logger.debug("Failed to write message to server");
+            Logger.debug(e);
             return Collections.emptyList();
         }
 
@@ -69,12 +69,12 @@ public class Requests {
             List<String> directories = (List<String>) input.readObject();
             return directories;
         } catch (ClassNotFoundException e) {
-            ServerSyncLogger.debug("Received unknown object in server response");
-            ServerSyncLogger.debug(e);
+            Logger.debug("Received unknown object in server response");
+            Logger.debug(e);
             return Collections.emptyList();
         } catch (IOException e) {
-            ServerSyncLogger.debug("Failed to read from server stream");
-            ServerSyncLogger.debug(e);
+            Logger.debug("Failed to read from server stream");
+            Logger.debug(e);
             return Collections.emptyList();
         }
     }
@@ -85,20 +85,20 @@ public class Requests {
      * @return int number of files or -1 if failure occurs
      */
     public int getNumberOfManagedFiles() {
-        ServerSyncLogger.debug("Requesting number of managed files");
+        Logger.debug("Requesting number of managed files");
         try {
             writeMessage(EServerMessage.GET_NUMBER_OF_MANAGED_FILES);
         } catch (IOException e) {
-            ServerSyncLogger.debug("Failed to write to server stream");
-            ServerSyncLogger.debug(e);
+            Logger.debug("Failed to write to server stream");
+            Logger.debug(e);
             return -1;
         }
 
         try {
             return input.readInt();
         } catch (IOException e) {
-            ServerSyncLogger.debug("Failed to read from server stream");
-            ServerSyncLogger.debug(e);
+            Logger.debug("Failed to read from server stream");
+            Logger.debug(e);
             return -1;
         }
     }
@@ -115,12 +115,12 @@ public class Requests {
             boolean serverHasFile = input.readBoolean();
 
             if (!serverHasFile) {
-                ServerSyncLogger.error(String.format("File does not exist on the server: %s", entry.target));
+                Logger.error(String.format("File does not exist on the server: %s", entry.target));
                 return false;
             }
         } catch (IOException e) {
-            ServerSyncLogger.error("Failed to read file status from stream");
-            ServerSyncLogger.debug(e);
+            Logger.error("Failed to read file status from stream");
+            Logger.debug(e);
             return false;
         }
 
@@ -147,8 +147,8 @@ public class Requests {
             output.writeUTF(m);
             output.flush();
         } catch (IOException e) {
-            ServerSyncLogger.debug(String.format("Failed to write message %s to server stream", message));
-            ServerSyncLogger.debug(e);
+            Logger.debug(String.format("Failed to write message %s to server stream", message));
+            Logger.debug(e);
             throw e;
         }
     }
@@ -158,8 +158,8 @@ public class Requests {
             output.writeObject(o);
             output.flush();
         } catch (IOException e) {
-            ServerSyncLogger.debug("Failed to write to server stream");
-            ServerSyncLogger.debug(e);
+            Logger.debug("Failed to write to server stream");
+            Logger.debug(e);
             throw e;
         }
     }
