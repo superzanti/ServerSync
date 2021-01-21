@@ -6,7 +6,6 @@ import com.superzanti.serversync.files.FileManifest;
 import com.superzanti.serversync.files.FileEntry;
 import com.superzanti.serversync.communication.response.ServerInfo;
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.LoggerNG;
 import com.superzanti.serversync.files.PathBuilder;
 import com.superzanti.serversync.util.PrettyCollection;
 import com.superzanti.serversync.util.enums.EBinaryAnswer;
@@ -49,7 +48,7 @@ public class ServerWorker implements Runnable {
     private Timer timeout;
     private TimerTask timeoutTask;
 
-    private final LoggerNG clientLogger;
+    private final Logger clientLogger;
 
     ServerWorker(
         Socket socket,
@@ -57,7 +56,7 @@ public class ServerWorker implements Runnable {
         Timer timeoutScheduler,
         FileManifest manifest
     ) {
-        clientLogger = new LoggerNG(String.format(
+        clientLogger = new Logger(String.format(
             "server-connection-from-%s",
             socket.getInetAddress().toString().replaceAll("[/.:@?|*\"]", "-")
         ));

@@ -1,33 +1,40 @@
 package com.superzanti.serversync.GUIJavaFX;
 
-import com.superzanti.serversync.util.Log;
 import com.superzanti.serversync.util.Logger;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 
-// GUI of logs
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+
+// GUI for showing the logs
 public class PaneLogs extends BorderPane {
 
     private final TextArea txtArea = new TextArea();
 
     public PaneLogs() {
-        Logger.getLog().addObserver((o, arg) -> {
-            if (o instanceof Log) {
-                Platform.runLater(() -> updateLogsArea(((Log) o).userFacingLog.toString()));
+        java.util.logging.Logger log = Logger.getLog();
+        log.addHandler(new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                Platform.runLater(() -> updateLogsArea(Logger.formatter.format(record)));
             }
+
+            @Override
+            public void flush() {}
+
+            @Override
+            public void close() {}
         });
+
         txtArea.setEditable(false);
         setMargin(txtArea, new Insets(10, 10, 10, 10));
         this.setCenter(txtArea);
     }
 
     public void updateLogsArea(String text) {
-        txtArea.setText(text);
-        txtArea.setScrollTop(Double.MAX_VALUE);
-        txtArea.selectPositionCaret(txtArea.getLength());
-        txtArea.deselect(); //removes the highlighting
+        txtArea.appendText(text);
     }
-
 }

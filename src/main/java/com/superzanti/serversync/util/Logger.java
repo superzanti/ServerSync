@@ -1,46 +1,61 @@
 package com.superzanti.serversync.util;
 
+import com.superzanti.serversync.ServerSync;
+import com.superzanti.serversync.files.PathBuilder;
+import javafx.application.Platform;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.logging.*;
 
 /**
- * Manager for serversyncs logs
+ * Wrapper for serversyncs logs
  *
- * @author Rheimus
+ * @author Rheimus, Alfuken
  */
 public class Logger {
-    public static final String FULL_LOG = "full";
-    public static final String USER_LOG = "user";
-    private static final String TAG_DEBUG = "DEBUG:";
-    static final String TAG_ERROR = "ERROR:";
-    static final String TAG_LOG = "LOG:";
+    public static java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ServerSync.APPLICATION_TITLE);
+    public static SimpleFormatter formatter = new SimpleFormatter();
+    FileHandler logFileHandler;
 
-    private static Log LOG;
+    final Path logsDir = new PathBuilder().add("logs").toPath();
 
-    public Logger(String context) {
-        LOG = new Log("serversync-" + context);
+    public Logger(String side) {
+        try {
+            Files.createDirectories(logsDir);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        String logFilePath = logsDir.resolve("serversync-" + side + ".log").toAbsolutePath().toString();
+        try {
+            logFileHandler = new FileHandler(logFilePath);
+        } catch (SecurityException | IOException e) {
+            e.printStackTrace();
+        }
+
+        LOG.addHandler(logFileHandler);
+        logFileHandler.setFormatter(formatter);
+
     }
 
-    public static Log getLog() {
+    public static java.util.logging.Logger getLog() {
         return LOG;
     }
 
     public static void setSystemOutput(boolean output) {
-        LOG.shouldOutputToSystem = output;
-    }
-
-    public static boolean save() {
-        LOG.saveLog();
-        return true;
+        // enable/disable System.out logging
+        LOG.setUseParentHandlers(output);
     }
 
     public static void log(String s) {
-        LOG.add(TAG_LOG, s);
-        LOG.saveLog();
+        LOG.info(s);
     }
 
     public static void error(String s) {
-        LOG.add(TAG_ERROR, s);
-        LOG.saveLog();
+        LOG.severe(s);
     }
 
     public static void debug(Exception e) {
@@ -48,8 +63,7 @@ public class Logger {
     }
 
     public static void debug(String s) {
-        LOG.add(TAG_DEBUG, s);
-        LOG.saveLog();
+        LOG.info(s);
     }
 
     public static void outputError(Object object) {
