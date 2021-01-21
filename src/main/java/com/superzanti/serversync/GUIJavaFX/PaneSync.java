@@ -17,6 +17,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
@@ -31,6 +32,7 @@ public class PaneSync extends BorderPane {
     private TextField fieldIp, fieldPort;
     private final ObservableList<ActionEntry> observableMods = FXCollections.observableArrayList();
     private PaneProgressBar paneProgressBar;
+    private boolean closeOnSuccessfulSync = false;
 
     private final ClientWorker worker = new ClientWorker();
 
@@ -231,6 +233,11 @@ public class PaneSync extends BorderPane {
                             Then.onComplete(sync, unused -> Platform.runLater(() -> {
                                 setProgressText(ServerSync.strings.getString("update_complete"));
                                 worker.close();
+                                if (closeOnSuccessfulSync)
+                                {
+                                    Stage stage = (Stage) btnSync.getScene().getWindow();
+                                    stage.close();
+                                }
                             }));
                         });
                     } catch (Exception exception) {
@@ -366,6 +373,11 @@ public class PaneSync extends BorderPane {
             Logger.debug(ex);
             updateLogsArea(ex.toString());
         }
+    }
+
+    public void setCloseOnSuccessfulSync(boolean closeOnSuccessfulSync)
+    {
+        this.closeOnSuccessfulSync = closeOnSuccessfulSync;
     }
 }
 

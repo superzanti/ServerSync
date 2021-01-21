@@ -1,6 +1,7 @@
 package com.superzanti.serversync;
 
 import com.superzanti.serversync.GUIJavaFX.Gui_JavaFX;
+import com.superzanti.serversync.GUIJavaFX.ProgressModeGUI;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.config.ConfigLoader;
 import com.superzanti.serversync.config.SyncConfig;
@@ -146,23 +147,7 @@ public class ServerSync implements Callable<Integer> {
                 System.exit(1);
             }
         } else if (modeProgressOnly) {
-            // TODO setup a progress only version of the GUI?
-            try {
-                worker.setAddress(SyncConfig.getConfig().SERVER_IP);
-                worker.setPort(SyncConfig.getConfig().SERVER_PORT);
-                worker.connect();
-                Then.onComplete(worker.fetchActions(), actionEntries -> Then.onComplete(worker.executeActions(actionEntries, actionProgress -> {
-                    if (actionProgress.isComplete()) {
-                        System.out.printf("Updated: %s%n", actionProgress.entry);
-                    }
-                }), unused -> {
-                    worker.close();
-                    System.exit(0);
-                }));
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.exit(1);
-            }
+            new Thread(() -> Application.launch(ProgressModeGUI.class)).start();
         } else {
             new Thread(() -> Application.launch(Gui_JavaFX.class)).start();
         }
