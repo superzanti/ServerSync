@@ -3,19 +3,19 @@ package com.superzanti.serversync.GUIJavaFX;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.util.Logger;
+import com.superzanti.serversync.util.Zipper;
 import com.superzanti.serversync.util.enums.ETheme;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -31,6 +31,8 @@ public class PaneOptions extends GridPane {
 
     public PaneOptions() {
         this.setAlignment(Pos.CENTER);
+        this.setHgap(10);
+        this.setVgap(10);
         this.setPadding(new Insets(10, 10, 10, 10));
 
         /* CLIENT */
@@ -81,6 +83,28 @@ public class PaneOptions extends GridPane {
         setRowIndex(getRefuseClientModsCheckbox(), 5);
         setColumnIndex(getRefuseClientModsCheckbox(), 1);
 
+        /*Backup button */
+        Label labelBackup = I18N.labelForValue(() -> I18N.get("ui/backup"));
+        Button btnBackup = new Button("Backup");
+        btnBackup.getStyleClass().add("btn");
+        btnBackup.setOnAction(e -> {
+            Thread thread = new Thread(){
+                public void run(){
+                    try {
+                        Date date = new Date();
+                        Zipper.zipDirectory("mods", date);
+                        Zipper.zipDirectory("config", date);
+
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    }
+                }
+            };
+
+            thread.start();
+        });
+        this.add(labelBackup,0,6);
+        this.add(btnBackup,1,6);
         /* CLIENT -> Ignore list*/
         // TODO implement this ignore list
 //        Label labelIgnore = new Label("Ignore list: ");

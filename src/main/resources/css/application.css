@@ -178,3 +178,7 @@
 {
     -fx-border-color: -fx-primary -fx-primary -fx-secondary -fx-primary;
 }
+
+.hyperlink {
+    -fx-font-size: 14px;
+}
