@@ -1,12 +1,9 @@
 package com.superzanti.serversync.util;
 
+import com.superzanti.serversync.GUIJavaFX.PaneLogs;
 import com.superzanti.serversync.ServerSync;
-import com.superzanti.serversync.files.PathBuilder;
 import javafx.application.Platform;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.logging.*;
 
@@ -16,61 +13,85 @@ import java.util.logging.*;
  * @author Rheimus, Alfuken
  */
 public class Logger {
-    public static java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ServerSync.APPLICATION_TITLE);
-    public static SimpleFormatter formatter = new SimpleFormatter();
-    FileHandler logFileHandler;
+    public static LoggerInstance instance = null;
+    private static Object mutex = new Object();
 
-    final Path logsDir = new PathBuilder().add("logs").toPath();
-
-    public Logger(String side) {
-        try {
-            Files.createDirectories(logsDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        String logFilePath = logsDir.resolve("serversync-" + side + ".log").toAbsolutePath().toString();
-        try {
-            logFileHandler = new FileHandler(logFilePath);
-        } catch (SecurityException | IOException e) {
-            e.printStackTrace();
-        }
-
-        LOG.addHandler(logFileHandler);
-        logFileHandler.setFormatter(formatter);
-
+    public static String getContext(){
+        return ServerSync.MODE == null ? "undefined" : ServerSync.MODE.toString();
     }
 
-    public static java.util.logging.Logger getLog() {
-        return LOG;
+    public static LoggerInstance getInstance()
+    {
+        LoggerInstance result = instance;
+        if (result == null)
+        {
+            //synchronized block to remove overhead
+            synchronized (mutex)
+            {
+                result = instance;
+                if(result == null)
+                {
+                    // if instance is null, initialize
+                    instance = result = new LoggerInstance(getContext());
+                }
+            }
+        }
+        return result;
     }
 
-    public static void setSystemOutput(boolean output) {
+    public static synchronized void instantiate()
+    {
+        instantiate(getContext());
+    }
+
+    public static void instantiate(String context){
+        instance = new LoggerInstance(context);
+    }
+
+    public static synchronized void setSystemOutput(boolean output) {
         // enable/disable System.out logging
-        LOG.setUseParentHandlers(output);
+//        getInstance().javaLogger.setUseParentHandlers(output);
     }
 
-    public static void log(String s) {
-        LOG.info(s);
+    public static synchronized void log(String s) {
+        getInstance().log(s);
     }
 
-    public static void error(String s) {
-        LOG.severe(s);
+    public static synchronized void error(String s) {
+        getInstance().error(s);
     }
 
-    public static void debug(Exception e) {
-        debug(Arrays.toString(e.getStackTrace()));
+    public static synchronized void debug(String s) {
+        getInstance().debug(s);
     }
 
-    public static void debug(String s) {
-        LOG.info(s);
+    public static synchronized void debug(Exception e) {
+        getInstance().debug(Arrays.toString(e.getStackTrace()));
     }
 
-    public static void outputError(Object object) {
-        debug("Failed to write object (" + object + ") to output stream");
+    public static synchronized void outputError(Object object) {
+        getInstance().debug("Failed to write object (" + object + ") to output stream");
     }
 
-    public static void inputError(Object object) {
-        debug("Failed to read object from input stream: " + object);
+    public static synchronized void inputError(Object object) {
+        getInstance().debug("Failed to read object from input stream: " + object);
     }
+
+    public static synchronized void attachOutputToLogsPane(PaneLogs paneLogs){
+        getInstance().javaLogger.addHandler(new Handler() {
+            final SimpleFormatter fmt = new SimpleFormatter();
+
+            @Override
+            public void publish(LogRecord record) {
+                Platform.runLater(() -> paneLogs.updateLogsArea(fmt.format(record)));
+            }
+
+            @Override
+            public void flush() {}
+
+            @Override
+            public void close() {}
+        });
+    }
+
 }

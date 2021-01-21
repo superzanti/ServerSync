@@ -20,7 +20,7 @@ public class ServerSetupTests {
     @BeforeEach
     void init() {
         ServerSync.MODE = EServerMode.SERVER;
-        Logger logger = new Logger("testing");
+        Logger.instantiate("testing");
         config = SyncConfig.getConfig();
         config.DIRECTORY_INCLUDE_LIST = new ArrayList<>();
         config.PUSH_CLIENT_MODS = false;
