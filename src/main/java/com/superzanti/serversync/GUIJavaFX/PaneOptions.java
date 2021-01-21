@@ -92,15 +92,9 @@ public class PaneOptions extends GridPane {
                 public void run(){
                     try {
                         Date date = new Date();
+                        Zipper.zipDirectory("mods", date);
+                        Zipper.zipDirectory("config", date);
 
-                        File fMods = new File(System.getProperty("user.dir")+"\\mods");
-                        if (fMods.exists() && fMods.isDirectory()) {
-                            Zipper.zipDirectory("mods", date);
-                        }
-                        File fConfigs = new File(System.getProperty("user.dir")+"\\config");
-                        if (fConfigs.exists() && fConfigs.isDirectory()) {
-                            Zipper.zipDirectory("config", date);
-                        }
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
                     }

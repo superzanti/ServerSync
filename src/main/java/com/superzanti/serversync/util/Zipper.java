@@ -13,15 +13,21 @@ public class Zipper {
     static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
     public static void zipDirectory(String sourceFile, Date date) throws IOException {
         Logger.log("Starting the zip \""+sourceFile+ "\" folder");
+        File fMods = new File(System.getProperty("user.dir")+"\\"+sourceFile);
+        if (fMods.exists() && fMods.isDirectory()) {
 
-        FileOutputStream fos = new FileOutputStream("ServerSync_"+formatter.format(date)+"_"+sourceFile+".zip");
-        ZipOutputStream zipOut = new ZipOutputStream(fos);
-        File fileToZip = new File(sourceFile);
+            FileOutputStream fos = new FileOutputStream("ServerSync_"+formatter.format(date)+"_"+sourceFile+".zip");
+            ZipOutputStream zipOut = new ZipOutputStream(fos);
+            File fileToZip = new File(sourceFile);
 
-        zipFile(fileToZip, fileToZip.getName(), zipOut);
-        zipOut.close();
-        fos.close();
-        Logger.log("Ending the zip \""+sourceFile+ "\" folder");
+            zipFile(fileToZip, fileToZip.getName(), zipOut);
+            zipOut.close();
+            fos.close();
+            Logger.log("Ending the zip \""+sourceFile+ "\" folder");
+        }else{
+            Logger.log("Folder \""+sourceFile+ "\" not found");
+        }
+
     }
     public static void zipFile(File fileToZip, String fileName, ZipOutputStream zipOut) throws IOException {
         if (fileToZip.isHidden()) {
