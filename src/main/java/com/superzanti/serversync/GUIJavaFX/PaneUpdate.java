@@ -18,28 +18,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.*;
-import java.util.List;
 
 public class PaneUpdate extends GridPane {
     private String curVersion = '"'+RefStrings.VERSION+'"';
     private Label labelCurVersion = I18N.labelForValue(() -> I18N.get("ui/current_version"));
     private Label labelCurVersion2 = new Label('"'+RefStrings.VERSION+'"');
     private Label labelVersion = new Label("Latest version: ");
-    private Label labelVersion2 = new Label("?");
+    private Label labelVersion2 = new Label("Can't check the last version");
     private Label labelUrl = new Label("URL: ");
-    private Hyperlink update_url = new Hyperlink("?");
+    private Hyperlink hyperUpdatedUrl = new Hyperlink("");
 
     public PaneUpdate() {
-        update_url.setOnAction(new EventHandler<ActionEvent>() {
+        hyperUpdatedUrl.setOnAction(new EventHandler<ActionEvent>() {
 
             @Override
             public void handle(ActionEvent t) {
-                URI u = null;
+                URI url = null;
                 try {
 
-                    u = new URI(update_url.getText());
-                    Desktop.getDesktop().browse(u);
-                    update_url.setVisited(false);
+                    url = new URI(hyperUpdatedUrl.getText());
+                    Desktop.getDesktop().browse(url);
+                    hyperUpdatedUrl.setVisited(false);
                 } catch (URISyntaxException | IOException e) {
                     e.printStackTrace();
                 }
@@ -57,7 +56,7 @@ public class PaneUpdate extends GridPane {
         this.add(labelVersion,0,1);
         this.add(labelVersion2,1,1);
         this.add(labelUrl,0,2);
-        this.add(update_url,1,2);
+        this.add(hyperUpdatedUrl,1,2);
 
         Platform.runLater(this::getLastReleases);
     }
@@ -92,17 +91,17 @@ public class PaneUpdate extends GridPane {
             this.labelVersion2.setText(release.get("tag_name").toString());
             String releaseVersion = release.get("update_url").toString();
             String urlRelease = "https://github.com" + releaseVersion.substring(1, releaseVersion.length() - 1);
-            this.update_url.setText(urlRelease);
+            this.hyperUpdatedUrl.setText(urlRelease);
             System.out.println(responseStrBuilder.toString());
             if(!this.curVersion.equals(releaseVersion)){
-                Gui_JavaFX.getStackMainPane().getPaneSideBar().updateBtnUpdate();
+                Gui_JavaFX.getStackMainPane().getPaneSideBar().updateIconUpdate("notUpdate");
             }
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
             //e.printStackTrace();
-            System.out.println("Can't check last version from Github");
-            Logger.debug("Can't check last version from Github");
+            Logger.debug("Can't check the last version from Github");
+            Gui_JavaFX.getStackMainPane().getPaneSideBar().updateIconUpdate("offline");
         }
     }
 }
