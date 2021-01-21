@@ -25,7 +25,7 @@ public class SyncConfig {
     public List<String> FILE_IGNORE_LIST = Arrays.asList("**/serversync-*.jar", "**/serversync-*.cfg");
     public List<String> CONFIG_INCLUDE_LIST = new ArrayList<>();
     public Locale LOCALE = Locale.getDefault();
-    public ETheme THEME = ETheme.GREY_BLUE;
+    public ETheme THEME = ETheme.BLUE_YELLOW;
     ////////////////////////////////////////
 
     // SERVER //////////////////////////////
