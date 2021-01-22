@@ -88,12 +88,13 @@ public class PaneUpdate extends GridPane {
 
 
             JsonObject release = Json.parse(responseStrBuilder.toString()).asObject();
-            this.labelVersion2.setText(release.get("tag_name").toString());
+            String lastVersion = release.get("tag_name").toString();
+            this.labelVersion2.setText(lastVersion);
             String releaseVersion = release.get("update_url").toString();
             String urlRelease = "https://github.com" + releaseVersion.substring(1, releaseVersion.length() - 1);
             this.hyperUpdatedUrl.setText(urlRelease);
             System.out.println(responseStrBuilder.toString());
-            if(!this.curVersion.equals(releaseVersion)){
+            if(!this.curVersion.equals(lastVersion)){
                 Gui_JavaFX.getStackMainPane().getPaneSideBar().updateIconUpdate("notUpdate");
             }
         } catch (MalformedURLException e) {
