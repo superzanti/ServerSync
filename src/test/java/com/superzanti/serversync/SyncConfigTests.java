@@ -15,7 +15,7 @@ public class SyncConfigTests {
 
     @BeforeEach
     void init() {
-        Logger testLogger = new Logger("testing");
+        Logger.instantiate("testing");
         config = new SyncConfig(EConfigType.COMMON);
     }
 

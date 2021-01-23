@@ -15,23 +15,10 @@ public class PaneLogs extends BorderPane {
     private final TextArea txtArea = new TextArea();
 
     public PaneLogs() {
-        java.util.logging.Logger log = Logger.getLog();
-        log.addHandler(new Handler() {
-            @Override
-            public void publish(LogRecord record) {
-                Platform.runLater(() -> updateLogsArea(Logger.formatter.format(record)));
-            }
-
-            @Override
-            public void flush() {}
-
-            @Override
-            public void close() {}
-        });
-
         txtArea.setEditable(false);
         setMargin(txtArea, new Insets(10, 10, 10, 10));
         this.setCenter(txtArea);
+        Logger.attachOutputToLogsPane(this);
     }
 
     public void updateLogsArea(String text) {

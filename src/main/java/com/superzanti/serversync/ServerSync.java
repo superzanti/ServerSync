@@ -105,7 +105,6 @@ public class ServerSync implements Callable<Integer> {
 
     private void runInServerMode() {
         ServerSync.MODE = EServerMode.SERVER;
-        new Logger("server");
         Logger.setSystemOutput(true);
         try {
             ConfigLoader.load(EConfigType.SERVER);
@@ -122,7 +121,6 @@ public class ServerSync implements Callable<Integer> {
 
     private void runInClientMode() {
         ServerSync.MODE = EServerMode.CLIENT;
-        new Logger("client");
         SyncConfig config = SyncConfig.getConfig();
         try {
             ConfigLoader.load(EConfigType.CLIENT);
