@@ -14,8 +14,10 @@ public class LoggerInstance {
     public java.util.logging.Logger javaLogger;
     final Path logsDir = new PathBuilder().add("logs").toPath();
     String ctx = "";
+    final String onelinerLogFormat = "[%1$tb %1$td, %1$tY %1$tl:%1$tM:%1$tS][ServerSync] %4$s: %5$s%6$s%n";
 
     public LoggerInstance(String context) {
+        setupOnelinerLogFormat();
         this.ctx = context;
         javaLogger = java.util.logging.Logger.getLogger(ServerSync.APPLICATION_TITLE + "-" + context);
 
@@ -30,6 +32,13 @@ public class LoggerInstance {
             if (fh != null) javaLogger.addHandler(fh);
         } catch (SecurityException ex) {
             error(ex.getMessage());
+        }
+    }
+
+    private void setupOnelinerLogFormat(){
+        String existingFormat = System.getProperty("java.util.logging.SimpleFormatter.format");
+        if (existingFormat == null){
+            System.setProperty("java.util.logging.SimpleFormatter.format", onelinerLogFormat);
         }
     }
 
