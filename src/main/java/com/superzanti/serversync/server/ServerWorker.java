@@ -36,8 +36,8 @@ import java.util.TimerTask;
  * @author superzanti
  */
 public class ServerWorker implements Runnable {
-    private static final int DEFAULT_CLIENT_TIMEOUT_MS = 120000; // 2 minutes
-    private static final int FILE_SYNC_CLIENT_TIMEOUT_MS = 600000; // 10 minutes
+    private static final int DEFAULT_CLIENT_TIMEOUT_MS = 60000 * 2; // 2 minutes
+    private static final int FILE_SYNC_CLIENT_TIMEOUT_MS = 60000 * 20; // 20 minutes
 
     private final Socket clientSocket;
     private ObjectInputStream ois;
@@ -152,6 +152,7 @@ public class ServerWorker implements Runnable {
                         if (Files.exists(theFile)) {
                             oos.writeBoolean(true);
                             oos.flush();
+                            setTimeout(ServerWorker.FILE_SYNC_CLIENT_TIMEOUT_MS);
                             transferFile(theFile);
                         } else {
                             oos.writeBoolean(false);

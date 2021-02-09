@@ -47,12 +47,14 @@ public class SyncFileOutputStream {
         }
 
         try {
-            Logger.debug("Attempting to write file (" + outputFile.toString() + ")");
+            Logger.debug(String.format("Attempting to write file '%s' with total size of %s bytes...", outputFile.toString(), size));
             OutputStream wr = Files.newOutputStream(outputFile, StandardOpenOption.TRUNCATE_EXISTING);
 
             byte[] outBuffer = new byte[server.clientSocket.getReceiveBufferSize()];
 
             int bytesReceived;
+            float mebibyte = 1024F*1024F;
+            float sizeMiB = Math.round(size / mebibyte * 10)/10F;
             long totalBytesReceived = 0L;
             while ((bytesReceived = server.input.read(outBuffer)) > 0) {
                 totalBytesReceived += bytesReceived;
@@ -60,6 +62,10 @@ public class SyncFileOutputStream {
                 wr.write(outBuffer, 0, bytesReceived);
                 // Not terribly worried about conversion loss
                 onProgress.accept((double) totalBytesReceived / size);
+
+                if (size > mebibyte && totalBytesReceived % mebibyte == 0){
+                    Logger.debug(String.format("Progress: %s / %s MiB", Math.round(totalBytesReceived/mebibyte), sizeMiB));
+                }
 
                 if (totalBytesReceived == size) {
                     break;

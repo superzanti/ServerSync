@@ -55,7 +55,6 @@ public class LoggerInstance {
     }
 
     public void log(String s) {
-        System.out.println(ctx);
         javaLogger.info(s);
     }
 
