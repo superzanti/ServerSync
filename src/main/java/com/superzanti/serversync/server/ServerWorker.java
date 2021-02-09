@@ -6,8 +6,8 @@ import com.superzanti.serversync.files.FileManifest;
 import com.superzanti.serversync.files.FileEntry;
 import com.superzanti.serversync.communication.response.ServerInfo;
 import com.superzanti.serversync.util.Logger;
-import com.superzanti.serversync.util.LoggerNG;
 import com.superzanti.serversync.files.PathBuilder;
+import com.superzanti.serversync.util.LoggerInstance;
 import com.superzanti.serversync.util.PrettyCollection;
 import com.superzanti.serversync.util.enums.EBinaryAnswer;
 import com.superzanti.serversync.util.enums.EServerMessage;
@@ -49,7 +49,7 @@ public class ServerWorker implements Runnable {
     private Timer timeout;
     private TimerTask timeoutTask;
 
-    private final LoggerNG clientLogger;
+    private final LoggerInstance clientLogger;
 
     ServerWorker(
         Socket socket,
@@ -57,9 +57,9 @@ public class ServerWorker implements Runnable {
         Timer timeoutScheduler,
         FileManifest manifest
     ) {
-        clientLogger = new LoggerNG(String.format(
+        clientLogger = new LoggerInstance(String.format(
             "server-connection-from-%s",
-            socket.getInetAddress().toString().replaceAll("[/.:@?|*\"]", "-")
+            socket.getInetAddress().toString().replaceAll("[^A-Za-z0-9]", "-")
         ));
         this.manifest = manifest;
         this.messages = messages;

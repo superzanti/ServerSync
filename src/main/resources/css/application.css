@@ -160,6 +160,10 @@
     -fx-border-width: 2;
 
 }
+.combo-box .list-cell:filled .text,
+.choice-box .list-cell:filled .text {
+    -fx-fill: #000000;
+}
 
 .combo-box .list-cell:filled:selected .text,
 .choice-box .list-cell:filled:selected .text {
@@ -173,4 +177,8 @@
 .combo-box:hover
 {
     -fx-border-color: -fx-primary -fx-primary -fx-secondary -fx-primary;
+}
+
+.hyperlink {
+    -fx-font-size: 14px;
 }
