@@ -49,18 +49,18 @@ public class Mode2Sync implements Runnable {
             Path file = entry.resolvePath();
 
             if (IgnoredFilesMatcher.matches(file)) {
-                return new ActionEntry(entry, EActionType.Ignore, "Matched user ignore pattern");
+                return new ActionEntry(entry, EActionType.Ignore, "ui/reason_matched_user_ignore_pattern");
             }
 
             if (Files.exists(file)) {
                 String hash = FileHash.hashFile(file);
 
                 if (entry.hash.equals(hash)) {
-                    return new ActionEntry(entry, EActionType.None, "File up to date");
+                    return new ActionEntry(entry, EActionType.None, "ui/reason_up_to_date");
                 }
-                return new ActionEntry(entry, EActionType.Update, "File does not match server");
+                return new ActionEntry(entry, EActionType.Update, "ui/reason_does_not_match_server");
             }
-            return new ActionEntry(entry, EActionType.Update, "File does not exist");
+            return new ActionEntry(entry, EActionType.Update, "ui/reason_does_not_exist");
         }).collect(Collectors.toList());
 
         List<Path> files = manifest.files.stream().map(FileEntry::resolvePath).collect(Collectors.toList());
