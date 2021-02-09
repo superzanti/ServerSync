@@ -19,6 +19,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.concurrent.Callable;
 
 // GUI of the SYNC panel (Field ip/port, button "sync" and "check for updates", table with mods)
@@ -107,15 +108,15 @@ public class PaneSync extends BorderPane {
             table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
             // Create columns
-            TableColumn<ActionEntry, String> colFileName =  I18N.tableColumnForKey("ui/file_path");
+            TableColumn<ActionEntry, String> colFileName = I18N.tableColumnForKey("ui/file_path");
             colFileName.prefWidthProperty().bind(table.widthProperty().multiply(0.55));
             colFileName.setCellValueFactory(new PropertyValueFactory<>("name"));
             colFileName.getStyleClass().add("align-left");
             //----
 
-            TableColumn<ActionEntry, EActionType> colStatus =  I18N.tableColumnEActionForKey("ui/action");
+            TableColumn<ActionEntry, EActionType> colStatus = I18N.tableColumnEActionForKey("ui/action");
             colStatus.prefWidthProperty().bind(table.widthProperty().multiply(0.15));
-            colStatus.setCellValueFactory(new PropertyValueFactory<>("ui/action"));
+            colStatus.setCellValueFactory(new PropertyValueFactory<>("action"));
             colStatus.setCellFactory(tc -> new TableCell<ActionEntry, EActionType>() {
 
                 @Override
@@ -125,7 +126,11 @@ public class PaneSync extends BorderPane {
                         setStyle("");
                         return;
                     }
-                    setText(item.toString());
+                    try {
+                        setText(I18N.get("ui/action_" + item.toString()));
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
                     switch (item) {
                         case Ignore:
                             setStyle("-fx-text-fill: #db5461;");
@@ -151,7 +156,20 @@ public class PaneSync extends BorderPane {
 
             TableColumn<ActionEntry, String> colReason = I18N.tableColumnForKey("ui/reason");
             colReason.prefWidthProperty().bind(table.widthProperty().multiply(0.25));
-            colReason.setCellValueFactory(new PropertyValueFactory<>("ui/reason"));
+            colReason.setCellValueFactory(new PropertyValueFactory<>("reason"));
+            colReason.setCellFactory(tc -> new TableCell<ActionEntry, String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (item != null) {
+                        try {
+                            setText(I18N.get(item));
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
 
             table.getColumns().addAll(colStatus, colFileName, colReason);
 
@@ -165,7 +183,10 @@ public class PaneSync extends BorderPane {
         boolean valid = true;
         if (ip.equals("") && !setPort(port)) {
             updateLogsArea("No config found, requesting details");
-            displayAlert(ServerSync.strings.getString("ui/wrong_configuration"), ServerSync.strings.getString("ui/ip_empty") + "\n" + ServerSync.strings.getString("ui/port_invalid"));
+            displayAlert(
+                ServerSync.strings.getString("ui/wrong_configuration"),
+                ServerSync.strings.getString("ui/ip_empty") + "\n" + ServerSync.strings.getString("ui/port_invalid")
+            );
             valid = false;
         } else if (ip.equals("")) {
             updateLogsArea("The ip field is empty");
@@ -173,7 +194,8 @@ public class PaneSync extends BorderPane {
             valid = false;
         } else if (!setPort(port)) {
             updateLogsArea("The ip field is empty");
-            displayAlert(ServerSync.strings.getString("ui/wrong_port"), ServerSync.strings.getString("ui/port_invalid"));
+            displayAlert(
+                ServerSync.strings.getString("ui/wrong_port"), ServerSync.strings.getString("ui/port_invalid"));
             valid = false;
         }
         return valid;
@@ -213,21 +235,22 @@ public class PaneSync extends BorderPane {
                             list.clear();
                             list.addAll(actions);
 
-                            Callable<Void> sync = worker.executeActions(actions, actionProgress -> Platform.runLater(() -> {
-                                getPaneProgressBar().setPathText(actionProgress.getName());
-                                getPaneProgressBar().getProgressBar().setProgress(actionProgress.getProgress());
-                                if (actionProgress.isComplete()) {
-                                    getObservableMods()
-                                        .stream().filter(entry -> entry.equals(actionProgress.entry))
-                                        .findAny()
-                                        .ifPresent(v -> {
-                                            v.action = EActionType.None;
-                                            v.reason = "Updated";
-                                        });
-                                }
-                                getTableView().refresh();
-                                getPaneProgressBar().updateGUI();
-                            }));
+                            Callable<Void> sync = worker
+                                .executeActions(actions, actionProgress -> Platform.runLater(() -> {
+                                    getPaneProgressBar().setPathText(actionProgress.getName());
+                                    getPaneProgressBar().getProgressBar().setProgress(actionProgress.getProgress());
+                                    if (actionProgress.isComplete()) {
+                                        getObservableMods()
+                                            .stream().filter(entry -> entry.equals(actionProgress.entry))
+                                            .findAny()
+                                            .ifPresent(v -> {
+                                                v.action = EActionType.None;
+                                                v.reason = "ui/reason_updated";
+                                            });
+                                    }
+                                    getTableView().refresh();
+                                    getPaneProgressBar().updateGUI();
+                                }));
                             Then.onComplete(sync, unused -> Platform.runLater(() -> {
                                 setProgressText(ServerSync.strings.getString("update_complete"));
                                 worker.close();
@@ -235,7 +258,8 @@ public class PaneSync extends BorderPane {
                         });
                     } catch (Exception exception) {
                         Logger.debug(exception);
-                        setProgressText(ServerSync.strings.getString("connection_failed_server")+" "+ip+":"+port);
+                        setProgressText(
+                            ServerSync.strings.getString("connection_failed_server") + " " + ip + ":" + port);
                     }
                 }
 
@@ -285,7 +309,8 @@ public class PaneSync extends BorderPane {
                         });
                     } catch (Exception exception) {
                         Logger.debug(exception);
-                        setProgressText(ServerSync.strings.getString("connection_failed_server")+" "+ip+":"+port);
+                        setProgressText(
+                            ServerSync.strings.getString("connection_failed_server") + " " + ip + ":" + port);
                     }
                 }
 
