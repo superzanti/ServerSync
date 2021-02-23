@@ -14,7 +14,7 @@ import java.util.logging.*;
  */
 public class Logger {
     public static LoggerInstance instance = null;
-    private static Object mutex = new Object();
+    private static final Object mutex = new Object();
 
     public static String getContext(){
         return ServerSync.MODE == null ? "undefined" : ServerSync.MODE.toString();

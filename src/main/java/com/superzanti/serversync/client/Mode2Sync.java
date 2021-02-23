@@ -9,6 +9,7 @@ import com.superzanti.serversync.util.Logger;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -47,8 +48,10 @@ public class Mode2Sync implements Runnable {
     public List<ActionEntry> generateActionList(FileManifest manifest) throws IOException {
         List<ActionEntry> actions = manifest.files.stream().map(entry -> {
             Path file = entry.resolvePath();
+            Path relativeFile = ServerSync.rootDir.relativize(file);
 
-            if (IgnoredFilesMatcher.matches(file)) {
+
+            if (IgnoredFilesMatcher.matches(relativeFile)) {
                 return new ActionEntry(entry, EActionType.Ignore, "ui/reason_matched_user_ignore_pattern");
             }
 
@@ -76,14 +79,14 @@ public class Mode2Sync implements Runnable {
                     .filter(f -> !Files.isDirectory(f) && !files.contains(f))
                     .map(f -> new FileEntry(ServerSync.rootDir.relativize(f).toString(), null, ""))
                     .map(entry -> {
-                        if (IgnoredFilesMatcher.matches(entry.resolvePath())) {
+                        if (IgnoredFilesMatcher.matches(Paths.get(entry.path))) {
                             return new ActionEntry(
                                 entry, EActionType.Ignore,
-                                "Matches user ignore pattern"
+                                "ui/reason_matched_user_ignore_pattern"
                             );
                         }
                         return new ActionEntry(
-                            entry, EActionType.Delete, "Folder set to mirror mode");
+                            entry, EActionType.Delete, "ui/reason_folder_set_to_mirror");
                     }).collect(Collectors.toList());
                 actions.addAll(dirActions);
             }

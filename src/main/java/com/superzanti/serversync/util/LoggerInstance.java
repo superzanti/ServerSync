@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.logging.FileHandler;
+import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
 
 public class LoggerInstance {
@@ -20,6 +21,7 @@ public class LoggerInstance {
         setupOnelinerLogFormat();
         this.ctx = context;
         javaLogger = java.util.logging.Logger.getLogger(ServerSync.APPLICATION_TITLE + "-" + context);
+        javaLogger.setLevel(Level.FINE);
 
         try {
             Files.createDirectories(logsDir);
@@ -63,7 +65,7 @@ public class LoggerInstance {
     }
 
     public void debug(String s) {
-        javaLogger.info(s);
+        javaLogger.log(Level.FINE, s);
     }
 
     public void debug(Exception e) {
