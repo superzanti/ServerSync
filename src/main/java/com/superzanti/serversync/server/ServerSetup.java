@@ -47,6 +47,10 @@ public class ServerSetup implements Runnable {
         manifest.directories = config.DIRECTORY_INCLUDE_LIST;
         if (config.PUSH_CLIENT_MODS) {
             Logger.log("Server configured to push client only mods, clients can still refuse these mods!");
+
+            // Create clientmods if it does not exist already
+            Files.createDirectories(FileManager.clientOnlyFilesDirectory);
+
             config.FILE_INCLUDE_LIST.add("clientmods/**");
             config.REDIRECT_FILES_LIST.add(new FileRedirect("clientmods/**", "mods"));
         }

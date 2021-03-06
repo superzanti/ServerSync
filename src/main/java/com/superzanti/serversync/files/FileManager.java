@@ -16,10 +16,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FileManager {
-    public static final String clientOnlyFilesDirectoryName = "clientmods";
-
-    public static final Path clientOnlyFilesDirectory = new PathBuilder().add(FileManager.clientOnlyFilesDirectoryName).toPath();
-    public static final Path logsDirectory = new PathBuilder().add("logs").toPath();
+    public static final Path clientOnlyFilesDirectory = ServerSync.rootDir.resolve("clientmods");
+    public static final Path logsDirectory = ServerSync.rootDir.resolve("logs");
 
     private FileManager() {
     }
