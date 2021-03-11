@@ -36,6 +36,7 @@ public class JsonConfig {
 
     public static void forServer(Path json) throws IOException {
         try (Reader reader = Files.newBufferedReader(json)) {
+            boolean hasMissingEntries = false;
             SyncConfig config = SyncConfig.getConfig();
             JsonObject root = Json.parse(reader).asObject();
             if (root.isNull()) {
@@ -51,58 +52,75 @@ public class JsonConfig {
             config.SYNC_MODE = getInt(general, PROP_SYNC_MODE);
             config.SERVER_PORT = getInt(connection, PROP_PORT);
 
-            JsonArray directoryIncludeList = getArray(rules, PROP_DIRECTORIES);
-            config.DIRECTORY_INCLUDE_LIST = directoryIncludeList
-                .values()
-                .stream()
-                .map(v -> {
-                    if (v.isObject()) {
-                        return new DirectoryEntry(
-                            v.asObject().get("path").asString(),
-                            EDirectoryMode.valueOf(v.asObject().get("mode").asString().toLowerCase())
-                        );
-                    }
-                    return new DirectoryEntry(v.asString(), EDirectoryMode.mirror);
-                })
-                .collect(Collectors.toList());
+            try {
+                JsonArray directoryIncludeList = getArray(rules, PROP_DIRECTORIES);
+                config.DIRECTORY_INCLUDE_LIST = directoryIncludeList
+                    .values()
+                    .stream()
+                    .map(v -> {
+                        if (v.isObject()) {
+                            return new DirectoryEntry(
+                                v.asObject().get("path").asString(),
+                                EDirectoryMode.valueOf(v.asObject().get("mode").asString().toLowerCase())
+                            );
+                        }
+                        return new DirectoryEntry(v.asString(), EDirectoryMode.mirror);
+                    })
+                    .collect(Collectors.toList());
+            } catch (NullPointerException e) {
+                Logger.debug("Missing config entry for directories, using defaults");
+                hasMissingEntries = true;
+            }
 
-            JsonObject files = getObject(rules, PROP_FILES);
-            config.FILE_INCLUDE_LIST = getArray(files, PROP_FILES_INCLUDE)
-                .values()
-                .stream()
-                .map(v -> {
-                    if (v.isObject()) {
-                        // Ditching description as we don't use it for anything
-                        return v.asObject().get("pattern").asString();
-                    }
-                    return v.asString();
-                })
-                .collect(Collectors.toList());
-            config.FILE_IGNORE_LIST = getArray(files, PROP_FILES_IGNORE)
-                .values()
-                .stream()
-                .map(v -> {
-                    if (v.isObject()) {
-                        // Ditching description as we don't use it for anything
-                        return v.asObject().get("pattern").asString();
-                    }
-                    return v.asString();
-                })
-                .collect(Collectors.toList());
-            config.REDIRECT_FILES_LIST = getArray(files, PROP_FILES_REDIRECT)
-                .values()
-                .stream()
-                .map(v -> FileRedirect.from(v.asObject()))
-                .collect(Collectors.toList());
+            try {
+                JsonObject files = getObject(rules, PROP_FILES);
+                config.FILE_INCLUDE_LIST = getArray(files, PROP_FILES_INCLUDE)
+                    .values()
+                    .stream()
+                    .map(v -> {
+                        if (v.isObject()) {
+                            // Ditching description as we don't use it for anything
+                            return v.asObject().get("pattern").asString();
+                        }
+                        return v.asString();
+                    })
+                    .collect(Collectors.toList());
+                config.FILE_IGNORE_LIST = getArray(files, PROP_FILES_IGNORE)
+                    .values()
+                    .stream()
+                    .map(v -> {
+                        if (v.isObject()) {
+                            // Ditching description as we don't use it for anything
+                            return v.asObject().get("pattern").asString();
+                        }
+                        return v.asString();
+                    })
+                    .collect(Collectors.toList());
+                config.REDIRECT_FILES_LIST = getArray(files, PROP_FILES_REDIRECT)
+                    .values()
+                    .stream()
+                    .map(v -> FileRedirect.from(v.asObject()))
+                    .collect(Collectors.toList());
+            } catch (NullPointerException e) {
+                Logger.debug("Missing config entry for files, using defaults");
+                hasMissingEntries = true;
+            }
 
             String[] localeParts = getString(misc, PROP_LOCALE, "en_US").split("_");
             config.LOCALE = new Locale(localeParts[0], localeParts[1]);
 
+            if (hasMissingEntries) {
+                // Generate a new config if we failed to read parts of it
+                // this will fill in the missing details with defaults
+                Logger.debug("Missing config entries detected, saving new server config");
+                saveServer(json);
+            }
         }
     }
 
     public static void forClient(Path json) throws IOException {
         try (Reader reader = Files.newBufferedReader(json)) {
+            boolean hasMissingEntries = false;
             SyncConfig config = SyncConfig.getConfig();
             JsonObject root = Json.parse(reader).asObject();
             if (root.isNull()) {
@@ -118,22 +136,34 @@ public class JsonConfig {
             config.SERVER_IP = getString(connection, PROP_ADDRESS, "127.0.0.1");
             config.SERVER_PORT = getInt(connection, PROP_PORT);
 
-            JsonObject files = getObject(rules, PROP_FILES);
-            config.FILE_IGNORE_LIST = getArray(files, PROP_FILES_IGNORE)
-                .values()
-                .stream()
-                .map(v -> {
-                    if (v.isObject()) {
-                        // Ditching description as we don't use it for anything
-                        return v.asObject().get("pattern").asString();
-                    }
-                    return v.asString();
-                })
-                .collect(Collectors.toList());
+            try {
+                JsonObject files = getObject(rules, PROP_FILES);
+                config.FILE_IGNORE_LIST = getArray(files, PROP_FILES_IGNORE)
+                    .values()
+                    .stream()
+                    .map(v -> {
+                        if (v.isObject()) {
+                            // Ditching description as we don't use it for anything
+                            return v.asObject().get("pattern").asString();
+                        }
+                        return v.asString();
+                    })
+                    .collect(Collectors.toList());
+            } catch (NullPointerException e) {
+                Logger.debug("Missing config entry for files, using defaults");
+                hasMissingEntries = true;
+            }
 
             String[] localeParts = getString(misc, PROP_LOCALE, "en_US").split("_");
             config.LOCALE = new Locale(localeParts[0], localeParts[1]);
             config.THEME = ETheme.valueOf(getString(misc, PROP_THEME, "BLUE_YELLOW"));
+
+            if (hasMissingEntries) {
+                // Generate a new config if we failed to read parts of it
+                // this will fill in the missing details with defaults
+                Logger.debug("Missing config entries detected, saving new client config");
+                saveClient(json);
+            }
         }
     }
 
