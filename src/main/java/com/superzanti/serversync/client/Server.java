@@ -6,9 +6,7 @@ import com.superzanti.serversync.util.AutoClose;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.enums.EServerMessage;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -19,6 +17,9 @@ public class Server {
     public ObjectInputStream input;
     public Socket clientSocket;
     public ServerInfo info;
+
+    public OutputStream os;
+    public InputStream is;
 
     protected final String address;
     protected final int port;
@@ -46,6 +47,7 @@ public class Server {
 
         Logger.log("< " + ServerSync.strings.getString("connection_message") + " >");
         try {
+            clientSocket.setPerformancePreferences(0, 1, 2);
             clientSocket.connect(new InetSocketAddress(host.getHostName(), port), 5000);
         } catch (IOException e) {
             Logger.error(ServerSync.strings.getString("connection_failed_server") + ": " + address + ":" + port);
@@ -55,9 +57,10 @@ public class Server {
 
         Logger.debug(ServerSync.strings.getString("debug_IO_streams"));
         try {
-            clientSocket.setPerformancePreferences(0, 1, 2);
-            output = new ObjectOutputStream(clientSocket.getOutputStream());
-            input = new ObjectInputStream(clientSocket.getInputStream());
+            os = clientSocket.getOutputStream();
+            is = clientSocket.getInputStream();
+            output = new ObjectOutputStream(os);
+            input = new ObjectInputStream(is);
         } catch (IOException e) {
             Logger.debug(ServerSync.strings.getString("debug_IO_streams_failed"));
             AutoClose.closeResource(clientSocket);

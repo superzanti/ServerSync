@@ -26,6 +26,7 @@ public class JsonConfig {
     private static final String PROP_SYNC_MODE = "sync_mode";
     private static final String PROP_PORT = "port";
     private static final String PROP_ADDRESS = "address";
+    private static final String PROP_BUFFER_SIZE = "buffer";
     private static final String PROP_DIRECTORIES = "directories";
     private static final String PROP_FILES = "files";
     private static final String PROP_FILES_INCLUDE = "include";
@@ -51,6 +52,13 @@ public class JsonConfig {
             config.PUSH_CLIENT_MODS = getBoolean(general, PROP_PUSH_CLIENT_MODS);
             config.SYNC_MODE = getInt(general, PROP_SYNC_MODE);
             config.SERVER_PORT = getInt(connection, PROP_PORT);
+
+            try {
+                config.BUFFER_SIZE = getInt(connection, PROP_BUFFER_SIZE);
+            } catch (NullPointerException e) {
+                Logger.debug("Missing config entry for buffer, using defaults");
+                hasMissingEntries = true;
+            }
 
             try {
                 JsonArray directoryIncludeList = getArray(rules, PROP_DIRECTORIES);
@@ -137,6 +145,13 @@ public class JsonConfig {
             config.SERVER_PORT = getInt(connection, PROP_PORT);
 
             try {
+                config.BUFFER_SIZE = getInt(connection, PROP_BUFFER_SIZE);
+            } catch (NullPointerException e) {
+                Logger.debug("Missing config entry for buffer, using defaults");
+                hasMissingEntries = true;
+            }
+
+            try {
                 JsonObject files = getObject(rules, PROP_FILES);
                 config.FILE_IGNORE_LIST = getArray(files, PROP_FILES_IGNORE)
                     .values()
@@ -178,6 +193,7 @@ public class JsonConfig {
 
         JsonObject connection = new JsonObject();
         connection.add(PROP_PORT, config.SERVER_PORT);
+        connection.add(PROP_BUFFER_SIZE, config.BUFFER_SIZE);
         root.add(CAT_CONNECTION, connection);
 
         JsonObject rules = new JsonObject();
@@ -216,6 +232,7 @@ public class JsonConfig {
         JsonObject connection = new JsonObject();
         connection.add(PROP_ADDRESS, config.SERVER_IP);
         connection.add(PROP_PORT, config.SERVER_PORT);
+        connection.add(PROP_BUFFER_SIZE, config.BUFFER_SIZE);
         root.add(CAT_CONNECTION, connection);
 
         JsonObject rules = new JsonObject();
