@@ -26,12 +26,13 @@ public class SyncConfig {
     public List<String> CONFIG_INCLUDE_LIST = new ArrayList<>();
     public Locale LOCALE = Locale.getDefault();
     public ETheme THEME = ETheme.BLUE_YELLOW;
+    public int BUFFER_SIZE = 1024 * 8;
     ////////////////////////////////////////
 
     // SERVER //////////////////////////////
     public int SERVER_PORT = 38067;
     public Boolean PUSH_CLIENT_MODS = false;
-    public List<String> FILE_INCLUDE_LIST = Collections.singletonList("**/mods");
+    public List<String> FILE_INCLUDE_LIST = Collections.singletonList("mods/**");
     public List<DirectoryEntry> DIRECTORY_INCLUDE_LIST = Collections.singletonList(new DirectoryEntry(
         "mods",
         EDirectoryMode.mirror
