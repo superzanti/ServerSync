@@ -26,7 +26,7 @@ public class SyncConfig {
     public List<String> CONFIG_INCLUDE_LIST = new ArrayList<>();
     public Locale LOCALE = Locale.getDefault();
     public ETheme THEME = ETheme.BLUE_YELLOW;
-    public int BUFFER_SIZE = 1024 * 8;
+    public int BUFFER_SIZE = 1024 * 64;
     ////////////////////////////////////////
 
     // SERVER //////////////////////////////

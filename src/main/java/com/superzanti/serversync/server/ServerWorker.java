@@ -13,10 +13,7 @@ import com.superzanti.serversync.util.enums.EBinaryAnswer;
 import com.superzanti.serversync.util.enums.EServerMessage;
 import com.superzanti.serversync.util.errors.UnknownMessageError;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
@@ -40,6 +37,8 @@ public class ServerWorker implements Runnable {
     private static final int FILE_SYNC_CLIENT_TIMEOUT_MS = 60000 * 20; // 20 minutes
 
     private final Socket clientSocket;
+    private InputStream is;
+    private OutputStream os;
     private ObjectInputStream ois;
     private ObjectOutputStream oos;
 
@@ -74,8 +73,10 @@ public class ServerWorker implements Runnable {
     @Override
     public void run() {
         try {
-            ois = new ObjectInputStream(clientSocket.getInputStream());
-            oos = new ObjectOutputStream(clientSocket.getOutputStream());
+            is = clientSocket.getInputStream();
+            os = clientSocket.getOutputStream();
+            ois = new ObjectInputStream(is);
+            oos = new ObjectOutputStream(os);
         } catch (IOException e) {
             clientLogger.log("Failed to create client streams");
             Logger.error(String.format("Error in client setup: %s", clientSocket.getInetAddress()));
@@ -292,17 +293,17 @@ public class ServerWorker implements Runnable {
 
         if (size > 0) {
             int bytesRead;
-            byte[] buffer = new byte[clientSocket.getSendBufferSize()];
+            byte[] buffer = new byte[SyncConfig.getConfig().BUFFER_SIZE];
 
-            try (BufferedInputStream fis = new BufferedInputStream(Files.newInputStream(file))) {
+            try (BufferedInputStream fis = new BufferedInputStream(Files.newInputStream(file), SyncConfig.getConfig().BUFFER_SIZE)) {
                 while ((bytesRead = fis.read(buffer)) > 0) {
-                    oos.write(buffer, 0, bytesRead);
+                    os.write(buffer, 0, bytesRead);
                 }
             } catch (IOException e) {
                 clientLogger.debug(String.format("Failed to write file: %s", file));
                 clientLogger.debug(e);
             } finally {
-                oos.flush();
+                os.flush();
             }
         }
 

@@ -3,10 +3,11 @@ package com.superzanti.serversync.communication;
 import com.superzanti.serversync.RefStrings;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.client.Server;
+import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.util.Logger;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -47,24 +48,31 @@ public class SyncFileOutputStream {
         }
 
         try {
-            Logger.debug(String.format("Attempting to write file '%s' with total size of %s bytes...", outputFile.toString(), size));
-            OutputStream wr = Files.newOutputStream(outputFile, StandardOpenOption.TRUNCATE_EXISTING);
+            Logger.debug(String.format(
+                "Attempting to write file '%s' with total size of %s bytes...",
+                outputFile.toString(), size
+            ));
+            BufferedOutputStream wr = new BufferedOutputStream(
+                Files.newOutputStream(outputFile, StandardOpenOption.TRUNCATE_EXISTING),
+                SyncConfig.getConfig().BUFFER_SIZE
+            );
 
-            byte[] outBuffer = new byte[server.clientSocket.getReceiveBufferSize()];
+            byte[] outBuffer = new byte[SyncConfig.getConfig().BUFFER_SIZE];
 
             int bytesReceived;
-            float mebibyte = 1024F*1024F;
-            float sizeMiB = Math.round(size / mebibyte * 10)/10F;
+            float mebibyte = 1024F * 1024F;
+            float sizeMiB = Math.round(size / mebibyte * 10) / 10F;
             long totalBytesReceived = 0L;
-            while ((bytesReceived = server.input.read(outBuffer)) > 0) {
+            while ((bytesReceived = server.is.read(outBuffer)) > 0) {
                 totalBytesReceived += bytesReceived;
 
                 wr.write(outBuffer, 0, bytesReceived);
                 // Not terribly worried about conversion loss
                 onProgress.accept((double) totalBytesReceived / size);
 
-                if (size > mebibyte && totalBytesReceived % mebibyte == 0){
-                    Logger.debug(String.format("Progress: %s / %s MiB", Math.round(totalBytesReceived/mebibyte), sizeMiB));
+                if (size > mebibyte && totalBytesReceived % mebibyte == 0) {
+                    Logger.debug(
+                        String.format("Progress: %s / %s MiB", Math.round(totalBytesReceived / mebibyte), sizeMiB));
                 }
 
                 if (totalBytesReceived == size) {

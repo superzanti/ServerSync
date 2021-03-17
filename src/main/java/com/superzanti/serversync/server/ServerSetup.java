@@ -29,8 +29,6 @@ import java.util.stream.Collectors;
  * @author Rheimus
  */
 public class ServerSetup implements Runnable {
-    private static final int SEND_BUFFER_SIZE = 1024 * 8;
-
     private final SyncConfig config = SyncConfig.getConfig();
     private final Path bannedIps = Paths.get(ELocation.BANNED_IPS.getValue());
 
@@ -151,7 +149,6 @@ public class ServerSetup implements Runnable {
                     continue;
                 }
 
-                socket.setSendBufferSize(ServerSetup.SEND_BUFFER_SIZE);
                 ServerWorker sc = new ServerWorker(
                     socket,
                     messages,
