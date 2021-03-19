@@ -4,7 +4,8 @@
     "sync_mode": 2
   },
   "connection": {
-    "port": 38067
+    "port": 38067,
+    "buffer": 65536
   },
   "rules": {
     "directories": [
