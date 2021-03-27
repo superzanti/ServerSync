@@ -3,6 +3,7 @@ package com.superzanti.serversync.client;
 import com.superzanti.serversync.RefStrings;
 import com.superzanti.serversync.ServerSync;
 import com.superzanti.serversync.config.IgnoredFilesMatcher;
+import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.files.*;
 import com.superzanti.serversync.util.Logger;
 
@@ -50,6 +51,9 @@ public class Mode2Sync implements Runnable {
             Path file = entry.resolvePath();
             Path relativeFile = ServerSync.rootDir.relativize(file);
 
+            if (entry.isOptional && SyncConfig.getConfig().REFUSE_CLIENT_MODS) {
+                return new ActionEntry(entry, EActionType.Ignore, "ui/reason_refuse_client_mods_enabled");
+            }
 
             if (IgnoredFilesMatcher.matches(relativeFile)) {
                 return new ActionEntry(entry, EActionType.Ignore, "ui/reason_matched_user_ignore_pattern");
@@ -98,26 +102,11 @@ public class Mode2Sync implements Runnable {
     public void run() {
         FileManifest manifest = server.fetchManifest();
 
-// <<<<<<< master
-//         Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().clear();
-//         Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(0);
-//         double n = manifest.entries.size();
-//         double count = 0;
-//         for(ManifestEntry entry : manifest.entries){
-//             Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);
-//             Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText(entry.path);
-//             Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setStatusText("Files updated : " +(int)count+"/"+(int)n);
-//             Platform.runLater(() -> Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI());
-
-//             Path file = entry.resolvePath();
-//             Logger.debug(String.format("Starting check for file: %s", file));
-//             if (!entry.redirectTo.equals("")) {
-//                 Logger.debug(String.format(
-// =======
         manifest.files
             .forEach(entry -> {
                 Path file = entry.resolvePath();
                 Logger.debug(String.format("Starting check for file: %s", file));
+
                 if (!entry.redirectTo.equals("")) {
                     Logger.debug(String.format(
                         "File: %s, redirected from: %s to %s",
@@ -130,32 +119,10 @@ public class Mode2Sync implements Runnable {
                 if (Files.exists(file)) {
                     String hash = FileHash.hashFile(file);
 
-// <<<<<<< master
-//                 if (entry.hash.equals(hash)) {
-//                     Logger.debug("File already exists");
-//                 }else{
-//                     server.updateIndividualFile(entry, file);
-//                 }
-//             }else{
-//                 server.updateIndividualFile(entry, file);
-//             }
-
-//             Gui_JavaFX.getStackMainPane().getPaneSync().getObservMods().add(new Mod(entry.path, EValid.UPTODATE,false));
-
-//             count++;
-//         };
-//         Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().getProgressBar().setProgress(count/n);
-//         Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setStatusText("Files updated : " +(int)count+"/"+(int)n);
-//         Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().setPathText("Done!");
-//         Platform.runLater(() -> Gui_JavaFX.getStackMainPane().getPaneSync().getPaneProgressBar().updateGUI());
-// =======
                     if (entry.hash.equals(hash)) {
                         Logger.debug("File already exists");
                     }
                 }
-
             });
-
-        // TODO implement delete phase
     }
 }
