@@ -22,16 +22,27 @@ public class FileEntry implements Serializable {
      */
     public final String redirectTo;
 
+    public final boolean isOptional;
+
     public FileEntry(String path, String hash) {
         this.path = path;
         this.hash = hash;
         this.redirectTo = "";
+        this.isOptional = false;
     }
 
     public FileEntry(String path, String hash, String mapping) {
         this.path = path;
         this.hash = hash;
         this.redirectTo = mapping;
+        this.isOptional = false;
+    }
+
+    public FileEntry(String path, String hash, String mapping, boolean isOptional) {
+        this.path = path;
+        this.hash = hash;
+        this.redirectTo = mapping;
+        this.isOptional = isOptional;
     }
 
     public Path resolvePath() {
@@ -47,6 +58,7 @@ public class FileEntry implements Serializable {
             "path='" + path + '\'' +
             ", hash='" + hash + '\'' +
             ", redirectTo='" + redirectTo + '\'' +
+            ", isOptional='" + isOptional + '\'' +
             '}';
     }
 }

@@ -78,47 +78,5 @@ public class ClientWorker implements Runnable, Closeable {
     }
 
     @Override
-    public void run() {
-//        updateHappened = false;
-
-//        Logger.getLog().clearUserFacingLog();
-//
-//        Client client = new Client(config.SERVER_IP, config.SERVER_PORT);
-//        server = Server.forClient(client);
-//
-//        if (!server.connect()) {
-//            errorInUpdates = true;
-//            closeWorker();
-//            return;
-//        }
-//
-//        ServerInfo serverInfo = server.info;
-//
-//        Mode2Sync sync = Mode2Sync.forServer(server);
-//        try {
-//            List<ActionEntry> actions = sync.generateActionList(sync.fetchManifest());
-//            sync.executeActionList(actions);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//
-//
-//        updateHappened = true;
-//        closeWorker();
-//
-//        // Update configured server to the latest used address
-//        // consideration to be had here for client silent sync mode
-//        //TODO fix or delete this
-//        if (ServerSync.clientGUI != null) {
-//            config.updateServerDetails(ServerSync.clientGUI.getIPAddress(), ServerSync.clientGUI.getPort());
-//        }
-//
-//        Logger.log(ServerSync.strings.getString("update_complete"));
-    }
-
-//    private void enableGuiButton() {
-//        Gui_JavaFX.getStackMainPane().getPaneSync().getBtnSync().setDisable(false);
-//        Gui_JavaFX.getStackMainPane().getPaneSync().getBtnCheckUpdate().setDisable(false);
-//    }
+    public void run() { }
 }
