@@ -1,5 +1,6 @@
 package com.superzanti.serversync.files;
 
+import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,10 +47,12 @@ public class FileEntry implements Serializable {
     }
 
     public Path resolvePath() {
-        if ("".equals(redirectTo)) {
-            return new PathBuilder().add(path).toPath();
+        String localPath=path.replace("/", File.separator).replace("\\", File.separator);
+        String localRedirect=redirectTo.replace("/", File.separator).replace("\\", File.separator);
+        if ("".equals(localRedirect)) {
+            return new PathBuilder().add(localPath).toPath();
         }
-        return new PathBuilder().add(redirectTo).add(Paths.get(path).getFileName()).toPath();
+        return new PathBuilder().add(localRedirect).add(Paths.get(localPath).getFileName()).toPath();
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.superzanti.serversync.files;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 
+import java.io.File;
 import java.io.Serializable;
 
 public class DirectoryEntry implements Serializable {
@@ -12,6 +13,10 @@ public class DirectoryEntry implements Serializable {
     public DirectoryEntry(String path, EDirectoryMode mode) {
         this.path = path;
         this.mode = mode;
+    }
+
+    public String getLocalPath() {
+        return path.replace("/", File.separator).replace("\\", File.separator);
     }
 
     public JsonObject toJson() {
