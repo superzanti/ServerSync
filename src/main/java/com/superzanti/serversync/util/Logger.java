@@ -50,7 +50,7 @@ public class Logger {
 
     public static synchronized void setSystemOutput(boolean output) {
         // enable/disable System.out logging
-//        getInstance().javaLogger.setUseParentHandlers(output);
+        getInstance().javaLogger.setUseParentHandlers(output);
     }
 
     public static synchronized void log(String s) {

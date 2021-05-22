@@ -106,7 +106,6 @@ public class ServerSync implements Callable<Integer> {
 
     private void runInServerMode() {
         ServerSync.MODE = EServerMode.SERVER;
-        Logger.setSystemOutput(true);
         try {
             ConfigLoader.load(EConfigType.SERVER);
         } catch (IOException e) {
@@ -122,6 +121,10 @@ public class ServerSync implements Callable<Integer> {
 
     private void runInClientMode() {
         ServerSync.MODE = EServerMode.CLIENT;
+        if(modeQuiet||modeProgressOnly){
+            //Disable the consoleHandler to fix automation hanging
+            Logger.setSystemOutput(false);
+        }
         SyncConfig config = SyncConfig.getConfig();
         try {
             ConfigLoader.load(EConfigType.CLIENT);
