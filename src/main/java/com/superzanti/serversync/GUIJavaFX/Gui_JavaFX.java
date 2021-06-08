@@ -28,7 +28,7 @@ public class Gui_JavaFX extends Application {
         root.setStyle(SyncConfig.getConfig().THEME.toString());
 
         Scene scene = new Scene(root, 1024, 576);
-        scene.getStylesheets().add(this.getClass().getResource("/css/application.css").toExternalForm());
+        scene.getStylesheets().add(this.getClass().getResource("/css/application.bss").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.setTitle(RefStrings.NAME + " - " + RefStrings.VERSION);
         primaryStage.setOnCloseRequest(t -> {

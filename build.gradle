@@ -52,6 +52,10 @@ test {
 jar {
     archivesBaseName = ssname
 
+    processResources {
+        exclude "css/application.css"
+    }
+
     manifest {
         attributes 'Main-Class': mainclass, 'Implementation-Version': ssversion
     }
