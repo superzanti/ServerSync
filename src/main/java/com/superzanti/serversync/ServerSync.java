@@ -79,7 +79,7 @@ public class ServerSync implements Callable<Integer> {
     }
 
     private void commonInit() {
-        Logger.log(String.format("Root dir: %s", ServerSync.rootDir));
+        Logger.log(String.format("Root dir: %s", ServerSync.rootDir.toAbsolutePath()));
         Logger.log(String.format("Running version: %s", RefStrings.VERSION));
         Locale locale = SyncConfig.getConfig().LOCALE;
         if (languageCode != null) {
@@ -106,7 +106,7 @@ public class ServerSync implements Callable<Integer> {
         }
     }
 
-    private void runInServerMode() {
+    private Thread runInServerMode() {
         ServerSync.MODE = EServerMode.SERVER;
         try {
             ConfigLoader.load(EConfigType.SERVER);
@@ -116,9 +116,9 @@ public class ServerSync implements Callable<Integer> {
         }
         commonInit();
 
-        ServerSetup setup = new ServerSetup();
-        Thread serverThread = new Thread(setup, "Server client listener");
+        Thread serverThread = new ServerSetup();
         serverThread.start();
+        return serverThread;
     }
 
     private void runInClientMode() {
