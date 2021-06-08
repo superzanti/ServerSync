@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  *
  * @author Rheimus
  */
-public class ServerSetup implements Runnable {
+public class ServerSetup extends Thread {
     private final SyncConfig config = SyncConfig.getConfig();
     private final Path bannedIps = Paths.get(ELocation.BANNED_IPS.getValue());
 
@@ -38,6 +38,8 @@ public class ServerSetup implements Runnable {
     private final List<String> messages = Arrays.stream(EServerMessage.values())
                                                 .map(EServerMessage::toString)
                                                 .collect(Collectors.toList());
+
+    private ServerSocket server;
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     private FileManifest populateManifest() throws IOException {
@@ -104,6 +106,7 @@ public class ServerSetup implements Runnable {
 
 
     public ServerSetup() {
+        this.setName("ServerSync - Server");
         DateFormat dateFormatter = DateFormat.getDateInstance();
 
         try {
@@ -127,9 +130,21 @@ public class ServerSetup implements Runnable {
     }
 
     @Override
+    public void interrupt() {
+        try {
+            Logger.log("Server interrupt received, shutting down");
+            server.close();
+            timeoutScheduler.cancel();
+        } catch (IOException e) {
+            // ignore
+        }
+        super.interrupt();
+    }
+
+
+    @Override
     public void run() {
         Logger.debug("Creating new server socket");
-        ServerSocket server;
         try {
             server = new ServerSocket(config.SERVER_PORT);
         } catch (BindException e) {
@@ -162,13 +177,15 @@ public class ServerSetup implements Runnable {
                     manifest
                 );
                 Thread clientThread = new Thread(sc, "Server client Handler");
-                clientThread.setName("ClientThread - " + address);
+                clientThread.setName("ServerSync - Server Client: " + address);
                 clientThread.start();
             } catch (IOException e) {
                 Logger.error(
-                    "Error while accepting client connection, breaking server listener. You will need to restart ServerSync");
+                    "Error while waiting for client connection, terminating server listener. You will need to restart ServerSync"
+                );
                 try {
                     server.close();
+                    timeoutScheduler.cancel();
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
