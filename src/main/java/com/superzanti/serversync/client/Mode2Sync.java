@@ -73,7 +73,7 @@ public class Mode2Sync implements Runnable {
         List<Path> files = manifest.files.stream().map(FileEntry::resolvePath).collect(Collectors.toList());
         for (DirectoryEntry dir : manifest.directories) {
             if (dir.mode == EDirectoryMode.mirror) {
-                Path dirPath = ServerSync.rootDir.resolve(dir.path);
+                Path dirPath = ServerSync.rootDir.resolve(dir.getLocalPath());
                 if (Files.notExists(dirPath)) {
                     // Can happen if a directory is configured to be managed but all of its files are ignored
                     continue;

@@ -14,6 +14,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,6 +23,7 @@ import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 @Command(name = "ServerSync", mixinStandardHelpOptions = true, version = RefStrings.VERSION, description = "A utility for synchronizing a server<->client style game.")
 public class ServerSync implements Callable<Integer> {
@@ -92,7 +94,7 @@ public class ServerSync implements Callable<Integer> {
             SyncConfig.getConfig().SERVER_PORT = serverPort;
         }
         if (ignorePatterns != null) {
-            SyncConfig.getConfig().FILE_IGNORE_LIST = Arrays.asList(ignorePatterns);
+            SyncConfig.getConfig().FILE_IGNORE_LIST = Arrays.stream(ignorePatterns).map(s -> s.replace("/", File.separator).replace("\\", File.separator)).collect(Collectors.toList());
         }
 
         try {
