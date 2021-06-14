@@ -126,7 +126,8 @@ public class Requests {
 
         try {
             long fileSize = input.readLong();
-            ActionProgress progress = new ActionProgress(0, entry.target.path, false, entry);
+            ActionProgress progress = new ActionProgress(-1d, entry.target.path, false, entry);
+            progressConsumer.accept(progress);// Init the updates with baseline
 
             SyncFileOutputStream out = new SyncFileOutputStream(server, fileSize, entry.target.resolvePath());
             out.write((pc) -> {
