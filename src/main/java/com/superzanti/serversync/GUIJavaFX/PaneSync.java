@@ -8,8 +8,11 @@ import com.superzanti.serversync.config.SyncConfig;
 import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.Then;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -20,7 +23,8 @@ import javafx.scene.layout.GridPane;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.concurrent.Callable;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 // GUI of the SYNC panel (Field ip/port, button "sync" and "check for updates", table with mods)
 public class PaneSync extends BorderPane {
@@ -208,8 +212,15 @@ public class PaneSync extends BorderPane {
             btnSync.setTooltip(I18N.toolTipForKey("ui/btn_sync_tooltip"));
             btnSync.setOnAction(e -> {
                 Logger.debug("Clicked sync button");
+                AtomicBoolean didSomething = new AtomicBoolean(false);
                 getBtnSync().setDisable(true);
                 getBtnCheckUpdate().setDisable(true);
+
+                StringProperty pathText = new SimpleStringProperty();
+                StringProperty statusText = new SimpleStringProperty();
+
+                getPaneProgressBar().getStatusLabel().textProperty().bind(statusText);
+                getPaneProgressBar().getPathLabel().textProperty().bind(pathText);
 
                 int port = getPort();
                 String ip = getFieldIp().getText();
@@ -218,9 +229,13 @@ public class PaneSync extends BorderPane {
                         .getStackMainPane()
                         .getPaneSync()
                         .getObservableMods();
-                    updateLogsArea("Starting update process...");
+
+                    Logger.log("Starting update process...");
 
                     try {
+                        Platform.runLater(() -> {
+                            pathText.set(ServerSync.strings.getString("ui/message_connecting_to_server"));
+                        });
                         worker.setAddress(ip);
                         worker.setPort(port);
                         worker.connect();
@@ -230,41 +245,101 @@ public class PaneSync extends BorderPane {
                         SyncConfig.getConfig().SERVER_PORT = port;
                         saveConfig();
 
-                        setProgressText(ServerSync.strings.getString("connection_attempt_server"));
-                        Then.onComplete(worker.fetchActions(), actions -> {
-                            list.clear();
-                            list.addAll(actions);
+                        Task<Void> sync = new Task<Void>() {
+                            @Override
+                            protected Void call() {
+                                try {
+                                    Platform.runLater(() -> {
+                                        pathText.set(
+                                            ServerSync.strings.getString("ui/message_connected_checking_for_updates"));
+                                    });
+                                    List<ActionEntry> actions = worker.fetchActions().call();
+                                    list.clear();
+                                    list.addAll(actions);
 
-                            Callable<Void> sync = worker
-                                .executeActions(actions, actionProgress -> Platform.runLater(() -> {
-                                    getPaneProgressBar().setPathText(actionProgress.getName());
-                                    getPaneProgressBar().getProgressBar().setProgress(actionProgress.getProgress());
-                                    if (actionProgress.isComplete()) {
-                                        getObservableMods()
-                                            .stream().filter(entry -> entry.equals(actionProgress.entry))
-                                            .findAny()
-                                            .ifPresent(v -> {
-                                                v.action = EActionType.None;
-                                                v.reason = "ui/reason_updated";
-                                            });
+                                    if (actions.size() > 0) {
+                                        Platform.runLater(() -> {
+                                            pathText.set(ServerSync.strings.getString("ui/message_updating_files"));
+                                        });
                                     }
-                                    getTableView().refresh();
-                                    getPaneProgressBar().updateGUI();
-                                }));
-                            Then.onComplete(sync, unused -> Platform.runLater(() -> {
-                                setProgressText(ServerSync.strings.getString("update_complete"));
+                                    worker.executeActions(actions, update -> {
+                                        // Kinda lame but we know that -1 will only come through as the first
+                                        // progress message
+                                        if (update.getProgress() == -1) {
+                                            Platform.runLater(() -> {
+                                                // Batching updates at the start here for better performance
+                                                // when updating is very fast, e.g. on same network
+                                                statusText.set(update.getName());
+                                                getTableView().refresh();
+                                            });
+                                        }
+                                        // -1 progress transforms to indeterminate here so all good
+                                        updateProgress(update.getProgress(), 1);
+                                        if (update.isComplete()) {
+                                            update.getEntry().action = EActionType.None;
+                                            update.getEntry().reason = "ui/reason_updated";
+                                        }
+                                        didSomething.set(true);
+                                    }).call();
+
+                                    Platform.runLater(() -> {
+                                        // Catch any straggler updates in the table view
+                                        statusText.set(null);
+                                        getTableView().refresh();
+                                    });
+                                } catch (Exception e) {
+                                    Logger.debug(e);
+                                    Logger.error("Failed to sync some files");
+                                    failed();
+                                }
+                                return null;
+                            }
+
+                            @Override
+                            protected void succeeded() {
                                 worker.close();
-                            }));
-                        });
+                                clearProgressBinding();
+                                Platform.runLater(() -> {
+                                    clearProgress();
+                                    if (didSomething.get()) {
+                                        setProgressText(ServerSync.strings.getString("update_complete"));
+                                    } else {
+                                        setProgressText(ServerSync.strings.getString("ui/message_nothing_to_do"));
+                                    }
+                                });
+                                super.succeeded();
+                            }
+
+                            @Override
+                            protected void failed() {
+                                worker.close();
+                                clearProgressBinding();
+                                Platform.runLater(() -> {
+                                    clearProgress();
+                                    setProgressText(ServerSync.strings.getString("update_error"));
+                                });
+                                super.failed();
+                            }
+                        };
+                        getPaneProgressBar().getProgressBar().progressProperty().bind(sync.progressProperty());
+                        new Thread(sync, "SeverSync - Do Sync").start();
                     } catch (Exception exception) {
                         Logger.debug(exception);
-                        setProgressText(
-                            ServerSync.strings.getString("connection_failed_server") + " " + ip + ":" + port);
+                        clearProgressBinding();
+                        Platform.runLater(() -> {
+                            clearProgress();
+                            setProgressText(
+                                String.format(
+                                    ServerSync.strings.getString("ui/message_failed_to_connect_to_server"),
+                                    ip,
+                                    port
+                                )
+                            );
+                        });
                     }
+                } else {
+                    Platform.runLater(this::clearProgress);
                 }
-
-                getBtnSync().setDisable(false);
-                getBtnCheckUpdate().setDisable(false);
             });
         }
         return btnSync;
@@ -277,8 +352,7 @@ public class PaneSync extends BorderPane {
             btnCheckUpdate.setTooltip(I18N.toolTipForKey("ui/btn_check_tooltip"));
             btnCheckUpdate.setOnAction(e -> {
                 Logger.debug("Clicked check updates button");
-                getBtnSync().setDisable(true);
-                getBtnCheckUpdate().setDisable(true);
+                Platform.runLater(this::initProgress);
 
                 int port = getPort();
                 String ip = getFieldIp().getText();
@@ -287,10 +361,11 @@ public class PaneSync extends BorderPane {
                         .getStackMainPane()
                         .getPaneSync()
                         .getObservableMods();
-                    updateLogsArea("Starting update process...");
-                    //setProgressText("Fetching manifest...");
-                    setProgressText(ServerSync.strings.getString("connection_attempt_server"));
-                    list.clear();
+                    Logger.log("Starting update process...");
+                    Platform.runLater(() -> {
+                        setProgressText(ServerSync.strings.getString("ui/message_connecting_to_server"));
+                        list.clear();
+                    });
                     worker.setAddress(ip);
                     worker.setPort(port);
 
@@ -302,23 +377,55 @@ public class PaneSync extends BorderPane {
                         SyncConfig.getConfig().SERVER_PORT = port;
                         saveConfig();
 
+                        Platform.runLater(() -> {
+                            setProgressText(ServerSync.strings.getString("ui/message_connected_checking_for_updates"));
+                        });
                         Then.onComplete(worker.fetchActions(), actions -> {
-                            list.addAll(actions);
+                            Platform.runLater(() -> {
+                                clearProgress();
+                                list.addAll(actions);
+                            });
                             worker.close();
-                            Platform.runLater(() -> setProgressText(""));
                         });
                     } catch (Exception exception) {
                         Logger.debug(exception);
-                        setProgressText(
-                            ServerSync.strings.getString("connection_failed_server") + " " + ip + ":" + port);
+                        Platform.runLater(() -> {
+                            setProgressText(
+                                String.format(
+                                    ServerSync.strings.getString("ui/message_failed_to_connect_to_server"),
+                                    ip,
+                                    port
+                                )
+                            );
+                        });
+                        Platform.runLater(this::clearProgress);
                     }
+                } else {
+                    Platform.runLater(this::clearProgress);
                 }
-
-                getBtnSync().setDisable(false);
-                getBtnCheckUpdate().setDisable(false);
             });
         }
         return btnCheckUpdate;
+    }
+
+    public void initProgress() {
+        getPaneProgressBar().getProgressBar().setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+        getBtnSync().setDisable(true);
+        getBtnCheckUpdate().setDisable(true);
+    }
+
+    public void clearProgress() {
+        getPaneProgressBar().setPathText("");
+        getPaneProgressBar().setStatusText("");
+        getPaneProgressBar().getProgressBar().setProgress(0);
+        getBtnSync().setDisable(false);
+        getBtnCheckUpdate().setDisable(false);
+    }
+
+    public void clearProgressBinding() {
+        getPaneProgressBar().getPathLabel().textProperty().unbind();
+        getPaneProgressBar().getStatusLabel().textProperty().unbind();
+        getPaneProgressBar().getProgressBar().progressProperty().unbind();
     }
 
     public TextField getFieldIp() {
@@ -342,7 +449,8 @@ public class PaneSync extends BorderPane {
         try {
             port = Integer.parseInt(fieldPort.getText());
         } catch (NumberFormatException e) {
-            updateLogsArea("Invalid port");
+            Logger.log("Invalid port");
+            Logger.debug(e);
             port = -1;
         }
 
@@ -351,7 +459,6 @@ public class PaneSync extends BorderPane {
 
     public void setProgressText(String text) {
         getPaneProgressBar().setPathText(text);
-        getPaneProgressBar().updateGUI();
     }
 
     public void setProgress(double progress) {
@@ -360,7 +467,7 @@ public class PaneSync extends BorderPane {
 
     public boolean setPort(int port) {
         if (port > 49151 || port < 0) {
-            updateLogsArea("Port out of range, valid range: 1 - 49151");
+            Logger.error("Port out of range, valid range: 1 - 49151");
             return false;
         }
         Platform.runLater(() -> fieldPort.setText(String.valueOf(port)));
@@ -386,7 +493,7 @@ public class PaneSync extends BorderPane {
     private void saveConfig() {
         try {
             SyncConfig.getConfig().save();
-            updateLogsArea("Options saved");
+            Logger.log("Options saved");
         } catch (IOException ex) {
             Logger.debug(ex);
             updateLogsArea(ex.toString());
