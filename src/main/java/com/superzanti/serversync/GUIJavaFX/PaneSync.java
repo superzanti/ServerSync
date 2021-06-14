@@ -207,7 +207,7 @@ public class PaneSync extends BorderPane {
 
     public Button getBtnSync() {
         if (btnSync == null) {
-            btnSync = I18N.buttonForKey(("ui/sync"));
+            btnSync = I18N.buttonForKey("ui/sync");
             btnSync.getStyleClass().add("btn");
             btnSync.setTooltip(I18N.toolTipForKey("ui/btn_sync_tooltip"));
             btnSync.setOnAction(e -> {
@@ -347,7 +347,7 @@ public class PaneSync extends BorderPane {
 
     public Button getBtnCheckUpdate() {
         if (btnCheckUpdate == null) {
-            btnCheckUpdate = I18N.buttonForKey(("ui/check_for_updates"));
+            btnCheckUpdate = I18N.buttonForKey("ui/check_for_updates");
             btnCheckUpdate.getStyleClass().add("btn");
             btnCheckUpdate.setTooltip(I18N.toolTipForKey("ui/btn_check_tooltip"));
             btnCheckUpdate.setOnAction(e -> {

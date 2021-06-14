@@ -20,7 +20,7 @@ public class PaneProgressBar extends VBox {
         this.setSpacing(5);
         this.setAlignment(Pos.CENTER);
         label = new Label("");
-        
+
         progressBar = new ProgressBar(0);
         progressBar.setProgress(0);
         progressBar.prefWidthProperty().bind(this.widthProperty().subtract(250));
