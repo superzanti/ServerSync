@@ -13,7 +13,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Locale;
@@ -238,17 +237,17 @@ public class PaneOptions extends GridPane {
 
     private void setDefaultComboxBox(){
         Locale locale = SyncConfig.getConfig().LOCALE;
-        if (locale.equals(new Locale("en", "US"))) {
+        if (locale.equals(new Locale("en", "US")) || locale.equals(new Locale("en"))) {
             comboBoxLanguage.getSelectionModel().select(ServerSync.strings.getString("language/english"));
-        } else if (locale.equals(new Locale("es", "ES"))) {
+        } else if (locale.equals(new Locale("es", "ES")) || locale.equals(new Locale("es"))) {
             comboBoxLanguage.getSelectionModel().select(ServerSync.strings.getString("language/spanish"));
-        } else if (locale.equals(new Locale("fr", "FR"))) {
+        } else if (locale.equals(new Locale("fr", "FR")) || locale.equals(new Locale("fr"))) {
             comboBoxLanguage.getSelectionModel().select(ServerSync.strings.getString("language/french"));
-        } else if (locale.equals(new Locale("pl", "PL"))) {
+        } else if (locale.equals(new Locale("pl", "PL")) || locale.equals(new Locale("pl"))) {
             comboBoxLanguage.getSelectionModel().select(ServerSync.strings.getString("language/polish"));
-        } else if (locale.equals(new Locale("ru", "RU"))) {
+        } else if (locale.equals(new Locale("ru", "RU")) || locale.equals(new Locale("ru"))) {
             comboBoxLanguage.getSelectionModel().select(ServerSync.strings.getString("language/russian"));
-        } else if (locale.equals(new Locale("zh", "CN"))) {
+        } else if (locale.equals(new Locale("zh", "CN")) || locale.equals(new Locale("zh"))) {
             comboBoxLanguage.getSelectionModel().select(ServerSync.strings.getString("language/chinese"));
         }
     }
