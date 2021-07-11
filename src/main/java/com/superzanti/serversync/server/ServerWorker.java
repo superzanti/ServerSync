@@ -298,6 +298,7 @@ public class ServerWorker implements Runnable {
             try (BufferedInputStream fis = new BufferedInputStream(Files.newInputStream(file), SyncConfig.getConfig().BUFFER_SIZE)) {
                 while ((bytesRead = fis.read(buffer)) > 0) {
                     os.write(buffer, 0, bytesRead);
+                    setTimeout(FILE_SYNC_CLIENT_TIMEOUT_MS);
                 }
             } catch (IOException e) {
                 clientLogger.debug(String.format("Failed to write file: %s", file));
