@@ -1,6 +1,6 @@
 package com.superzanti.serversync;
 
-import com.superzanti.serversync.GUIJavaFX.Gui_JavaFX;
+import com.superzanti.serversync.GUIJavaFX.GUI_Launcher;
 import com.superzanti.serversync.client.ClientWorker;
 import com.superzanti.serversync.config.ConfigLoader;
 import com.superzanti.serversync.config.SyncConfig;
@@ -9,7 +9,6 @@ import com.superzanti.serversync.util.Logger;
 import com.superzanti.serversync.util.Then;
 import com.superzanti.serversync.util.enums.EConfigType;
 import com.superzanti.serversync.util.enums.EServerMode;
-import javafx.application.Application;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -165,7 +164,7 @@ public class ServerSync implements Callable<Integer> {
                 System.exit(1);
             }
         } else {
-            new Thread(() -> Application.launch(Gui_JavaFX.class)).start();
+            new GUI_Launcher().start();
         }
     }
 }

@@ -1,9 +1,6 @@
 package com.superzanti.serversync.util;
 
-import com.superzanti.serversync.GUIJavaFX.PaneLogs;
 import com.superzanti.serversync.ServerSync;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 
 import java.util.Arrays;
 import java.util.concurrent.Executors;
@@ -11,9 +8,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.SimpleFormatter;
 
 /**
  * Wrapper for serversyncs logs
@@ -49,10 +43,6 @@ public class Logger {
         return result;
     }
 
-    public static synchronized void instantiate() {
-        instantiate(getContext());
-    }
-
     public static void instantiate(String context) {
         instance = new LoggerInstance(context);
     }
@@ -82,35 +72,12 @@ public class Logger {
         getInstance().debug("Failed to write object (" + object + ") to output stream");
     }
 
-    public static synchronized void inputError(Object object) {
-        getInstance().debug("Failed to read object from input stream: " + object);
-    }
-
-    public static synchronized void attachOutputToLogsPane(PaneLogs paneLogs) {
-        final StringProperty records = new SimpleStringProperty();
-        paneLogs.getText().textProperty().bind(records);
-        uiHandler = new Handler() {
-            final SimpleFormatter fmt = new SimpleFormatter();
-            final StringBuilder r = new StringBuilder();
-
-
-            @Override
-            public void publish(LogRecord record) {
-                if (record.getLevel().equals(Level.INFO)) {
-                    r.append(fmt.format(record));
-                    Logger.flush();
-                }
-            }
-
-            @Override
-            public void flush() {
-                records.set(r.toString());
-            }
-
-            @Override
-            public void close() {
-            }
-        };
+    public static synchronized void attachUIHandler(Handler handler) {
+        if (uiHandler != null) {
+            uiHandler.close();
+            getInstance().javaLogger.removeHandler(uiHandler);
+        }
+        uiHandler = handler;
         getInstance().javaLogger.addHandler(uiHandler);
     }
 
