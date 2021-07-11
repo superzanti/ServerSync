@@ -169,8 +169,17 @@ public class JsonConfig {
                 hasMissingEntries = true;
             }
 
-            String[] localeParts = getString(misc, PROP_LOCALE, "en_US").split("_");
-            config.LOCALE = new Locale(localeParts[0], localeParts[1]);
+            String locale = getString(misc, PROP_LOCALE, "en_US");
+            String[] localeParts = locale.split("_");
+            if (localeParts.length == 1) {
+                config.LOCALE = new Locale(localeParts[0]);
+            }
+            if (localeParts.length == 2) {
+                config.LOCALE = new Locale(localeParts[0], localeParts[1]);
+            }
+            if (localeParts.length > 2) {
+                Logger.error(String.format("Unknown locale pattern: %s", locale));
+            }
             config.THEME = ETheme.valueOf(getString(misc, PROP_THEME, "BLUE_YELLOW"));
 
             if (hasMissingEntries) {
