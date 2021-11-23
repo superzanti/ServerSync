@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.util.Arrays;
 
 public class FileHash {
     public static String hashFile(Path file) {
@@ -20,7 +21,7 @@ public class FileHash {
             if( FileHash.isBinaryFile(file) ){
                 stream = Files.newInputStream(file);
             }else{
-                stream = new ByteArrayInputStream(String.join("", Files.readAllLines(file, StandardCharsets.UTF_8)).getBytes());
+                stream = new ByteArrayInputStream(String.join("", Files.readAllLines(file, StandardCharsets.UTF_8)).getBytes(StandardCharsets.UTF_8));
             }
 
             DigestInputStream in = new DigestInputStream(
@@ -39,11 +40,20 @@ public class FileHash {
     }
 
     private static boolean isBinaryFile(Path f) throws IOException {
+        String[] textMine = {"text", "application/xml", "application/json", "application/javascript", "application/vnd.ms-excel"};
+
         String type = Files.probeContentType(f);
         if (type == null) {
-            //type couldn't be determined, assume binary
-            return true;
-        } else if (type.startsWith("text")) {
+            //type couldn't be determined, guess via first 8192 bytes
+            try (InputStream stream = new BufferedInputStream(Files.newInputStream(f))) {
+                byte[] buffer = new byte[8192];
+                int read = stream.read(buffer);
+                for( int i = 0; i < read; i++ ){
+                    if(buffer[i] == 0x00) return true;
+                }
+                return false;
+            }
+        } else if (Arrays.stream(textMine).anyMatch(type::startsWith)) {
             return false;
         } else {
             //type isn't text
