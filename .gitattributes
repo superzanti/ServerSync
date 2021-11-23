@@ -1,0 +1,2 @@
+src/test/resources/hash_lf.txt text eol=lf
+src/test/resources/hash_crlf.txt text eol=crlf
