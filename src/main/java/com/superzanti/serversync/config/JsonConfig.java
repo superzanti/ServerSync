@@ -114,8 +114,13 @@ public class JsonConfig {
                 hasMissingEntries = true;
             }
 
-            String[] localeParts = getString(misc, PROP_LOCALE, "en_US").split("_");
-            config.LOCALE = new Locale(localeParts[0], localeParts[1]);
+            String locale = getString(misc, PROP_LOCALE, "en_US");
+            if (locale.contains("_")) {
+                String[] localeParts = getString(misc, PROP_LOCALE, "en_US").split("_");
+                config.LOCALE = new Locale(localeParts[0], localeParts[1]);
+            } else {
+                config.LOCALE = new Locale(locale);
+            }
 
             if (hasMissingEntries) {
                 // Generate a new config if we failed to read parts of it

@@ -19,7 +19,7 @@ class JsonConfigTest {
     }
 
     @ParameterizedTest
-    @DisplayName("Parsing")
+    @DisplayName("Should parse")
     @ValueSource(strings = {"src/test/resources/server-config.json"})
     void parseServerConfig(Path file) {
         ServerSync.MODE = EServerMode.SERVER;
@@ -31,6 +31,20 @@ class JsonConfigTest {
             assertNotNull(config.SERVER_PORT);
             assertNotNull(config.DIRECTORY_INCLUDE_LIST);
             assertNotNull(config.FILE_IGNORE_LIST);
+            assertNotNull(config.LOCALE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @ParameterizedTest
+    @DisplayName("Should parse single part locales")
+    @ValueSource(strings = {"src/test/resources/server-single-part-locale-config.json"})
+    void parseSinglePartLocale(Path file) {
+        ServerSync.MODE = EServerMode.SERVER;
+        try {
+            JsonConfig.forServer(file);
+            SyncConfig config = SyncConfig.getConfig();
             assertNotNull(config.LOCALE);
         } catch (IOException e) {
             e.printStackTrace();

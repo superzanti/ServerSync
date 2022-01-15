@@ -1,0 +1,45 @@
+{
+  "general": {
+    "push_client_mods": false,
+    "sync_mode": 2
+  },
+  "connection": {
+    "port": 38067,
+    "buffer": 65536
+  },
+  "rules": {
+    "directories": [
+      {
+        "path": "test-mirror",
+        "mode": "mirror"
+      },
+      {
+        "path": "test-push",
+        "mode": "push"
+      },
+      "test-default"
+    ],
+    "files": {
+      "include": [],
+      "ignore": [
+        {
+          "description": "No jar files allowed",
+          "pattern": "**/*.jar"
+        },
+        {
+          "pattern": "**/other.bing"
+        },
+        "**/basic.thing"
+      ],
+      "redirect": [
+        {
+          "pattern": "**/*.jar",
+          "redirectTo": "redirected-files"
+        }
+      ]
+    }
+  },
+  "misc": {
+    "locale": "en"
+  }
+}
