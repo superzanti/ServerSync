@@ -40,9 +40,10 @@ public class FileHash {
     }
 
     private static boolean isBinaryFile(Path f) throws IOException {
-        String[] textMine = {"text", "application/xml", "application/json", "application/javascript", "application/vnd.ms-excel"};
+        String[] textMime = {"text", "application/xml", "application/json", "application/javascript", "application/vnd.ms-excel"};
 
         String type = Files.probeContentType(f);
+        //type isn't text
         if (type == null) {
             //type couldn't be determined, guess via first 8192 bytes
             try (InputStream stream = new BufferedInputStream(Files.newInputStream(f))) {
@@ -53,11 +54,6 @@ public class FileHash {
                 }
                 return false;
             }
-        } else if (Arrays.stream(textMine).anyMatch(type::startsWith)) {
-            return false;
-        } else {
-            //type isn't text
-            return true;
-        }
+        } else return Arrays.stream(textMime).noneMatch(type::startsWith);
     }
 }
