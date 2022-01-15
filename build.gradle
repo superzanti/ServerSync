@@ -5,13 +5,10 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'java'
     id 'application'
-    id 'eclipse'
-    id 'maven-publish'
 }
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 
@@ -26,16 +23,16 @@ configurations {
 
 dependencies {
     // Use JUnit Jupiter API for testing.
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.4.2', 'org.junit.jupiter:junit-jupiter-params:5.4.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2', 'org.junit.jupiter:junit-jupiter-params:5.8.2'
     // Use JUnit Jupiter Engine for testing.
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.4.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2', 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 
     implementation fileTree(dir: 'libs', include: '*.jar')
 
-    annotationProcessor 'info.picocli:picocli-codegen:4.3.2'
+    annotationProcessor 'info.picocli:picocli-codegen:4.6.2'
 
     shadow group: 'com.eclipsesource.minimal-json', name: 'minimal-json', version: '0.9.5'
-    shadow group: 'info.picocli', name: 'picocli', version: '4.3.2'
+    shadow group: 'info.picocli', name: 'picocli', version: '4.6.2'
 }
 
 application {
@@ -97,23 +94,23 @@ task createServerExe(type: Launch4jLibraryTask) {
     version = ssversion
 }
 
-publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/${System.getenv('GPR_REPO')}")
-            credentials {
-                username = project.findProperty("gpr.user") as String ?: System.getenv("GPR_USERNAME")
-                password = project.findProperty("gpr.key") as String ?: System.getenv("GPR_TOKEN")
-            }
-        }
-    }
-    publications {
-        shadow(MavenPublication) { publication ->
-            project.shadow.component(publication)
-        }
-    }
-}
+//publishing {
+//    repositories {
+//        maven {
+//            name = "GitHubPackages"
+//            url = uri("https://maven.pkg.github.com/${System.getenv('GPR_REPO')}")
+//            credentials {
+//                username = project.findProperty("gpr.user") as String ?: System.getenv("GPR_USERNAME")
+//                password = project.findProperty("gpr.key") as String ?: System.getenv("GPR_TOKEN")
+//            }
+//        }
+//    }
+//    publications {
+//        shadow(MavenPublication) { publication ->
+//            project.shadow.component(publication)
+//        }
+//    }
+//}
 
 clean {
 }
