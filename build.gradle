@@ -5,12 +5,12 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'java'
     id 'application'
+    id 'maven-publish'
 }
 
 repositories {
     mavenCentral()
 }
-
 
 
 group = "com.superzanti.serversync"
@@ -94,23 +94,23 @@ task createServerExe(type: Launch4jLibraryTask) {
     version = ssversion
 }
 
-//publishing {
-//    repositories {
-//        maven {
-//            name = "GitHubPackages"
-//            url = uri("https://maven.pkg.github.com/${System.getenv('GPR_REPO')}")
-//            credentials {
-//                username = project.findProperty("gpr.user") as String ?: System.getenv("GPR_USERNAME")
-//                password = project.findProperty("gpr.key") as String ?: System.getenv("GPR_TOKEN")
-//            }
-//        }
-//    }
-//    publications {
-//        shadow(MavenPublication) { publication ->
-//            project.shadow.component(publication)
-//        }
-//    }
-//}
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/${System.getenv('GPR_REPO')}")
+            credentials {
+                username = project.findProperty("gpr.user") as String ?: System.getenv("GPR_USERNAME")
+                password = project.findProperty("gpr.key") as String ?: System.getenv("GPR_TOKEN")
+            }
+        }
+    }
+    publications {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
+        }
+    }
+}
 
 clean {
 }
