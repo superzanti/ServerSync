@@ -1,7 +1,7 @@
 import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
 
 plugins {
-    id 'edu.sc.seis.launch4j' version '2.4.6'
+    id 'edu.sc.seis.launch4j' version '2.5.4'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'java'
     id 'application'
@@ -14,7 +14,12 @@ repositories {
 
 
 group = "com.superzanti.serversync"
-version = ssversion
+version = ss_version
+
+java {
+    sourceCompatibility = 9
+    targetCompatibility = 16
+}
 
 configurations {
     shadow
@@ -36,7 +41,8 @@ dependencies {
 }
 
 application {
-    mainClassName = 'com.superzanti.serversync.ServerSync'
+    mainClass = ss_main_class
+    mainClassName = ss_main_class
 }
 
 test {
@@ -47,20 +53,18 @@ test {
 }
 
 jar {
-    archivesBaseName = ssname
-
     processResources {
         exclude "css/application.css"
     }
 
     manifest {
-        attributes 'Main-Class': mainclass, 'Implementation-Version': ssversion
+        attributes 'Main-Class': ss_main_class, 'Implementation-Version': ss_version
     }
 }
 
 shadowJar {
+    inputs.file(jar.archiveFile)
     configurations = [project.configurations.shadow]
-    archivesBaseName = ssname
     minimize()
 
     dependencies {
@@ -69,29 +73,28 @@ shadowJar {
 }
 
 createExe {
-    dependsOn shadowJar
+    jarTask = shadowJar
+    mainClassName = ss_main_class
     outfile = 'ServerSyncClient.exe'
     icon = "${projectDir}/src/main/resources/ServersyncLogo.ico"
-    copyConfigurable = project.tasks.shadowJar.outputs.files
-    jar = "lib/${project.tasks.shadowJar.archiveName}"
+    copyConfigurable = shadowJar.outputs.files
     supportUrl = "https://github.com/superzanti/ServerSync"
     productName = "ServerSync - Client"
     fileDescription = "The client side for users."
-    version = ssversion
+    version = ss_version
 }
 
 task createServerExe(type: Launch4jLibraryTask) {
-    dependsOn shadowJar
+    jarTask = shadowJar
+    mainClassName = ss_main_class_server
     outfile = 'ServerSyncServer.exe'
     headerType = 'console'
-    mainClassName = 'com.superzanti.serversync.ServerSyncServer'
     icon = "${projectDir}/src/main/resources/ServersyncLogoServer.ico"
-    copyConfigurable = project.tasks.shadowJar.outputs.files
-    jar = "lib/${project.tasks.shadowJar.archiveName}"
+    copyConfigurable = shadowJar.outputs.files
     supportUrl = "https://github.com/superzanti/ServerSync"
     productName = "ServerSync - Server"
     fileDescription = "The server side for admins."
-    version = ssversion
+    version = ss_version
 }
 
 publishing {
@@ -112,10 +115,7 @@ publishing {
     }
 }
 
-clean {
-}
-
-task cleanProject {
+tasks.register('cleanProject') {
     def cleanupFiles = ["publish", "config", "logs", "mods", "clientmods"]
 
     for (name in cleanupFiles) {
