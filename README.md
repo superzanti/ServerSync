@@ -5,6 +5,11 @@
 [Releases](https://github.com/superzanti/ServerSync/releases)  
 [Experimental Releases](https://github.com/rheimus/ServerSync/releases)
 
+Requirements
+=========
+- Java 9+
+- Java FX
+
 ServerSync
 =========
 A utility for easy mod management. The client will always be able to connect to your server with less instruction required on how to do so.
