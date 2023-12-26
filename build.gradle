@@ -2,7 +2,7 @@ import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
 
 plugins {
     id 'edu.sc.seis.launch4j' version '2.5.4'
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'java'
     id 'application'
     id 'maven-publish'
@@ -43,13 +43,12 @@ dependencies {
 
 application {
     mainClass = ss_main_class
-    mainClassName = ss_main_class
 }
 
 test {
     useJUnitPlatform()
     afterTest { desc, result ->
-        logger.quiet "Executing test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+        logger.quiet "Ran test ${desc.name} [${desc.className}] with result: ${result.resultType}"
     }
 }
 
