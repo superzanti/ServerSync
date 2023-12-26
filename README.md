@@ -95,5 +95,5 @@ Then change the working directory of your eclipse to
 
 Have at it.
 
-Special Thanks:
+## Special Thanks
 - [P3rf3ctXZer0](https://github.com/P3rf3ctXZer0): Extremely useful feedback & testing
