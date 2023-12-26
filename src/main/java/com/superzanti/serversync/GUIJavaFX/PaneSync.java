@@ -136,17 +136,10 @@ public class PaneSync extends BorderPane {
                         e.printStackTrace();
                     }
                     switch (item) {
-                        case Ignore:
-                            setStyle("-fx-text-fill: #db5461;");
-                            break;
-                        case Update:
-                            setStyle("-fx-text-fill: #dfa06e;");
-                            break;
-                        case None:
-                            setStyle("-fx-text-fill: #86ba90;");
-                            break;
-                        default:
-                            setStyle("");
+                        case Ignore -> setStyle("-fx-text-fill: #db5461;");
+                        case Update -> setStyle("-fx-text-fill: #dfa06e;");
+                        case None -> setStyle("-fx-text-fill: #86ba90;");
+                        default -> setStyle("");
                     }
                 }
             });
@@ -183,26 +176,31 @@ public class PaneSync extends BorderPane {
         return table;
     }
 
-    public Boolean checkIpAndPort(String ip, int port) {
-        boolean valid = true;
-        if (ip.equals("") && !setPort(port)) {
+    /**
+     * Check that the server configuration is correct, display alerts if incorrect.
+     * @param ip the address of the server
+     * @param port the port the server is running on
+     * @return true if the server config is valid
+     */
+    public Boolean validateAddress(String ip, int port) {
+        if (ip.equals("") && port == -1) {
             updateLogsArea("No config found, requesting details");
             displayAlert(
                 ServerSync.strings.getString("ui/wrong_configuration"),
                 ServerSync.strings.getString("ui/ip_empty") + "\n" + ServerSync.strings.getString("ui/port_invalid")
             );
-            valid = false;
+            return false;
         } else if (ip.equals("")) {
             updateLogsArea("The ip field is empty");
             displayAlert(ServerSync.strings.getString("ui/wrong_ip"), ServerSync.strings.getString("ui/ip_empty"));
-            valid = false;
-        } else if (!setPort(port)) {
+            return false;
+        } else if (port == -1) {
             updateLogsArea("The ip field is empty");
             displayAlert(
                 ServerSync.strings.getString("ui/wrong_port"), ServerSync.strings.getString("ui/port_invalid"));
-            valid = false;
+            return false;
         }
-        return valid;
+        return true;
     }
 
     public Button getBtnSync() {
@@ -224,7 +222,7 @@ public class PaneSync extends BorderPane {
 
                 int port = getPort();
                 String ip = getFieldIp().getText();
-                if (checkIpAndPort(ip, port)) {
+                if (validateAddress(ip, port)) {
                     ObservableList<ActionEntry> list = Gui_JavaFX
                         .getStackMainPane()
                         .getPaneSync()
@@ -350,62 +348,69 @@ public class PaneSync extends BorderPane {
             btnCheckUpdate = I18N.buttonForKey("ui/check_for_updates");
             btnCheckUpdate.getStyleClass().add("btn");
             btnCheckUpdate.setTooltip(I18N.toolTipForKey("ui/btn_check_tooltip"));
-            btnCheckUpdate.setOnAction(e -> {
-                Logger.debug("Clicked check updates button");
-                Platform.runLater(this::initProgress);
-
-                int port = getPort();
-                String ip = getFieldIp().getText();
-                if (checkIpAndPort(ip, port)) {
-                    ObservableList<ActionEntry> list = Gui_JavaFX
-                        .getStackMainPane()
-                        .getPaneSync()
-                        .getObservableMods();
-                    Logger.log("Starting update process...");
-                    Platform.runLater(() -> {
-                        setProgressText(ServerSync.strings.getString("ui/message_connecting_to_server"));
-                        list.clear();
-                    });
-                    worker.setAddress(ip);
-                    worker.setPort(port);
-
-                    try {
-                        worker.connect();
-
-                        // Setting this after connection so that we don't save an invalid address
-                        SyncConfig.getConfig().SERVER_IP = ip;
-                        SyncConfig.getConfig().SERVER_PORT = port;
-                        saveConfig();
-
-                        Platform.runLater(() -> {
-                            setProgressText(ServerSync.strings.getString("ui/message_connected_checking_for_updates"));
-                        });
-                        Then.onComplete(worker.fetchActions(), actions -> {
-                            Platform.runLater(() -> {
-                                clearProgress();
-                                list.addAll(actions);
-                            });
-                            worker.close();
-                        });
-                    } catch (Exception exception) {
-                        Logger.debug(exception);
-                        Platform.runLater(() -> {
-                            setProgressText(
-                                String.format(
-                                    ServerSync.strings.getString("ui/message_failed_to_connect_to_server"),
-                                    ip,
-                                    port
-                                )
-                            );
-                        });
-                        Platform.runLater(this::clearProgress);
-                    }
-                } else {
-                    Platform.runLater(this::clearProgress);
-                }
-            });
+            btnCheckUpdate.setOnAction(e -> checkForUpdatesAction());
         }
         return btnCheckUpdate;
+    }
+
+    private void checkForUpdatesAction() {
+        Logger.debug("Clicked check updates button");
+        Platform.runLater(this::initProgress);
+
+        int port = getPort();
+        String ip = getFieldIp().getText();
+        if (validateAddress(ip, port)) {
+            ObservableList<ActionEntry> list = Gui_JavaFX
+                .getStackMainPane()
+                .getPaneSync()
+                .getObservableMods();
+            Logger.log("Starting update process...");
+            Platform.runLater(() -> {
+                setProgressText(ServerSync.strings.getString("ui/message_connecting_to_server"));
+                list.clear();
+            });
+            worker.setAddress(ip);
+            worker.setPort(port);
+
+            try {
+                worker.connect();
+
+                // Setting this after connection so that we don't save an invalid address
+                SyncConfig.getConfig().SERVER_IP = ip;
+                SyncConfig.getConfig().SERVER_PORT = port;
+                saveConfig();
+
+                Platform.runLater(() -> {
+                    setProgressText(ServerSync.strings.getString("ui/message_connected_checking_for_updates"));
+                });
+                Then.onComplete(worker.fetchActions(), actions -> {
+                    Platform.runLater(() -> {
+                        clearProgress();
+                        list.addAll(actions);
+                    });
+                    worker.close();
+                });
+            } catch (Exception exception) {
+                Logger.debug(exception);
+                Platform.runLater(() -> {
+                    setProgressText(
+                        String.format(
+                            ServerSync.strings.getString("ui/message_failed_to_connect_to_server"),
+                            ip,
+                            port
+                        )
+                    );
+                });
+                Platform.runLater(this::clearProgress);
+            }
+        } else {
+            Platform.runLater(this::clearProgress);
+        }
+    }
+
+    public void refreshConfigValues() {
+        getFieldIp().setText(SyncConfig.getConfig().SERVER_IP);
+        getFieldPort().setText(String.valueOf(SyncConfig.getConfig().SERVER_PORT));
     }
 
     public void initProgress() {
@@ -465,13 +470,8 @@ public class PaneSync extends BorderPane {
         getPaneProgressBar().getProgressBar().setProgress(progress);
     }
 
-    public boolean setPort(int port) {
-        if (port > 49151 || port < 0) {
-            Logger.error("Port out of range, valid range: 1 - 49151");
-            return false;
-        }
+    public void setPort(int port) {
         Platform.runLater(() -> fieldPort.setText(String.valueOf(port)));
-        return true;
     }
 
     public void setIPAddress(String ip) {

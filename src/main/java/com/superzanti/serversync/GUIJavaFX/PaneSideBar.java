@@ -27,7 +27,10 @@ public class PaneSideBar extends VBox {
         btnSync.setPrefWidth(125);
         btnSync.getStyleClass().add("sidebar-button");
         btnSync.setGraphic(svgSync);
-        btnSync.setOnAction(e -> Gui_JavaFX.getStackMainPane().displayPanel(0));
+        btnSync.setOnAction(e -> {
+            Gui_JavaFX.getStackMainPane().getPaneSync().refreshConfigValues();
+            Gui_JavaFX.getStackMainPane().displayPanel(0);
+        });
 
         /* LOGS button */
         SVGPath svgLogs = new SVGPath();
@@ -54,8 +57,8 @@ public class PaneSideBar extends VBox {
         btnOptions.getStyleClass().add("sidebar-button");
         btnOptions.setGraphic(svgOptions);
         btnOptions.setOnAction(e -> {
-            Gui_JavaFX.getStackMainPane().displayPanel(2);
             Gui_JavaFX.getStackMainPane().getPaneOptions().refreshConfigValues();
+            Gui_JavaFX.getStackMainPane().displayPanel(2);
         });
 
         /* UPDATE button */
@@ -71,7 +74,6 @@ public class PaneSideBar extends VBox {
         btnUpdate.setGraphic(svgUpdate);
         btnUpdate.setOnAction(e -> {
             Gui_JavaFX.getStackMainPane().displayPanel(3);
-            Gui_JavaFX.getStackMainPane().getPaneOptions().refreshConfigValues();
         });
 
         this.getStyleClass().add("sidebar-vbx");
