@@ -1,4 +1,4 @@
-![Java CI](https://github.com/superzanti/ServerSync/workflows/Java%20CI/badge.svg)
+![Java CI](https://github.com/superzanti/ServerSync/workflows/Java%20Build/badge.svg)
 
 [Quick start guide](https://github.com/superzanti/ServerSync/wiki/Quick-start)
 
