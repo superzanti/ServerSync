@@ -20,9 +20,6 @@ Technically you could sync any game/filesystem using serversync however it does 
 
 If you don't feel like compiling from the source code and simply want to download a jar file see the [Releases](https://github.com/superzanti/ServerSync/releases).
 
-Honorable Mentions:
-- [P3rf3ctXZer0](https://github.com/P3rf3ctXZer0): Extremely useful feedback & testing
-
 
 DISCLAIMER:
 -----------
@@ -97,3 +94,6 @@ Then change the working directory of your eclipse to
 ```
 
 Have at it.
+
+Special Thanks:
+- [P3rf3ctXZer0](https://github.com/P3rf3ctXZer0): Extremely useful feedback & testing
