@@ -17,8 +17,9 @@ group = "com.superzanti.serversync"
 version = ss_version
 
 java {
-    sourceCompatibility = 9
-    targetCompatibility = 16
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(16)
+    }
 }
 
 configurations {
