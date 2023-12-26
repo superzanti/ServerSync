@@ -7,6 +7,11 @@ public class FileRedirect {
     public final String pattern;
     public final String redirectTo;
 
+    public FileRedirect() {
+        this.pattern = "";
+        this.redirectTo = "";
+    }
+
     public FileRedirect(String pattern, String redirectTo) {
         this.pattern = pattern;
         this.redirectTo = redirectTo;

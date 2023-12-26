@@ -26,7 +26,7 @@ public class Glob {
     }
 
     public static Optional<String> getPattern(Path path, List<String> patterns) {
-        return patterns.stream().filter(p -> globMatcher(sanitizePattern(p)).matches(path)).findFirst();
+        return patterns.parallelStream().filter(p -> globMatcher(sanitizePattern(p)).matches(path)).findFirst();
     }
 
     public static boolean matches(Path path, String pattern) {
@@ -34,6 +34,6 @@ public class Glob {
     }
 
     public static boolean matches(Path path, List<String> patterns) {
-        return patterns.stream().anyMatch(pattern -> globMatcher(sanitizePattern(pattern)).matches(path));
+        return patterns.parallelStream().anyMatch(pattern -> globMatcher(sanitizePattern(pattern)).matches(path));
     }
 }

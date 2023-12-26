@@ -57,12 +57,7 @@ public class FileEntry implements Serializable {
 
     @Override
     public String toString() {
-        return "FileEntry{" +
-            "path='" + path + '\'' +
-            ", hash='" + hash + '\'' +
-            ", redirectTo='" + redirectTo + '\'' +
-            ", isOptional='" + isOptional + '\'' +
-            '}';
+        return String.format("FileEntry{path=%s,hash=%s,redirectTo=%s,isOptional=%s}", path, hash, redirectTo, isOptional);
     }
 }
 

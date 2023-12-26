@@ -15,9 +15,8 @@ import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,77 +32,11 @@ public class ServerSetup extends Thread {
     private final Path bannedIps = Paths.get(ELocation.BANNED_IPS.getValue());
 
     private final Timer timeoutScheduler = new Timer();
-
-    private FileManifest manifest;
     private final List<String> messages = Arrays.stream(EServerMessage.values())
                                                 .map(EServerMessage::toString)
                                                 .collect(Collectors.toList());
-
+    private FileManifest manifest;
     private ServerSocket server;
-
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
-    private FileManifest populateManifest() throws IOException {
-        FileManifest manifest = new FileManifest();
-        manifest.directories = config.DIRECTORY_INCLUDE_LIST;
-        if (config.PUSH_CLIENT_MODS) {
-            Logger.log("Server configured to push client only mods, clients can still refuse these mods!");
-
-            // Create clientmods if it does not exist already
-            Files.createDirectories(FileManager.clientOnlyFilesDirectory);
-
-            config.FILE_INCLUDE_LIST.add("clientmods/**");
-            config.REDIRECT_FILES_LIST.add(new FileRedirect("clientmods/**", "mods"));
-        }
-
-        // Standard file handling, ignoring directories here as they are not relevant to serversync
-        List<Path> included = Files
-            .walk(ServerSync.rootDir)
-            .filter(f -> !Files.isDirectory(f))
-            .map(f -> ServerSync.rootDir.relativize(f))
-            .filter(f -> Glob.matches(f, config.FILE_INCLUDE_LIST))
-            .collect(Collectors.toList());
-
-        List<Path> filtered = included
-            .stream()
-            .filter(f -> !Glob.matches(f, config.FILE_IGNORE_LIST))
-            .collect(Collectors.toList());
-
-        List<String> includeMap = filtered
-            .stream()
-            // optional get can never be missing as we have just filtered the list by matching patterns
-            .map(
-                f -> String.format("%s, Pattern: %s", f.toString(), Glob.getPattern(f, config.FILE_INCLUDE_LIST).get()))
-            .collect(Collectors.toList());
-        Logger.debug(String.format("Included files: %s", PrettyCollection.get(includeMap)));
-
-        List<String> excludeMap = included
-            .stream()
-            .filter(f -> Glob.matches(f, config.FILE_IGNORE_LIST))
-            // optional get can never be missing as we have just filtered the list by matching patterns
-            .map(f -> String.format("%s, Pattern: %s", f.toString(), Glob.getPattern(f, config.FILE_IGNORE_LIST).get()))
-            .collect(Collectors.toList());
-        Logger.debug(String.format("Ignored files: %s", PrettyCollection.get(excludeMap)));
-
-        manifest.files = filtered
-            .stream()
-            .map(f -> {
-                String fileHash = FileHash.hashFile(ServerSync.rootDir.resolve(f));
-                Optional<FileRedirect> redirect = config.REDIRECT_FILES_LIST
-                    .stream().filter(r -> Glob.matches(f, r.pattern)).findFirst();
-
-                return redirect
-                    .map(fileRedirect -> {
-                        if (fileRedirect.pattern.equals("clientmods/**")) {
-                            return new FileEntry(f.toString(), fileHash, fileRedirect.redirectTo, true);
-                        }
-                        return new FileEntry(f.toString(), fileHash, fileRedirect.redirectTo);
-                    })
-                    .orElseGet(() -> new FileEntry(f.toString(), fileHash));
-            }).collect(Collectors.toList());
-
-        return manifest;
-    }
-
 
     public ServerSetup() {
         this.setName("ServerSync - Server");
@@ -127,6 +60,76 @@ public class ServerSetup extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private FileManifest populateManifest() throws IOException {
+        FileManifest manifest = new FileManifest();
+        manifest.directories = config.DIRECTORY_INCLUDE_LIST;
+        if (config.PUSH_CLIENT_MODS) {
+            Logger.log("Server configured to push client only mods, clients can still refuse these mods!");
+
+            // Create clientmods if it does not exist already
+            Files.createDirectories(FileManager.clientOnlyFilesDirectory);
+
+            config.FILE_INCLUDE_LIST.add("clientmods/**");
+            config.REDIRECT_FILES_LIST.add(new FileRedirect("clientmods/**", "mods"));
+        }
+
+        Files.walkFileTree(ServerSync.rootDir, new FileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                if (Files.isReadable(dir)) {
+                    return FileVisitResult.CONTINUE;
+                } else {
+                    Logger.error(String.format("Directory is not readable: %s", dir));
+                }
+                return FileVisitResult.SKIP_SUBTREE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                if (Files.isReadable(file)) {
+                    Path rel = ServerSync.rootDir.relativize(file);
+                    if (Glob.matches(rel, config.FILE_INCLUDE_LIST) && !Glob.matches(rel, config.FILE_IGNORE_LIST)) {
+                        String hash = FileHash.hashFile(file);
+                        FileEntry entry = config.REDIRECT_FILES_LIST
+                            .parallelStream()
+                            .filter(r -> Glob.matches(rel, r.pattern))
+                            .findFirst()
+                            .map(redirect -> {
+                                if (redirect.pattern.equals("clientmods/**")) {
+                                    return new FileEntry(rel.toString(), hash, redirect.redirectTo, true);
+                                }
+                                return new FileEntry(rel.toString(), hash, redirect.redirectTo);
+                            })
+                            .orElse(new FileEntry(rel.toString(), hash));
+
+                        manifest.files.add(entry);
+                    }
+                } else {
+                    Logger.error(String.format("File is not readable: %s", file));
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                Logger.error(String.format("Failed to visit file: %s", file));
+                exc.printStackTrace();
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+                if (exc != null) {
+                    Logger.error(String.format("Issue while iterating directory: %s", dir));
+                    exc.printStackTrace();
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return manifest;
     }
 
     @Override
