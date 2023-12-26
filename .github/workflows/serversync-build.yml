@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: ['8', '16']
+        java: ["16"]
     name: Java ${{ matrix.java }} Build
     steps:
       - uses: actions/checkout@v4
@@ -15,10 +15,10 @@ jobs:
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: "zulu"
           java-version: ${{ matrix.java }}
           java-package: jdk+fx
-          cache: 'gradle'
+          cache: "gradle"
 
       - name: <>-- Build --<>
         run: ./gradlew build createAllExecutables --no-daemon
