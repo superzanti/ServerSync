@@ -1,0 +1,33 @@
+import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
+
+plugins {
+    id 'edu.sc.seis.launch4j' version '2.5.4'
+    id 'java'
+
+}
+
+repositories {
+    mavenCentral()
+}
+
+group = "com.superzanti.serversync"
+version = ss_version
+
+dependencies {
+
+    implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
+    implementation fileTree(dir: 'libs', include: '*.jar')
+
+    // Use JUnit Jupiter API for testing.
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2', 'org.junit.jupiter:junit-jupiter-params:5.8.2'
+    // Use JUnit Jupiter Engine for testing.
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2', 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
+
+}
+
+test {
+    useJUnitPlatform()
+    afterTest { desc, result ->
+        logger.quiet "Ran test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+    }
+}

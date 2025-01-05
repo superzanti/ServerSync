@@ -1,0 +1,70 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'edu.sc.seis.launch4j' version '2.5.4'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+group = 'com.superzanti.serversync'
+version = '4.3.0'
+
+application {
+    mainClass = 'com.superzanti.serversync.ServerSync'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':build-shared')  // This makes shared classes available
+
+    implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
+    implementation 'info.picocli:picocli:4.7.5'
+    annotationProcessor 'info.picocli:picocli-codegen:4.7.5'
+    implementation fileTree(dir: 'libs', include: '*.jar')
+
+    //Dependencies (GUI)
+    implementation "org.openjfx:javafx-controls:$javafx.version:win"
+    implementation "org.openjfx:javafx-controls:$javafx.version:linux"
+    implementation "org.openjfx:javafx-controls:$javafx.version:mac"
+}
+
+javafx {
+    version = "17.0.13"
+    modules = [ 'javafx.controls' ]
+}
+
+jar.enabled = false
+
+// Configure the shadowJar task (with JavaFX)
+shadowJar {
+
+    archiveClassifier.set('')
+
+    //Don't minimize with JavaFX
+    //minimize() //Comment to build GUI
+
+    processResources {
+        exclude "css/application.css"
+    }
+
+    dependencies {
+        exclude 'forge*.jar'
+        //exclude '**/*javafx*/**' //Comment to build GUI
+
+    }
+}
+
+createExe {
+    jarTask = shadowJar
+    mainClassName = ss_main_class
+    outfile = 'ServerSyncClient.exe'
+    icon = "${rootDir}/build-shared/src/main/resources/ServersyncLogo.ico"
+    copyConfigurable = shadowJar.outputs.files
+    supportUrl = "https://github.com/superzanti/ServerSync"
+    productName = "ServerSync - Client"
+    fileDescription = "The client side for users."
+    version = ss_version
+}

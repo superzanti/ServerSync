@@ -1,0 +1,21 @@
+[janv. 05, 2025 5:26:56][ServerSync] INFOS: Starting server in mode: 2
+[janv. 05, 2025 5:26:56][ServerSync] INFOS: Starting scan for managed files: 5 janv. 2025
+[janv. 05, 2025 5:26:56][ServerSync] INFOS: Ignore patterns: {
+  **/*.jar
+  **/other.bing
+  **/basic.thing
+}
+[janv. 05, 2025 5:26:56][ServerSync] INFOS: Manifest files: {
+  
+}
+[janv. 05, 2025 5:26:56][ServerSync] INFOS: Starting server in mode: 2
+[janv. 05, 2025 5:26:56][ServerSync] INFOS: Starting scan for managed files: 5 janv. 2025
+[janv. 05, 2025 5:26:56][ServerSync] INFOS: Ignore patterns: {
+  **/*.jar
+  **/other.bing
+  **/basic.thing
+}
+[janv. 05, 2025 5:26:56][ServerSync] INFOS: Server configured to push client only mods, clients can still refuse these mods!
+[janv. 05, 2025 5:26:56][ServerSync] INFOS: Manifest files: {
+  
+}
