@@ -60,3 +60,26 @@ createExe {
     fileDescription = "The server side for admins."
     version = ss_version
 }
+
+startScripts {
+    dependsOn shadowJar
+    classpath = files(classpath = files("${buildDir}/libs/${project.name}-${project.version}.jar"))
+}
+
+distZip {
+    dependsOn shadowJar
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+distTar {
+    dependsOn shadowJar
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+distributions {
+    main {
+        contents {
+            from(shadowJar)
+        }
+    }
+}

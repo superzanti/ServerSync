@@ -33,7 +33,7 @@ dependencies {
 
 javafx {
     version = "17.0.13"
-    modules = [ 'javafx.controls' ]
+    modules = ['javafx.controls']
 }
 
 jar.enabled = false
@@ -67,4 +67,29 @@ createExe {
     productName = "ServerSync - Client"
     fileDescription = "The client side for users."
     version = ss_version
+}
+
+startScripts {
+    dependsOn shadowJar
+    classpath = files(classpath = files("${buildDir}/libs/${project.name}-${project.version}.jar"))
+
+}
+
+
+distZip {
+    dependsOn shadowJar
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+distTar {
+    dependsOn shadowJar
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+distributions {
+    main {
+        contents {
+            from(shadowJar)
+        }
+    }
 }
