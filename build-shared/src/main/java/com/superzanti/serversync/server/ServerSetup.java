@@ -54,7 +54,7 @@ public class ServerSetup extends Thread {
             manifest.directories.stream().map(d -> ServerSyncUtility.rootDir.resolve(Paths.get(d.path))).forEach(p -> {
                 if (Files.notExists(p)) {
                     Logger.error(String.format("Managed directory does not exist: %s", p));
-                    System.exit(0);
+                    System.exit(1);
                 }
             });
         } catch (IOException e) {

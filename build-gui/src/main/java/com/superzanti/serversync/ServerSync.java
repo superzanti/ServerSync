@@ -62,7 +62,7 @@ public class ServerSync implements Callable<Integer> {
         return 0;
     }
 
-    private void commonInit() {
+    private void guiInit() {
         Logger.log(String.format("Root dir: %s", ServerSyncUtility.rootDir.toAbsolutePath()));
         Logger.log(String.format("Running version: %s", RefStrings.VERSION));
         Locale locale = SyncConfig.getConfig().LOCALE;
@@ -103,7 +103,7 @@ public class ServerSync implements Callable<Integer> {
             Logger.error("Failed to load client config");
             e.printStackTrace();
         }
-        commonInit();
+        guiInit();
 
         ClientWorker worker = new ClientWorker();
         if (modeQuiet) {
