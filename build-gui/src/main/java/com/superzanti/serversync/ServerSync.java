@@ -58,11 +58,11 @@ public class ServerSync implements Callable<Integer> {
     @Override
     public Integer call() {
         ServerSyncUtility.rootDir = Paths.get(rootDirectory);
-        runInClientMode();
+        run();
         return 0;
     }
 
-    private void guiInit() {
+    private void init() {
         Logger.log(String.format("Root dir: %s", ServerSyncUtility.rootDir.toAbsolutePath()));
         Logger.log(String.format("Running version: %s", RefStrings.VERSION));
         Locale locale = SyncConfig.getConfig().LOCALE;
@@ -90,7 +90,7 @@ public class ServerSync implements Callable<Integer> {
         }
     }
 
-    private void runInClientMode() {
+    private void run() {
         ServerSyncUtility.MODE = EServerMode.CLIENT;
         if(modeQuiet||modeProgressOnly){
             //Disable the consoleHandler to fix automation hanging
@@ -103,7 +103,7 @@ public class ServerSync implements Callable<Integer> {
             Logger.error("Failed to load client config");
             e.printStackTrace();
         }
-        guiInit();
+        init();
 
         ClientWorker worker = new ClientWorker();
         if (modeQuiet) {

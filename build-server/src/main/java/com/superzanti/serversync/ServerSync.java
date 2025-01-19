@@ -56,11 +56,11 @@ public class ServerSync implements Callable<Integer> {
     @Override
     public Integer call() {
         ServerSyncUtility.rootDir = Paths.get(rootDirectory);
-        runInServerMode();
+        run();
         return 0;
     }
 
-    private void serverInit() {
+    private void init() {
         Logger.log(String.format("Root dir: %s", ServerSyncUtility.rootDir.toAbsolutePath()));
         Logger.log(String.format("Running version: %s", RefStrings.VERSION));
         Locale locale = SyncConfig.getConfig().LOCALE;
@@ -88,7 +88,7 @@ public class ServerSync implements Callable<Integer> {
         }
     }
 
-    private Thread runInServerMode() {
+    private Thread run() {
         ServerSyncUtility.MODE = EServerMode.SERVER;
         try {
             ConfigLoader.loadServer();
@@ -96,7 +96,7 @@ public class ServerSync implements Callable<Integer> {
             Logger.error("Failed to load server config");
             Logger.debug(e);
         }
-        serverInit();
+        init();
 
         Thread serverThread = new ServerSetup();
         serverThread.start();
