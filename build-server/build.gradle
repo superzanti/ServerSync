@@ -5,11 +5,11 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
-group = 'com.superzanti.serversync'
+group = ss_group
 version = '4.3.0'
 
 application {
-    mainClass = 'com.superzanti.serversync.ServerSync'
+    mainClass = ss_main_class
 }
 
 repositories {
@@ -34,8 +34,8 @@ shadowJar {
     }
 
     manifest {
-        attributes 'Main-Class': 'com.superzanti.serversync.ServerSync'
-        attributes 'Implementation-Version': '4.3.0'
+        attributes 'Main-Class': ss_main_class
+        attributes 'Implementation-Version': project.version
     }
 
     archiveClassifier.set('')
@@ -50,15 +50,15 @@ shadowJar {
 
 createExe {
     jarTask = shadowJar
-    mainClassName = ss_main_class_server
+    mainClassName = ss_main_class
     outfile = 'ServerSyncServer.exe'
     headerType = 'console'
-    icon = "${rootDir}/build-shared/src/main/resources/ServersyncLogo.ico"
+    icon = "${rootDir}/build-shared/src/main/resources/ServersyncLogoServer.ico"
     copyConfigurable = shadowJar.outputs.files
     supportUrl = "https://github.com/superzanti/ServerSync"
     productName = "ServerSync - Server"
     fileDescription = "The server side for admins."
-    version = ss_version
+    version = project.version
 }
 
 startScripts {

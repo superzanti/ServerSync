@@ -6,11 +6,11 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
-group = 'com.superzanti.serversync'
+group = ss_group
 version = '4.3.0'
 
 application {
-    mainClass = 'com.superzanti.serversync.ServerSync'
+    mainClass = ss_main_class
 }
 
 repositories {
@@ -50,10 +50,14 @@ shadowJar {
         exclude "css/application.css"
     }
 
+    manifest {
+        attributes 'Main-Class': ss_main_class
+        attributes 'Implementation-Version': project.version
+    }
+
     dependencies {
         exclude 'forge*.jar'
         //exclude '**/*javafx*/**' //Comment to build GUI
-
     }
 }
 
@@ -66,13 +70,12 @@ createExe {
     supportUrl = "https://github.com/superzanti/ServerSync"
     productName = "ServerSync - Client"
     fileDescription = "The client side for users."
-    version = ss_version
+    version = project.version
 }
 
 startScripts {
     dependsOn shadowJar
     classpath = files(classpath = files("${buildDir}/libs/${project.name}-${project.version}.jar"))
-
 }
 
 
