@@ -1,0 +1,85 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'edu.sc.seis.launch4j' version '2.5.4'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+group = 'com.superzanti.serversync'
+version = '4.3.0'
+
+application {
+    mainClass = 'com.superzanti.serversync.ServerSync'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':build-shared')  // This makes shared classes available
+
+    implementation 'info.picocli:picocli:4.7.5'
+    annotationProcessor 'info.picocli:picocli-codegen:4.7.5'
+    implementation fileTree(dir: 'libs', include: '*.jar')
+}
+
+
+jar.enabled = false
+
+// Configure the shadowJar task (with JavaFX)
+shadowJar {
+    processResources {
+        exclude "css/application.css"
+    }
+
+    manifest {
+        attributes 'Main-Class': 'com.superzanti.serversync.ServerSync'
+        attributes 'Implementation-Version': '4.3.0'
+    }
+
+    archiveClassifier.set('')
+
+    minimize()
+
+    dependencies {
+        exclude 'forge*.jar'
+        exclude '**/*javafx*/**' //Comment to build GUI
+    }
+}
+
+createExe {
+    jarTask = shadowJar
+    mainClassName = ss_main_class_server
+    outfile = 'ServerSyncServer.exe'
+    headerType = 'console'
+    icon = "${rootDir}/build-shared/src/main/resources/ServersyncLogo.ico"
+    copyConfigurable = shadowJar.outputs.files
+    supportUrl = "https://github.com/superzanti/ServerSync"
+    productName = "ServerSync - Server"
+    fileDescription = "The server side for admins."
+    version = ss_version
+}
+
+startScripts {
+    dependsOn shadowJar
+    classpath = files(classpath = files("${buildDir}/libs/${project.name}-${project.version}.jar"))
+}
+
+distZip {
+    dependsOn shadowJar
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+distTar {
+    dependsOn shadowJar
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+distributions {
+    main {
+        contents {
+            from(shadowJar)
+        }
+    }
+}
