@@ -6,56 +6,66 @@
 
 # Requirements
 
-- Java 9+
-- Java FX
+- Java 16+
 
 # ServerSync
 
-A utility for easy mod management. The client will always be able to connect to your server with less instruction required on how to do so.
+A utility for easy mod management. The player will always be able to connect to your server with less instruction required on how to do so.
 
-Clients will need to run serversync.jar before starting Minecraft to sync with their desired server (can be [automated](https://github.com/superzanti/ServerSync/wiki/Automation)), sync on connect from within Minecraft is desirable but is currently outside the scope of this project.
+Players will need to run serversync.jar before starting Minecraft to sync with their desired server (can be [automated](https://github.com/superzanti/ServerSync/wiki/Automation)).
 
-Technically you could sync any game/filesystem using serversync however it does have some specific funtionality intended for use with Minecraft.
-
-If you don't feel like compiling from the source code and simply want to download a jar file see the [Releases](https://github.com/superzanti/ServerSync/releases).
+For pre compiled artifacts see [Releases](https://github.com/superzanti/ServerSync/releases).
 
 ## DISCLAIMER:
 
-This utility is only intended for personal use. Other developers work very hard on their mods and simply visiting their website, forum post, or github is just a common courtesy. Please don't use this to mass distribute other people's mods without explicit permisson.
+This utility is only intended for personal use. Mod authors work hard on their craft; please support them by visiting their forums, websites or other project sources.
 
-Depending on the copyright and/or pattent laws in your area using this mod with other developer's mods for a commercial purpose could be ILLEGAL, check licenses.
+Using this mod for commercial purposes could violate license(s) make sure to check the terms.
 
-This utility allows ANY server running it to put ANY file in your game folder, such as a virus or a keylogger. So if you are a client please make sure you trust your server administrator and as a good measure make sure to scan your games folders for malicious content.
+This utility allows servers running it to put **ANY** file in your game folder, such as a virus or a keylogger. So if you are a player please make sure you trust the server you are connecting to, having virus monitoring on the games directory would be a good idea.
 
 ## FREQUENTLY ASKED QUESTIONS:
 
 - "This mod isn't doing anything!"
-  - This version of serversync is run independent of minecraft (minecraft should be closed when running serversync), I did this as minecraft did not need to be running for the program to work and the previous method required you to open and close minecraft several times which if you have any more than 2-3 mods then loading time gets very taxing.
+  - This version of serversync is run independent of minecraft for performance (minecraft should be closed).
 - "I can't connect to my server"
   - Check the ip and port details are correct on both server and client.
   - Are you using your external/internal IP address?
   - Are you trying to transfer a file larger than your max file size?
   - Are you ignoring a file that is necessary to connect to the server?
-- "This is so insecure I hate it!"
-  - As per the disclaimer this is not intended to be a super secure system, it's more for personal use.
-  - Please direct any useful security material to the issues, shall look into it.
 - "Can you add feature X? Or fix bug Y?"
-  - Probably. Submit it to the issues, and I'll check it out.
+  - Probably. Submit it to the issues.
 - "I have files such as Optifine that I don't want the server to delete"
   - check out the wiki, there are docs on how to [ignore files](https://github.com/superzanti/ServerSync/wiki/Ignore-&-include-lists-examples)
 
 ## What does it do?
 
-ServerSync is a Server <-> Client app, both are bundled into the same file.
+ServerSync is a Server <-> Client app, server admins can run the server side while players run the client side.
 
-The server configures what is required for clients to connect and serves files.
+Server admins configure the files required in order to connect. 
 
-The client requests information from the server and downloads / removes files based on what is required to connect.
+Players run the client to check if they need to download updates or new files before starting the game.
 
 ## How do I use it?
 
-ServerSync can be used either as a command line tool or a user interface, running with no arguments assumes that you want to start the GUI.
+ServerSync can be used either as a command line tool or a user interface.
+
 See: [CLI Wiki](https://github.com/superzanti/ServerSync/wiki/Command-line-arguments) & [Quick Start](https://github.com/superzanti/ServerSync/wiki/Quick-start)
+
+> 💡 the default configuration for your java install may allow 'double click' running for jar files.
+
+### Server Admins
+Releases include uber jars and windows executables.
+```bash
+java -jar serversync-server.jar <args>
+```
+
+### Players
+Releases include uber jars and windows executables.
+```bash
+java -jar serversync-client.jar <args>
+```
+
 
 ## Working with the code
 
@@ -65,7 +75,7 @@ See: [CLI Wiki](https://github.com/superzanti/ServerSync/wiki/Command-line-argum
 ./gradlew build
 ```
 
-Find the output in `./build/libs`
+Find the output in `./<project>/build/libs`
 
 ### Building exe files
 
@@ -73,7 +83,7 @@ Find the output in `./build/libs`
 ./gradlew build createAllExecutables
 ```
 
-Find the output in `./build/launch4j`
+Find the output in `./<project>/build/launch4j`
 
 ### Clean project
 
