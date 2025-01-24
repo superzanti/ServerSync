@@ -1,8 +1,8 @@
 plugins {
     id "java"
     id "application"
-    id "edu.sc.seis.launch4j" version "2.5.4"
-    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id "edu.sc.seis.launch4j" version "3.0.6"
+    id "com.gradleup.shadow" version "8.3.5"
 }
 
 group = ss_group
@@ -55,13 +55,13 @@ shadowJar {
     }
 }
 
-createExe {
+launch4j {
     jarTask = shadowJar
     mainClassName = ss_main_class
     outfile = "ServerSyncServer.exe"
     headerType = "console"
     icon = "${rootDir}/build-shared/src/main/resources/ServersyncLogoServer.ico"
-    copyConfigurable = shadowJar.outputs.files
+    copyConfigurable = []
     supportUrl = "https://github.com/superzanti/ServerSync"
     productName = "ServerSync - Server"
     fileDescription = "The server side for admins."
@@ -70,7 +70,7 @@ createExe {
 
 startScripts {
     dependsOn shadowJar
-    classpath = files(classpath = files("${buildDir}/libs/${project.name}-${project.version}.jar"))
+    classpath = files(classpath = files("${layout.buildDirectory.get()}/libs/${project.name}-${project.version}.jar"))
 }
 
 distZip {
@@ -94,7 +94,7 @@ distributions {
 tasks.register("assembleGithubArtifacts", Copy) {
     group = "distribution"
     dependsOn createExe
-    from layout.buildDirectory.dir("launch4j/lib"), layout.buildDirectory.file("launch4j")
+    from layout.buildDirectory.dir("libs"), layout.buildDirectory.file("launch4j")
     into file("$rootDir/publish/github")
     exclude "lib"
 }

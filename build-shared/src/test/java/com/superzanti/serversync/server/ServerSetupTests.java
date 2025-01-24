@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,28 +21,25 @@ public class ServerSetupTests {
     void init() {
         ServerSyncUtility.MODE = EServerMode.SERVER;
         Logger.instantiate("testing");
-        config = SyncConfig.getConfig();
-        config.DIRECTORY_INCLUDE_LIST = new ArrayList<>();
-        config.PUSH_CLIENT_MODS = false;
     }
-
-//    @Test
-//    @DisplayName("Construction")
-//    void construction() {
-////        ServerSetup setup = new ServerSetup();
-//    }
 
     @Test
     @DisplayName("Questions")
-    void shouldPushClientOnlyFiles() {
-        config.PUSH_CLIENT_MODS = false;
+    void shouldPushClientOnlyFilesWhenPushClientModsIsTrue() {
+        SyncConfig.getConfig().DIRECTORY_INCLUDE_LIST = List.of();
+        SyncConfig.getConfig().PUSH_CLIENT_MODS = true;
         ServerSetup setup = new ServerSetup();
 
-        assertFalse(setup.shouldPushClientOnlyFiles());
-
-        config.PUSH_CLIENT_MODS = true;
-        setup = new ServerSetup();
-
         assertTrue(setup.shouldPushClientOnlyFiles());
+    }
+
+    @Test
+    @DisplayName("Questions")
+    void shouldNotPushClientOnlyFilesWhenPushClientModsIsFalse() {
+        SyncConfig.getConfig().DIRECTORY_INCLUDE_LIST = List.of();
+        SyncConfig.getConfig().PUSH_CLIENT_MODS = false;
+        ServerSetup setupTrue = new ServerSetup();
+
+        assertFalse(setupTrue.shouldPushClientOnlyFiles());
     }
 }
