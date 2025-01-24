@@ -31,7 +31,7 @@ public class SyncConfig {
 
     // SERVER //////////////////////////////
     public int SERVER_PORT = 38067;
-    public Boolean PUSH_CLIENT_MODS = false;
+    public boolean PUSH_CLIENT_MODS = false;
     public List<String> FILE_INCLUDE_LIST = Collections.singletonList("mods/**");
     public List<DirectoryEntry> DIRECTORY_INCLUDE_LIST = Collections.singletonList(new DirectoryEntry(
         "mods",
@@ -42,7 +42,7 @@ public class SyncConfig {
     ////////////////////////////////////////
 
     // CLIENT //////////////////////////////
-    public Boolean REFUSE_CLIENT_MODS = false;
+    public boolean REFUSE_CLIENT_MODS = false;
     ////////////////////////////////////////
 
     private static SyncConfig singleton;
