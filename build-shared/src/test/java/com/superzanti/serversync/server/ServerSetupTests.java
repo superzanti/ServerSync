@@ -36,13 +36,13 @@ public class ServerSetupTests {
     @DisplayName("Questions")
     void shouldPushClientOnlyFiles() {
         config.PUSH_CLIENT_MODS = false;
-        ServerSetup setup = new ServerSetup();
+        ServerSetup setupFalse = new ServerSetup();
 
-        assertFalse(setup.shouldPushClientOnlyFiles());
+        assertFalse(setupFalse.shouldPushClientOnlyFiles());
 
         config.PUSH_CLIENT_MODS = true;
-        setup = new ServerSetup();
+        ServerSetup setupTrue = new ServerSetup();
 
-        assertTrue(setup.shouldPushClientOnlyFiles());
+        assertTrue(setupTrue.shouldPushClientOnlyFiles());
     }
 }
