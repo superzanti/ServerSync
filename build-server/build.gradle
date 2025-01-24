@@ -36,6 +36,9 @@ application {
 
 // Configure the shadowJar task (with JavaFX)
 shadowJar {
+    archiveBaseName = 'server-sync'
+    archiveClassifier = 'server'
+
     processResources {
         exclude "css/application.css"
     }
@@ -44,8 +47,6 @@ shadowJar {
         attributes 'Main-Class': ss_main_class
         attributes 'Implementation-Version': project.version
     }
-
-    archiveClassifier.set('')
 
     minimize()
 

@@ -48,8 +48,8 @@ jar {
 
 // Configure the shadowJar task (with JavaFX)
 shadowJar {
-
-    archiveClassifier.set('')
+    archiveBaseName = 'server-sync'
+    archiveClassifier = 'client'
 
     //Don't minimize with JavaFX
     //minimize() //Comment to build GUI

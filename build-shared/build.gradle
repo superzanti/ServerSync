@@ -1,5 +1,4 @@
 plugins {
-    id 'edu.sc.seis.launch4j' version '2.5.4'
     id 'java-library'
 }
 
@@ -24,6 +23,11 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(java_language_version)
     }
+}
+
+jar {
+    archiveBaseName = 'server-sync'
+    archiveClassifier = 'shared'
 }
 
 test {
