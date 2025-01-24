@@ -9,10 +9,6 @@ plugins {
 group = ss_group
 version = '4.3.1'
 
-application {
-    mainClass = ss_main_class
-}
-
 repositories {
     mavenCentral()
 }
@@ -31,12 +27,24 @@ dependencies {
     implementation "org.openjfx:javafx-controls:$javafx.version:mac"
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(java_language_version)
+    }
+}
+
+application {
+    mainClass = ss_main_class
+}
+
 javafx {
     version = "17.0.13"
     modules = ['javafx.controls']
 }
 
-jar.enabled = false
+jar {
+    enabled = false
+}
 
 // Configure the shadowJar task (with JavaFX)
 shadowJar {

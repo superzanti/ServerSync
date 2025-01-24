@@ -8,10 +8,6 @@ plugins {
 group = ss_group
 version = '4.3.1'
 
-application {
-    mainClass = ss_main_class
-}
-
 repositories {
     mavenCentral()
 }
@@ -24,8 +20,19 @@ dependencies {
     implementation fileTree(dir: 'libs', include: '*.jar')
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(java_language_version)
+    }
+}
 
-jar.enabled = false
+jar {
+    enabled = false
+}
+
+application {
+    mainClass = ss_main_class
+}
 
 // Configure the shadowJar task (with JavaFX)
 shadowJar {
