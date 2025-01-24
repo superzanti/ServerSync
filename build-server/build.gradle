@@ -1,23 +1,23 @@
 plugins {
-    id 'java'
-    id 'application'
-    id 'edu.sc.seis.launch4j' version '2.5.4'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id "java"
+    id "application"
+    id "edu.sc.seis.launch4j" version "2.5.4"
+    id "com.github.johnrengelman.shadow" version "7.1.2"
 }
 
 group = ss_group
-version = '4.3.1'
+version = "4.3.1"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation project(':build-shared')  // This makes shared classes available
+    implementation project(":build-shared")  // This makes shared classes available
 
-    implementation 'info.picocli:picocli:4.7.5'
-    annotationProcessor 'info.picocli:picocli-codegen:4.7.5'
-    implementation fileTree(dir: 'libs', include: '*.jar')
+    implementation "info.picocli:picocli:4.7.5"
+    annotationProcessor "info.picocli:picocli-codegen:4.7.5"
+    implementation fileTree(dir: "libs", include: "*.jar")
 }
 
 java {
@@ -34,33 +34,32 @@ application {
     mainClass = ss_main_class
 }
 
-// Configure the shadowJar task (with JavaFX)
 shadowJar {
-    archiveBaseName = 'server-sync'
-    archiveClassifier = 'server'
+    archiveBaseName = "server-sync"
+    archiveClassifier = "server"
 
     processResources {
         exclude "css/application.css"
     }
 
     manifest {
-        attributes 'Main-Class': ss_main_class
-        attributes 'Implementation-Version': project.version
+        attributes "Main-Class": ss_main_class
+        attributes "Implementation-Version": project.version
     }
 
     minimize()
 
     dependencies {
-        exclude 'forge*.jar'
-        exclude '**/*javafx*/**' //Comment to build GUI
+        exclude "forge*.jar"
+        exclude "**/*javafx*/**"
     }
 }
 
 createExe {
     jarTask = shadowJar
     mainClassName = ss_main_class
-    outfile = 'ServerSyncServer.exe'
-    headerType = 'console'
+    outfile = "ServerSyncServer.exe"
+    headerType = "console"
     icon = "${rootDir}/build-shared/src/main/resources/ServersyncLogoServer.ico"
     copyConfigurable = shadowJar.outputs.files
     supportUrl = "https://github.com/superzanti/ServerSync"
@@ -90,4 +89,16 @@ distributions {
             from(shadowJar)
         }
     }
+}
+
+tasks.register("assembleGithubArtifacts", Copy) {
+    group = "distribution"
+    dependsOn createExe
+    from layout.buildDirectory.dir("launch4j/lib"), layout.buildDirectory.file("launch4j")
+    into file("$rootDir/publish/github")
+    exclude "lib"
+}
+
+clean {
+    delete "$rootDir/publish"
 }

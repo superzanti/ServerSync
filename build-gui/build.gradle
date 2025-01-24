@@ -1,25 +1,25 @@
 plugins {
-    id 'java'
-    id 'application'
-    id 'edu.sc.seis.launch4j' version '2.5.4'
-    id 'org.openjfx.javafxplugin' version '0.1.0'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id "java"
+    id "application"
+    id "edu.sc.seis.launch4j" version "2.5.4"
+    id "org.openjfx.javafxplugin" version "0.1.0"
+    id "com.github.johnrengelman.shadow" version "7.1.2"
 }
 
 group = ss_group
-version = '4.3.1'
+version = "4.3.1"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation project(':build-shared')  // This makes shared classes available
+    implementation project(":build-shared")  // This makes shared classes available
 
-    implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
-    implementation 'info.picocli:picocli:4.7.5'
-    annotationProcessor 'info.picocli:picocli-codegen:4.7.5'
-    implementation fileTree(dir: 'libs', include: '*.jar')
+    implementation "com.eclipsesource.minimal-json:minimal-json:0.9.5"
+    implementation "info.picocli:picocli:4.7.5"
+    annotationProcessor "info.picocli:picocli-codegen:4.7.5"
+    implementation fileTree(dir: "libs", include: "*.jar")
 
     //Dependencies (GUI)
     implementation "org.openjfx:javafx-controls:$javafx.version:win"
@@ -39,7 +39,7 @@ application {
 
 javafx {
     version = "17.0.13"
-    modules = ['javafx.controls']
+    modules = ["javafx.controls"]
 }
 
 jar {
@@ -48,8 +48,8 @@ jar {
 
 // Configure the shadowJar task (with JavaFX)
 shadowJar {
-    archiveBaseName = 'server-sync'
-    archiveClassifier = 'client'
+    archiveBaseName = "server-sync"
+    archiveClassifier = "client"
 
     //Don't minimize with JavaFX
     //minimize() //Comment to build GUI
@@ -59,12 +59,12 @@ shadowJar {
     }
 
     manifest {
-        attributes 'Main-Class': ss_main_class
-        attributes 'Implementation-Version': project.version
+        attributes "Main-Class": ss_main_class
+        attributes "Implementation-Version": project.version
     }
 
     dependencies {
-        exclude 'forge*.jar'
+        exclude "forge*.jar"
         //exclude '**/*javafx*/**' //Comment to build GUI
     }
 }
@@ -72,7 +72,7 @@ shadowJar {
 createExe {
     jarTask = shadowJar
     mainClassName = ss_main_class
-    outfile = 'ServerSyncClient.exe'
+    outfile = "ServerSyncClient.exe"
     icon = "${rootDir}/build-shared/src/main/resources/ServersyncLogo.ico"
     copyConfigurable = shadowJar.outputs.files
     supportUrl = "https://github.com/superzanti/ServerSync"
@@ -104,3 +104,16 @@ distributions {
         }
     }
 }
+
+tasks.register("assembleGithubArtifacts", Copy) {
+    group = "distribution"
+    dependsOn createExe
+    from layout.buildDirectory.dir("launch4j/lib"), layout.buildDirectory.file("launch4j")
+    into file("$rootDir/publish/github")
+    exclude "lib"
+}
+
+clean {
+    delete "$rootDir/publish"
+}
+
