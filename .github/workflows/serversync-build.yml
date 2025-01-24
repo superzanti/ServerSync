@@ -9,26 +9,26 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        java: ["17", "21"]
-    name: Java ${{ matrix.java }} Build
+    name: Java Build
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Java ${{ matrix.java }}
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: ${{ matrix.java }}
+          java-version: 21
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: <>-- Build --<>
-        run: ./gradlew build createExe --no-daemon
+        run: ./gradlew build
+
+      - name: <>-- Create Windows Executables --<>
+        run: ./gradlew createExe
 
       - name: <>-- Assemble --<>
-        run: ./gradlew assembleGithubArtifacts --no-daemon
+        run: ./gradlew assembleGithubArtifacts
 
       - uses: actions/upload-artifact@v4
         with:
