@@ -96,7 +96,6 @@ tasks.register("assembleGithubArtifacts", Copy) {
     dependsOn createExe
     from layout.buildDirectory.dir("libs"), layout.buildDirectory.file("launch4j")
     into file("$rootDir/publish/github")
-    exclude "lib"
 }
 
 clean {
