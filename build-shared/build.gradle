@@ -19,6 +19,12 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.8.2", "com.eclipsesource.minimal-json:minimal-json:0.9.5"
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(java_language_version)
+    }
+}
+
 jar {
     archiveBaseName = "server-sync"
     archiveClassifier = "shared"

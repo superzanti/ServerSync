@@ -27,6 +27,12 @@ dependencies {
     implementation "org.openjfx:javafx-controls:$javafx.version:mac"
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(java_language_version)
+    }
+}
+
 application {
     mainClass = ss_main_class
 }

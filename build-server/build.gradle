@@ -20,6 +20,12 @@ dependencies {
     implementation fileTree(dir: "libs", include: "*.jar")
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(java_language_version)
+    }
+}
+
 jar {
     enabled = false
 }
